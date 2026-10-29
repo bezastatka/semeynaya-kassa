@@ -31,7 +31,7 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
     <h1>Семейная касса</h1>
     <p class="hint" style="margin:0">Учёт трат и доходов для себя и всей семьи.</p>
     <div id="auTabs" class="mseg" role="radiogroup" aria-label="Способ входа">
-      <button type="button" role="radio" data-m="in">Вход</button><button type="button" role="radio" data-m="up">Регистрация</button><button type="button" role="radio" data-m="link">По ссылке</button>
+      <button type="button" role="radio" data-m="in">Вход</button><button type="button" role="radio" data-m="up">Регистрация</button><button type="button" role="radio" data-m="code">По коду</button>
     </div>
     <form id="auForm" class="stack" style="gap:12px" novalidate>
       <div id="auNameRow" hidden><label class="label" for="auName">Как вас зовут</label><input id="auName" class="field" autocomplete="name" maxlength="60" placeholder="Это имя увидят участники общих счетов"></div>
@@ -40,6 +40,13 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
       <button class="primary" id="auGo" type="submit">Войти</button>
       <div class="formmsg" id="auMsg" role="status"></div>
     </form>
+    <div id="auCodeStep" class="stack" style="gap:12px" hidden>
+      <p id="auCodeText" style="margin:0"></p>
+      <div><label class="label" for="auCode">Код из письма</label><input id="auCode" class="field codein" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="123456"></div>
+      <button class="primary" id="auVerify" type="button">Подтвердить</button>
+      <div class="inline" style="justify-content:space-between"><button type="button" class="linkbtn" id="auResend">Отправить код ещё раз</button><button type="button" class="linkbtn muted" id="auBack">Изменить почту</button></div>
+      <div class="formmsg" id="auCodeMsg" role="status"></div>
+    </div>
   </div>
 </div>
 <header class="bar"><div class="bar-in">

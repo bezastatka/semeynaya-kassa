@@ -421,3 +421,5 @@ body.locked{overflow:hidden}
 .authbox .primary{width:100%}
 body.auth .bar,body.auth main,body.auth .bnav{visibility:hidden}
 .mono{font-variant-numeric:tabular-nums;word-break:break-all}
+.codein{font-family:var(--display);font-size:26px;letter-spacing:.3em;text-align:center;font-variant-numeric:tabular-nums}
+.linkbtn:disabled{color:var(--muted);cursor:default}
