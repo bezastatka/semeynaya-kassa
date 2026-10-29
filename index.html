@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Семейная касса</title>
+<meta name="description" content="Учёт трат и доходов для себя и всей семьи: общие счета, кошельки, цели, регулярные платежи и статистика.">
+<meta name="theme-color" content="#F2F5F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1514" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Касса">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
+<script>
+try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.documentElement;
+  if(p.theme==="light"||p.theme==="dark")r.setAttribute("data-app-theme",p.theme);
+  if(p.accent&&p.accent!=="emerald")r.setAttribute("data-accent",p.accent)}catch(e){}
+</script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="authScreen" class="authscreen" hidden>
+  <div class="authbox card">
+    <div class="authlogo" aria-hidden="true"><img src="icons/icon-192.png" alt="" width="64" height="64"></div>
+    <h1>Семейная касса</h1>
+    <p class="hint" style="margin:0">Учёт трат и доходов для себя и всей семьи.</p>
+    <div id="auTabs" class="mseg" role="radiogroup" aria-label="Способ входа">
+      <button type="button" role="radio" data-m="in">Вход</button><button type="button" role="radio" data-m="up">Регистрация</button><button type="button" role="radio" data-m="link">По ссылке</button>
+    </div>
+    <form id="auForm" class="stack" style="gap:12px" novalidate>
+      <div id="auNameRow" hidden><label class="label" for="auName">Как вас зовут</label><input id="auName" class="field" autocomplete="name" maxlength="60" placeholder="Это имя увидят участники общих счетов"></div>
+      <div><label class="label" for="auEmail">Почта</label><input id="auEmail" class="field" type="email" autocomplete="email" inputmode="email"></div>
+      <div id="auPassRow"><label class="label" for="auPass">Пароль</label><input id="auPass" class="field" type="password" autocomplete="current-password" minlength="6"></div>
+      <button class="primary" id="auGo" type="submit">Войти</button>
+      <div class="formmsg" id="auMsg" role="status"></div>
+    </form>
+  </div>
+</div>
+<header class="bar"><div class="bar-in">
+  <button type="button" class="accbtn" id="accBtn" aria-haspopup="dialog" aria-controls="accSheet">
+    <span class="accline"><span class="accname" id="accName">Семейная касса</span><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></span>
+    <span class="acckind" id="accKind">Загружаем счета…</span>
+  </button>
+  <div class="monthnav" id="monthNav">
+    <button class="nav" id="prev" type="button" aria-label="Предыдущий месяц">‹</button>
+    <strong id="monthLabel">Октябрь 2026</strong>
+    <button class="nav" id="next" type="button" aria-label="Следующий месяц">›</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div id="notice" class="notice" hidden></div>
+
+  <div class="subs-scroll" id="subStrip" hidden><div class="subs" id="subs" role="group" aria-label="Кошельки"></div></div>
+  <div class="subtoggle" id="subToggle" hidden></div>
+  <section class="card" id="newSub" hidden>
+    <div class="stack" style="gap:12px">
+      <h3>Новый кошелёк</h3>
+      <div class="hint" style="margin:0">Например, «Карта», «Наличные» или «Копилка на отпуск». Баланс считается из суммы на старте, доходов, расходов и переводов.</div>
+      <div class="row2 rev"><div><label class="label" for="nsName">Название</label><input id="nsName" class="field" maxlength="30"></div>
+        <div><label class="label" for="nsStart">Сейчас в нём</label><input id="nsStart" class="field" inputmode="decimal" placeholder="0"></div></div>
+      <div class="inline"><button type="button" class="primary" id="nsCreate">Добавить кошелёк</button><button type="button" class="ghost" id="nsCancel">Отмена</button></div>
+      <div class="formmsg" id="nsMsg" role="status"></div>
+    </div>
+  </section>
+
+  <section class="card" id="newPanel" hidden>
+    <div class="stack">
+      <h3 id="newTitle">Новый счёт</h3>
+      <div id="newIntro" class="hint" hidden>Счёт — это отдельная копилка трат. Личный видите только вы, в общий можно позвать семью.</div>
+      <div><label for="newName" class="label">Название</label><input id="newName" class="field" maxlength="40" placeholder="Например, «Семья» или «Мои расходы»"></div>
+      <div><span class="label">Тип счёта</span>
+        <div class="seg" id="newType" role="radiogroup" aria-label="Тип счёта">
+          <button type="button" role="radio" data-type="personal" aria-checked="true"><b>Личный</b><span>Видите только вы</span></button>
+          <button type="button" role="radio" data-type="shared" aria-checked="false"><b>Общий</b><span>Можно позвать семью по коду</span></button>
+        </div></div>
+      <div class="row2">
+        <div><label for="newCur" class="label">Валюта</label><select id="newCur" class="field"></select></div>
+        <div><label for="newBudget" class="label">Бюджет на месяц</label><input id="newBudget" class="field" inputmode="decimal" placeholder="Необязательно"></div>
+      </div>
+      <div class="inline"><button type="button" class="primary" id="createBtn">Создать счёт</button><button type="button" class="ghost" id="cancelNew">Отмена</button></div>
+      <div class="formmsg" id="newMsg" role="status"></div>
+      <hr class="divider">
+      <div><label for="joinCode" class="label">Есть код приглашения в общий счёт?</label>
+        <div class="inline"><input id="joinCode" class="field" maxlength="8" autocomplete="off" placeholder="Например, K7M2QX" style="text-transform:uppercase"><button type="button" class="ghost" id="joinBtn">Присоединиться</button></div>
+        <div class="formmsg" id="joinMsg" role="status"></div></div>
+    </div>
+  </section>
+
+  <!-- ===== Операции ===== -->
+  <div id="vSpend" class="view spend">
+    <div class="col-a">
+      <section class="card summary" aria-live="polite">
+        <span class="label" id="sumLabel">Итоги месяца</span>
+        <div class="trio">
+          <div><span>Расходы</span><b id="total">0 ₽</b></div>
+          <div><span>Доходы</span><b id="incV" class="pos">—</b></div>
+          <div><span>Разница</span><b id="balV">—</b></div>
+        </div>
+        <div class="meter" id="meterWrap" hidden>
+          <div class="track"><div class="fill" id="fill"></div></div>
+          <div class="meta" id="meterMeta"></div>
+        </div>
+        <div class="hintline" id="stats"></div>
+      </section>
+
+      <section id="dueCard" class="card stack" style="gap:6px" hidden></section>
+
+      <section id="goalsSec" class="stack" style="gap:10px" hidden>
+        <div class="sechead"><h2>Цели</h2><button type="button" class="linkbtn" id="addGoalBtn">+ Новая цель</button></div>
+        <div id="goalNew" hidden></div>
+        <div id="goals" class="goals"></div>
+      </section>
+    </div>
+
+    <div class="col-b">
+      <section>
+        <div class="sechead"><h2 id="listTitle">Операции</h2></div>
+        <div id="list"><div class="empty">Загружаем операции…</div></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== История ===== -->
+  <div id="vHist" class="view narrow" hidden>
+    <section class="card stack" style="gap:14px">
+      <div><label for="hq" class="label">Поиск</label><input id="hq" class="field" type="search" autocomplete="off" placeholder="Комментарий, категория, человек или сумма"></div>
+      <div class="hrow"><div><span class="label">Тип</span><div id="hKind"></div></div><div><span class="label">Период</span><div id="hPeriod"></div></div></div>
+      <div id="hRange" class="row2" hidden><div><label for="hFrom" class="label">С даты</label><input type="date" id="hFrom"></div><div><label for="hTo" class="label">По дату</label><input type="date" id="hTo"></div></div>
+      <div class="hsel">
+        <div><label for="hCat" class="label">Категория</label><select id="hCat" class="field"></select></div>
+        <div id="hWhoWrap"><label for="hWho" class="label">Кто</label><select id="hWho" class="field"></select></div>
+        <div><label for="hSort" class="label">Сортировка</label><select id="hSort" class="field">
+          <option value="date_desc">Сначала новые</option><option value="date_asc">Сначала старые</option>
+          <option value="amt_desc">Сначала крупные</option><option value="amt_asc">Сначала мелкие</option></select></div>
+      </div>
+      <div class="inline"><button type="button" class="ghost" id="hReset">Сбросить фильтры</button><button type="button" class="ghost" id="hCsv" hidden>Скачать CSV</button></div>
+    </section>
+    <div class="flow hsum" id="hSum"></div>
+    <div id="hList"></div>
+    <button type="button" class="ghost" id="hMore" hidden>Показать ещё</button>
+    <div class="hint" id="hCap" hidden>Загружаем более старые операции…</div>
+  </div>
+
+  <!-- ===== Статистика ===== -->
+  <div id="vStats" class="view mid" hidden>
+    <div class="stat-head">
+      <div><span class="label" style="margin-bottom:2px">Период</span><div class="period-name" id="periodName">Октябрь 2026</div></div>
+      <div id="periodSeg"></div>
+    </div>
+    <div id="scopeSeg"></div>
+    <div class="notice" id="statNote" hidden></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="charts" id="charts"></div>
+    <details class="card" id="custom">
+      <summary>Выбрать графики</summary>
+      <div class="hint">Отметьте, какие графики показывать, и расставьте их стрелками. Вид каждого графика переключается прямо на его карточке.</div>
+      <div class="cust" id="custList"></div>
+    </details>
+  </div>
+
+  <!-- ===== Настройки ===== -->
+  <div id="vPrefs" class="view narrow" hidden>
+    <nav class="card setmenu" id="setMenu" aria-label="Разделы настроек"></nav>
+    <div id="prefBack" hidden><button type="button" class="backbtn" id="prefBackBtn">‹ Все настройки</button></div>
+
+    <section class="card sec" id="prefTheme" hidden>
+      <h3>Оформление</h3>
+      <div><span class="label">Тема</span><div class="seg three" id="themeSeg" role="radiogroup" aria-label="Тема"></div></div>
+      <div><span class="label">Цвет акцента</span><div class="swatches" id="accentSw" role="radiogroup" aria-label="Цвет акцента"></div></div>
+    </section>
+
+    <section class="card sec" id="prefApp" hidden>
+      <h3>Общие</h3>
+      <div><span class="label">Открывать при запуске</span><div class="seg" id="startSeg" role="radiogroup" aria-label="Открывать при запуске"></div></div>
+      <div><span class="label">Суммы</span><div class="seg" id="centsSeg" role="radiogroup" aria-label="Формат сумм"></div></div>
+      <div><label class="label" for="baseCur">Валюта для сводки по всем счетам</label><select id="baseCur" class="field" style="max-width:260px"></select></div>
+      <div id="rateRows" class="stack" style="gap:8px"></div>
+      <div class="inline"><button type="button" class="ghost" id="resetCharts">Вернуть графики по умолчанию</button></div>
+      <div class="hint" style="margin:0">Эти настройки сохраняются в вашем аккаунте и не влияют на других участников.</div>
+    </section>
+
+    <section class="card sec" id="prefMe" hidden>
+      <h3>Аккаунт и данные</h3>
+      <div><span class="label">Почта</span><div id="meEmail" class="mono">—</div></div>
+      <div><label class="label" for="meName">Имя для участников общих счетов</label>
+        <div class="inline"><input id="meName" class="field" maxlength="60" autocomplete="name"><button type="button" class="ghost" id="meNameSave">Сохранить</button></div></div>
+      <hr class="divider">
+      <div class="stack" style="gap:8px"><span class="label" style="margin:0">Резервная копия</span>
+        <div class="hint" style="margin:0">В файл попадут все ваши счета, кошельки, операции, категории, шаблоны и цели. Храните его у себя — из него можно восстановить данные.</div>
+        <div class="inline"><button type="button" class="ghost" id="bkExport">Скачать копию</button><button type="button" class="ghost" id="bkImportBtn">Восстановить из файла</button></div>
+        <input type="file" id="bkFile" accept="application/json,.json" hidden>
+        <div class="formmsg" id="bkMsg" role="status"></div></div>
+      <div class="hint" id="usage" style="margin:0"></div>
+      <hr class="divider">
+      <div class="inline"><button type="button" class="ghost danger" id="signOut">Выйти из аккаунта</button></div>
+    </section>
+
+    <section class="card sec" id="accSet" hidden>
+      <h3 id="setTitle">Счёт</h3>
+      <div id="inviteBlock" class="stack" style="gap:10px">
+        <span class="label" style="margin:0">Пригласить в счёт</span>
+        <div class="code"><output id="codeOut">——————</output><button type="button" class="ghost" id="copyCode">Скопировать код</button></div>
+        <ol class="steps">
+          <li>Отправьте человеку ссылку на приложение и этот код.</li>
+          <li>Он входит в свой аккаунт, нажимает на название счёта вверху, затем «Присоединиться по коду».</li>
+        </ol>
+        <span class="label" style="margin:6px 0 0">Участники</span>
+        <div class="people" id="people"></div>
+      </div>
+      <div><label class="label" for="setName">Название</label><input id="setName" class="field" maxlength="40"></div>
+      <div id="setPeopleWrap"><label class="label" for="setPeople">Члены семьи</label>
+        <input id="setPeople" class="field" placeholder="Мама, Папа, Аня">
+        <div class="hint">Через запятую. Если оставить пустым, трата записывается на того, кто её добавил.</div></div>
+      <div class="row2">
+        <div><label class="label" for="setCur">Валюта</label><select id="setCur" class="field"></select></div>
+        <div><label class="label" for="setBudget">Бюджет на месяц</label><input id="setBudget" class="field" inputmode="decimal" placeholder="Без лимита"></div>
+      </div>
+      <button type="button" class="primary" id="saveSet">Сохранить</button>
+      <div class="formmsg" id="setMsg" role="status"></div>
+      <hr class="divider">
+      <div id="dangerZone"></div>
+    </section>
+
+    <section class="card sec" id="subSet" hidden>
+      <h3>Кошельки</h3>
+      <div class="hint" style="margin:0">«На старте» — сколько было в кошельке до первой записи. Выключите переключатель у кошелька (например, копилки), чтобы он не входил во «Всего», бюджет и общую статистику.</div>
+      <div id="subRows" class="stack" style="gap:10px"></div>
+      <div class="inline"><button type="button" class="ghost" id="addSubRow">+ Кошелёк</button></div>
+      <button type="button" class="primary" id="saveSubs">Сохранить кошельки</button>
+      <div class="formmsg" id="subMsg" role="status"></div>
+    </section>
+
+    <section class="card sec" id="catSet" hidden>
+      <h3 id="catSetTitle">Категории</h3>
+      <div id="catTabs"></div>
+      <div id="catList"></div>
+      <div class="inline"><button type="button" class="ghost" id="addCatBtn">+ Новая категория</button></div>
+      <div id="catCopy"></div>
+      <div class="hint" style="margin:0">Категории общие для всех участников счёта. Скрытые не предлагаются при вводе, но остаются в истории и статистике.</div>
+      <input type="file" id="iconFile" accept="image/png,image/jpeg" hidden>
+    </section>
+
+    <section class="card sec" id="tplSet" hidden>
+      <h3>Шаблоны платежей</h3>
+      <div class="hint" style="margin:0">Шаблон заполняет форму одним нажатием. Платежи с пометкой «каждый месяц» появляются в блоке «Регулярные платежи» на главной.</div>
+      <div id="tplList"></div>
+      <div class="inline"><button type="button" class="ghost" id="addTplBtn">+ Новый шаблон</button></div>
+    </section>
+
+    <p class="foot">Личные счета видите только вы. Общие счета — только их участники.</p>
+  </div>
+</main>
+
+<nav class="bnav" aria-label="Разделы"><div class="bnav-in">
+  <button type="button" class="nb" data-view="spend" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>Главная</button>
+  <button type="button" class="nb" data-view="history"><svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 4.5v3.5h3.5"/><path d="M12 8v4.2l2.8 1.8"/></svg>История</button>
+  <div class="fabslot"><button type="button" class="fab" id="fab" aria-label="Добавить операцию" aria-haspopup="dialog" aria-controls="entrySheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <button type="button" class="nb" data-view="stats"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 16.5v-5M12 16.5V6.5M17 16.5v-8"/></svg>Статистика</button>
+  <button type="button" class="nb" data-view="prefs"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Настройки</button>
+</div></nav>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<section class="sheet" id="accSheet" role="dialog" aria-modal="true" aria-labelledby="accSheetTitle" hidden>
+  <div class="sheet-in">
+    <div class="sheet-head"><h3 id="accSheetTitle">Счета</h3><button type="button" class="x sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div id="accTotal" class="acctotal"></div>
+    <div id="tabs" class="acclist" role="listbox" aria-label="Счета"></div>
+    <div class="inline"><button type="button" class="ghost" id="accNew">+ Новый счёт</button><button type="button" class="ghost" id="accJoin">Присоединиться по коду</button></div>
+  </div>
+</section>
+
+<section class="sheet" id="entrySheet" role="dialog" aria-modal="true" aria-labelledby="entryTitle" hidden>
+  <form id="form" class="sheet-in" novalidate>
+    <div class="sheet-head"><h3 id="entryTitle">Новая операция</h3><button type="button" class="x sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div id="tplBar" hidden></div>
+    <div id="tplSave" hidden></div>
+    <div id="kindSeg"></div>
+    <div>
+      <label for="amount" class="label">Сумма</label>
+      <div class="amount-row"><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0"><span id="curSym">₽</span></div>
+    </div>
+    <div id="catWrap"><span class="label" id="catLabel">Категория</span><div class="cgrid" id="cats" role="radiogroup" aria-label="Категория"></div></div>
+    <div id="trWrap" class="row2 half" hidden><div><label class="label" for="trFrom">Откуда</label><select id="trFrom" class="field"></select></div><div><label class="label" for="trTo">Куда</label><select id="trTo" class="field"></select></div></div>
+    <div id="trAmt2Wrap" hidden><label class="label" for="trAmt2" id="trAmt2Lbl">Придёт на счёт</label><input id="trAmt2" class="field" inputmode="decimal" autocomplete="off" placeholder="Сумма в валюте второго счёта"></div>
+    <div class="dchips" id="details"></div>
+    <div id="dateRow" hidden><label for="date" class="label">Дата</label><input type="date" id="date"></div>
+    <div id="subWrap" hidden><span class="label">Кошелёк</span><div class="chips" id="subPick" role="radiogroup" aria-label="Кошелёк"></div></div>
+    <div id="whoWrap" hidden><span class="label" id="whoLabel">Кто потратил</span><div class="chips" id="members" role="radiogroup" aria-label="Кто потратил"></div></div>
+    <div id="noteRow" hidden><label for="note" class="label">Комментарий</label><input id="note" class="field" maxlength="80" placeholder="Например, «Пятёрочка» или «подарок маме»"></div>
+    <div class="submit"><button type="submit" class="primary" id="addBtn">Добавить расход</button><div class="formmsg" id="formMsg" role="status"></div></div>
+  </form>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/backend.js"></script>
+<script src="js/app.js"></script>
+<script>
+if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
