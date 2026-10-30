@@ -12,7 +12,8 @@
   function err(e){if(e&&e.code&&typeof e.code==="string"&&/^(invalid_argument|unavailable|quota_exceeded|denied|not_found)$/.test(e.code))return e;
     const msg=String((e&&(e.message||e.error_description))||e||"");
     let code="unavailable";
-    if(e&&(e.code==="42501"||/row-level security|permission denied/i.test(msg)))code="denied";
+    if(/too_many_attempts/.test(msg))code="rate_limited";
+    else if(e&&(e.code==="42501"||/row-level security|permission denied/i.test(msg)))code="denied";
     else if(e&&(e.code==="P0002"||/not_found/.test(msg)))code="not_found";
     else if(e&&(e.code==="23514"||e.code==="22P02"||e.code==="23505"))code="invalid_argument_data";
     return {code,message:msg}}

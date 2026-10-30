@@ -1,7 +1,7 @@
 /* Семейная касса — офлайн-кэш оболочки приложения.
    Свои файлы: сначала сеть (чтобы обновления приходили сразу), без сети — из кэша.
    Шрифты и библиотеки с CDN: из кэша. Запросы к базе не кэшируются. */
-const VERSION="kassa-v2";
+const VERSION="kassa-v3";
 const SHELL=["./","index.html","app.css","js/config.js","js/backend.js","js/app.js","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/icon-32.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

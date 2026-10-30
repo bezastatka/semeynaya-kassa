@@ -159,7 +159,7 @@ function normCatList(raw,defs,otherId){const out=[],seen=new Set();
   for(const c of Array.isArray(raw)?raw:[]){if(!c||!c.id||seen.has(String(c.id)))continue;const id=String(c.id);seen.add(id);
     const d=defs.find(x=>x.id===id)||{};
     out.push({id,name:String(c.name||d.name||"Без названия").slice(0,30),c:/^--c([1-9]|10)$/.test(c.c)?c.c:(d.c||"--c10"),
-      icon:typeof c.icon==="string"&&(ICONS[c.icon]||c.icon.startsWith("img:"))?c.icon:(d.icon||"dots"),hidden:!!c.hidden&&id!==otherId})}
+      icon:typeof c.icon==="string"&&(Object.hasOwn(ICONS,c.icon)||/^img:[A-Za-z0-9_\-.~:@+]{1,200}$/.test(c.icon))?c.icon:(d.icon||"dots"),hidden:!!c.hidden&&id!==otherId})}
   if(!out.length)return defs.map(x=>({...x,hidden:false}));
   if(!seen.has(otherId))out.push({...defs.find(x=>x.id===otherId),hidden:false});
   return out}
@@ -168,7 +168,7 @@ const stripCat=x=>({id:x.id,name:x.name,c:x.c,icon:x.icon,hidden:!!x.hidden});
 let iconData={},iconUnsub=null,iconKey="";
 function catIcon(c,size){size=size||32;const box=h("span",{class:"cico",style:"--cc:var("+(c.c||"--c10")+");width:"+size+"px;height:"+size+"px","aria-hidden":"true"});
   if(c.icon&&String(c.icon).startsWith("img:")){const src=iconData[c.icon.slice(4)];if(src){box.classList.add("img");box.append(h("img",{src,alt:""}));return box}}
-  box.innerHTML='<svg viewBox="0 0 24 24">'+(ICONS[c.icon]||ICONS.dots)+'</svg>';return box}
+  box.innerHTML='<svg viewBox="0 0 24 24">'+(Object.hasOwn(ICONS,c.icon)?ICONS[c.icon]:ICONS.dots)+'</svg>';return box}
 const iconCol=a=>a.type==="personal"?db.collection("data/users/"+uid+"/"+a.id+"/icons"):db.collection("accounts/"+a.id+"/icons");
 const okIcon=v=>typeof v==="string"&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(v);
 function resubIcons(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===iconKey)return;
@@ -1319,7 +1319,7 @@ function resubscribe(){if(!db||!acc)return;const key=acc.type+":"+acc.id+":"+mon
 function setReadOnly(){readOnly=true;$("fab").disabled=true;closeSheet();$("saveSet").hidden=true;$("saveSubs").hidden=true;$("newPanel").hidden=true;
   notice("Доступ только на просмотр.");renderTabs();renderDanger();if(acc)renderList()}
 function writeErr(e,el){const c=e&&e.code;el.classList.add("bad");
-  el.textContent=c==="quota_exceeded"?"База заполнена: удалите старые операции, чтобы добавить новые.":c==="denied"?"Нет доступа: вы не участник этого счёта или вышли из аккаунта.":c==="invalid_argument"?"Запись не найдена — возможно, её уже удалили. Обновите страницу.":c==="invalid_argument_data"?"Данные не прошли проверку. Проверьте поля и попробуйте ещё раз.":"Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."}
+  el.textContent=c==="rate_limited"?"Слишком много попыток ввести код. Попробуйте через час.":c==="quota_exceeded"?"База заполнена: удалите старые операции, чтобы добавить новые.":c==="denied"?"Нет доступа: вы не участник этого счёта или вышли из аккаунта.":c==="invalid_argument"?"Запись не найдена — возможно, её уже удалили. Обновите страницу.":c==="invalid_argument_data"?"Данные не прошли проверку. Проверьте поля и попробуйте ещё раз.":"Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."}
 
 $("form").addEventListener("submit",async ev=>{ev.preventDefault();const msg=$("formMsg");msg.classList.remove("bad");
   const amount=Math.round(parseNum($("amount").value)*100)/100;
@@ -1444,7 +1444,13 @@ $("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target
     .filter(d=>d.path.startsWith("data/users/"+uid+"/")||d.path.startsWith("accounts/"))
     .sort((x,y)=>x.path.split("/").length-y.path.split("/").length);
   let ok=0,fail=0;msg.textContent="Восстанавливаем 0 из "+rows.length+"…";
-  for(const r of rows){if(/^accounts\/[^/]+$/.test(r.path)){const m=Array.isArray(r.data.members)?r.data.members:[];if(!m.includes(uid))r.data.members=[...m,uid];if(!r.data.owner)r.data.owner=uid}
+  let kept=0;
+  for(const r of rows){
+    if(/^accounts\/[^/]+$/.test(r.path)){
+      /* a shared account that still exists keeps its members; a missing one is recreated with you as the only member */
+      let exists=false;try{exists=(await db.doc(r.path).get()).exists}catch(x){}
+      if(exists){kept++;ok++;continue}
+      r.data.members=[uid];r.data.owner=uid}
     try{await db.doc(r.path).set(r.data);ok++}catch(x){fail++}
     if((ok+fail)%25===0)msg.textContent="Восстанавливаем "+(ok+fail)+" из "+rows.length+"…"}
   msg.textContent="Восстановлено "+ok+" из "+rows.length+(fail?" · не удалось "+fail+" (обычно это общие счета, где вы не участник)":"")+". Обновляем приложение…";
