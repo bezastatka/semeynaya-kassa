@@ -20,8 +20,8 @@
 
   /* ---------- paths ---------- */
   const SEG=/^[A-Za-z0-9_\-.~:@+]{1,200}$/;
-  function check(path,even){const p=String(path).split("/");if(!p.every(s=>SEG.test(s)&&s!=="."&&s!==".."))throw new TypeError("Неверный путь: "+path);
-    if((p.length%2===0)!==even)throw new TypeError("Неверное число сегментов: "+path);return p}
+  function check(path,even){const p=String(path).split("/");if(!p.every(s=>SEG.test(s)&&s!=="."&&s!==".."))throw new TypeError(T("Неверный путь: ")+path);
+    if((p.length%2===0)!==even)throw new TypeError(T("Неверное число сегментов: ")+path);return p}
   const parentOf=path=>path.split("/").slice(0,-1).join("/");
   const rid=()=>{const a="abcdefghijklmnopqrstuvwxyz0123456789",r=new Uint32Array(20);crypto.getRandomValues(r);let s="";for(const x of r)s+=a[x%a.length];return s};
 
@@ -93,49 +93,49 @@
     let mode="in",codeType="signup",codeEmail="",cool=0,coolT=null;
     const setMode=m=>{mode=m;$("auNameRow").hidden=m!=="up";$("auPassRow").hidden=m==="code";
       $("auPass").autocomplete=m==="up"?"new-password":"current-password";
-      $("auGo").textContent=m==="up"?"Создать аккаунт":m==="code"?"Прислать код":"Войти";
+      $("auGo").textContent=m==="up"?T("Создать аккаунт"):m==="code"?T("Прислать код"):T("Войти");
       for(const b of document.querySelectorAll("#auTabs button"))b.setAttribute("aria-checked",String(b.dataset.m===m));msg("")};
     for(const b of document.querySelectorAll("#auTabs button"))b.onclick=()=>setMode(b.dataset.m);
-    const tick=()=>{const b=$("auResend");if(cool>0){b.disabled=true;b.textContent="Отправить ещё раз через "+cool+" с";cool--;coolT=setTimeout(tick,1000)}else{b.disabled=false;b.textContent="Отправить код ещё раз"}};
+    const tick=()=>{const b=$("auResend");if(cool>0){b.disabled=true;b.textContent=T("Отправить ещё раз через ")+cool+T(" с");cool--;coolT=setTimeout(tick,1000)}else{b.disabled=false;b.textContent=T("Отправить код ещё раз")}};
     const startCool=()=>{clearTimeout(coolT);cool=60;tick()};
     const showCode=(email,type,text)=>{codeEmail=email;codeType=type;$("auForm").hidden=true;$("auTabs").hidden=true;$("auCodeStep").hidden=false;
-      $("auCodeText").textContent=text||("Мы отправили код на "+email+". Введите его, чтобы продолжить.");say("auCodeMsg","");$("auCode").value="";startCool();setTimeout(()=>$("auCode").focus(),50)};
+      $("auCodeText").textContent=text||(T("Мы отправили код на ")+email+T(". Введите его, чтобы продолжить."));say("auCodeMsg","");$("auCode").value="";startCool();setTimeout(()=>$("auCode").focus(),50)};
     const hideCode=()=>{$("auCodeStep").hidden=true;$("auForm").hidden=false;$("auTabs").hidden=false;clearTimeout(coolT)};
-    const human=t=>/Invalid login/i.test(t)?"Неверная почта или пароль.":/already registered/i.test(t)?"Такой аккаунт уже есть — войдите с паролем.":
-      /rate limit|security purposes|only request this after/i.test(t)?"Слишком часто. Подождите минуту и попробуйте снова.":/expired|invalid/i.test(t)?"Код неверный или устарел. Проверьте письмо или запросите новый код.":
-      /Signups not allowed|not found/i.test(t)?"Аккаунта с такой почтой нет. Откройте «Регистрация».":/sending.*email|smtp/i.test(t)?"Не удалось отправить письмо. Проверьте настройки почты в Supabase.":"Не получилось: "+t;
+    const human=t=>/Invalid login/i.test(t)?T("Неверная почта или пароль."):/already registered/i.test(t)?T("Такой аккаунт уже есть — войдите с паролем."):
+      /rate limit|security purposes|only request this after/i.test(t)?T("Слишком часто. Подождите минуту и попробуйте снова."):/expired|invalid/i.test(t)?T("Код неверный или устарел. Проверьте письмо или запросите новый код."):
+      /Signups not allowed|not found/i.test(t)?T("Аккаунта с такой почтой нет. Откройте «Регистрация»."):/sending.*email|smtp/i.test(t)?T("Не удалось отправить письмо. Проверьте настройки почты в Supabase."):T("Не получилось: ")+t;
     $("auForm").onsubmit=async ev=>{ev.preventDefault();const email=$("auEmail").value.trim().toLowerCase(),pass=$("auPass").value,name=$("auName").value.trim();
-      if(!/^\S+@\S+\.\S+$/.test(email))return msg("Введите адрес почты.",true);
-      if(mode!=="code"&&pass.length<6)return msg("Пароль — не короче 6 символов.",true);
-      if(mode==="up"&&!name)return msg("Как вас называть? Это имя увидят участники общих счетов.",true);
-      $("auGo").disabled=true;msg("Подождите…");
+      if(!/^\S+@\S+\.\S+$/.test(email))return msg(T("Введите адрес почты."),true);
+      if(mode!=="code"&&pass.length<6)return msg(T("Пароль — не короче 6 символов."),true);
+      if(mode==="up"&&!name)return msg(T("Как вас называть? Это имя увидят участники общих счетов."),true);
+      $("auGo").disabled=true;msg(T("Подождите…"));
       try{if(mode==="code"){const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});if(error)throw error;msg("");showCode(email,"email")}
         else if(mode==="up"){const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{name}}});if(error)throw error;
           if(data.session){setSession(data.session);await saveName(name)}
-          else if(data.user&&Array.isArray(data.user.identities)&&!data.user.identities.length)msg("Такой аккаунт уже есть — войдите с паролем.",true);
-          else{msg("");showCode(email,"signup","Мы отправили код подтверждения на "+email+". Введите его, чтобы закончить регистрацию.")}}
+          else if(data.user&&Array.isArray(data.user.identities)&&!data.user.identities.length)msg(T("Такой аккаунт уже есть — войдите с паролем."),true);
+          else{msg("");showCode(email,"signup",T("Мы отправили код подтверждения на ")+email+T(". Введите его, чтобы закончить регистрацию."))}}
         else{const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-          if(error&&/not confirmed/i.test(error.message)){await sb.auth.resend({type:"signup",email}).catch(()=>{});msg("");showCode(email,"signup","Почта ещё не подтверждена. Мы отправили код на "+email+" — введите его.");return}
+          if(error&&/not confirmed/i.test(error.message)){await sb.auth.resend({type:"signup",email}).catch(()=>{});msg("");showCode(email,"signup",T("Почта ещё не подтверждена. Мы отправили код на ")+email+T(" — введите его."));return}
           if(error)throw error;setSession(data.session)}}
       catch(e){msg(human(String(e.message||e)),true)}
       finally{$("auGo").disabled=false}};
     const verify=async()=>{const token=$("auCode").value.replace(/\D/g,"");
-      if(token.length<6)return say("auCodeMsg","Введите код из письма — 6 цифр или больше.",true);
-      $("auVerify").disabled=true;say("auCodeMsg","Проверяем…");
+      if(token.length<6)return say("auCodeMsg",T("Введите код из письма — 6 цифр или больше."),true);
+      $("auVerify").disabled=true;say("auCodeMsg",T("Проверяем…"));
       try{const {data,error}=await sb.auth.verifyOtp({email:codeEmail,token,type:codeType});if(error)throw error;
         say("auCodeMsg","");setSession(data.session);const n=data.user&&data.user.user_metadata&&data.user.user_metadata.name;if(n)await saveName(n)}
       catch(e){say("auCodeMsg",human(String(e.message||e)),true)}finally{$("auVerify").disabled=false}};
     $("auVerify").onclick=verify;
     $("auCode").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();verify()}});
     $("auCode").addEventListener("input",e=>{const v=e.target.value.replace(/\D/g,"");if(v!==e.target.value)e.target.value=v});
-    $("auResend").onclick=async()=>{if(cool>0)return;say("auCodeMsg","Отправляем…");
+    $("auResend").onclick=async()=>{if(cool>0)return;say("auCodeMsg",T("Отправляем…"));
       try{const r=codeType==="signup"?await sb.auth.resend({type:"signup",email:codeEmail}):await sb.auth.signInWithOtp({email:codeEmail,options:{shouldCreateUser:false}});
-        if(r.error)throw r.error;say("auCodeMsg","Новый код отправлен.");startCool()}catch(e){say("auCodeMsg",human(String(e.message||e)),true)}};
+        if(r.error)throw r.error;say("auCodeMsg",T("Новый код отправлен."));startCool()}catch(e){say("auCodeMsg",human(String(e.message||e)),true)}};
     $("auBack").onclick=()=>{hideCode();msg("")};
     setMode("in");
-    if(new URLSearchParams(location.search).get("deleted")==="1"){msg("Аккаунт и ваши данные удалены. Спасибо, что пользовались «Семейной кассой».");history.replaceState(null,"",location.pathname)}}
+    if(new URLSearchParams(location.search).get("deleted")==="1"){msg(T("Аккаунт и ваши данные удалены. Спасибо, что пользовались «Семейной кассой»."));history.replaceState(null,"",location.pathname)}}
   async function boot(){if(!sb){document.getElementById("authScreen").hidden=false;document.getElementById("auForm").hidden=true;
-      document.getElementById("auMsg").textContent="Приложение ещё не подключено к базе: заполните js/config.js.";return}
+      document.getElementById("auMsg").textContent=T("Приложение ещё не подключено к базе: заполните js/config.js.");return}
     const {data}=await sb.auth.getSession();
     sb.auth.onAuthStateChange((ev,s)=>{if(s&&s.user&&!uid){setSession(s);const n=s.user.user_metadata&&s.user.user_metadata.name;if(n)saveName(n)}
       if(ev==="SIGNED_OUT"){location.reload()}});

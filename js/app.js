@@ -1,26 +1,26 @@
 const isInc=e=>e.kind==="income";
-const TR={id:"transfer",name:"Перевод",c:"--c10",icon:"transfer"};
+const TR={id:"transfer",name:T("Перевод"),c:"--c10",icon:"transfer"};
 const isTr=e=>e.kind==="transfer";
 const isExp=e=>e.kind!=="income"&&e.kind!=="transfer"&&e.kind!=="debt";
 const isDebt=e=>e.kind==="debt";
 const deepDel=new URLSearchParams(location.search).get("action")==="delete-account";
-const DEBTC={id:"debt",name:"Долг",c:"--c7",icon:"coins"};
+const DEBTC={id:"debt",name:T("Долг"),c:"--c7",icon:"coins"};
 const catOf=e=>isTr(e)?TR:isDebt(e)?DEBTC:isInc(e)?(ICAT[e.cat]||ICAT.i_other):(CAT[e.cat]||CAT.other);
 const accBudget=()=>!statAll&&subSel==="all"?Number(acc&&acc.budget)||0:0;
-const CURS=[["₽","₽ — рубль"],["€","€ — евро"],["$","$ — доллар"],["₸","₸ — тенге"],["₴","₴ — гривна"],["Br","Br — белорусский рубль"]];
-const MONTHS=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
-const MSHORT=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
-const WD=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
-const ACCENTS=[["emerald","Изумрудный","#0F6E5A"],["ocean","Синий","#1F5FBF"],["violet","Фиолетовый","#6A48C2"],["coral","Терракотовый","#B8452B"],["graphite","Графитовый","#2E3A38"]];
+const CURS=[["₽",T("₽ — рубль")],["€",T("€ — евро")],["$",T("$ — доллар")],["₸",T("₸ — тенге")],["₴",T("₴ — гривна")],["Br",T("Br — белорусский рубль")]];
+const MONTHS=[T("Январь"),T("Февраль"),T("Март"),T("Апрель"),T("Май"),T("Июнь"),T("Июль"),T("Август"),T("Сентябрь"),T("Октябрь"),T("Ноябрь"),T("Декабрь")];
+const MSHORT=[T("янв"),T("фев"),T("мар"),T("апр"),T("май"),T("июн"),T("июл"),T("авг"),T("сен"),T("окт"),T("ноя"),T("дек")];
+const WD=[T("Пн"),T("Вт"),T("Ср"),T("Чт"),T("Пт"),T("Сб"),T("Вс")];
+const ACCENTS=[["emerald",T("Изумрудный"),"#0F6E5A"],["ocean",T("Синий"),"#1F5FBF"],["violet",T("Фиолетовый"),"#6A48C2"],["coral",T("Терракотовый"),"#B8452B"],["graphite",T("Графитовый"),"#2E3A38"]];
 const CHARTS=[
-  {id:"structure",name:"На что уходят деньги",types:[["donut","Кольцо"],["bars","Полосы"]],def:"donut"},
-  {id:"flow",name:"Доходы и расходы",types:[["bars","Столбцы"],["net","Разница"]],def:"bars"},
-  {id:"income",name:"Источники доходов",types:[["donut","Кольцо"],["bars","Полосы"]],def:"donut"},
-  {id:"dynamics",name:"Расходы по дням",types:[["bars","Столбцы"],["line","Линия"],["cum","Накопительно"]],def:"bars"},
-  {id:"compare",name:"Сравнение с прошлым периодом",types:[["cats","По категориям"],["total","Итог"]],def:"cats"},
-  {id:"catmonths",name:"Категории по месяцам",types:[["sum","Суммы"],["share","Доли"]],def:"sum"},
-  {id:"weekday",name:"Расходы по дням недели",types:[["sum","Сумма"],["avg","В среднем"]],def:"sum"},
-  {id:"top",name:"Крупнейшие траты",types:[["5","5"],["10","10"]],def:"5"}];
+  {id:"structure",name:T("На что уходят деньги"),types:[["donut",T("Кольцо")],["bars",T("Полосы")]],def:"donut"},
+  {id:"flow",name:T("Доходы и расходы"),types:[["bars",T("Столбцы")],["net",T("Разница")]],def:"bars"},
+  {id:"income",name:T("Источники доходов"),types:[["donut",T("Кольцо")],["bars",T("Полосы")]],def:"donut"},
+  {id:"dynamics",name:T("Расходы по дням"),types:[["bars",T("Столбцы")],["line",T("Линия")],["cum",T("Накопительно")]],def:"bars"},
+  {id:"compare",name:T("Сравнение с прошлым периодом"),types:[["cats",T("По категориям")],["total",T("Итог")]],def:"cats"},
+  {id:"catmonths",name:T("Категории по месяцам"),types:[["sum",T("Суммы")],["share",T("Доли")]],def:"sum"},
+  {id:"weekday",name:T("Расходы по дням недели"),types:[["sum",T("Сумма")],["avg",T("В среднем")]],def:"sum"},
+  {id:"top",name:T("Крупнейшие траты"),types:[["5","5"],["10","10"]],def:"5"}];
 const CHART=Object.fromEntries(CHARTS.map(c=>[c.id,c]));
 const DEF_ON={flow:true,income:true,structure:true,dynamics:true,compare:true,catmonths:true,weekday:false,top:true};
 const $=id=>document.getElementById(id);
@@ -47,14 +47,18 @@ function normPrefs(p){p=p&&typeof p==="object"?p:{};
     accent:ACCENTS.some(a=>a[0]===p.accent)?p.accent:"emerald",
     start:p.start==="stats"?"stats":"spend",cents:p.cents==="round"?"round":"show",
     period:["m","q","h","y"].includes(p.period)?p.period:"m",
-    base:CURS.some(c=>c[0]===p.base)?p.base:"₽",scope:p.scope==="all"?"all":"acc",rates:{}};
+    base:CURS.some(c=>c[0]===p.base)?p.base:"₽",lang:["ru","en"].includes(p.lang)?p.lang:null,scope:p.scope==="all"?"all":"acc",rates:{}};
   if(p.rates&&typeof p.rates==="object")for(const [k,v] of Object.entries(p.rates))if(CURS.some(c=>c[0]===k)&&Number(v)>0)out.rates[k]=Number(v);
   const seen=new Set(),list=[];
   for(const c of Array.isArray(p.charts)?p.charts:[]){if(!c||!CHART[c.id]||seen.has(c.id))continue;seen.add(c.id);
     const def=CHART[c.id];list.push({id:c.id,on:!!c.on,type:def.types.some(t=>t[0]===c.type)?c.type:def.def,group:c.group==="person"?"person":"cat"})}
   defaultCharts().forEach((c,i)=>{if(!seen.has(c.id))list.splice(Math.min(i,list.length),0,c)});
   out.charts=list;return out}
-let prefs=normPrefs((()=>{try{return JSON.parse(lsGet("fk.prefs")||"{}")}catch(e){return {}}})());
+let prefs=normPrefs((()=>{try{return JSON.parse(lsGet("fk.prefs")||"{}")}catch(e){return {}}})());prefs.lang=LANG;
+async function changeLang(v){if(v===LANG)return;prefs.lang=v;lsSet("fk.prefs",JSON.stringify(prefs));setLang(v,true);clearTimeout(prefTimer);
+  if(db&&uid&&!readOnly){const snap=JSON.parse(JSON.stringify(prefs));
+    try{await Promise.race([db.doc("data/users/"+uid+"/prefs").set(snap),new Promise(r=>setTimeout(r,2500))])}catch(e){}}
+  location.reload()}
 let prefTimer=null,prefChain=Promise.resolve();
 function savePrefs(){lsSet("fk.prefs",JSON.stringify(prefs));clearTimeout(prefTimer);
   prefTimer=setTimeout(()=>{if(!db||!uid||readOnly)return;const snap=JSON.parse(JSON.stringify(prefs));
@@ -77,21 +81,21 @@ function s(tag,attrs,...kids){const el=document.createElementNS(NS,tag);
 let curOverride=null,statAll=false;
 const cur=()=>curOverride||(acc&&acc.currency)||"₽";
 function fmtC(n,c){n=Math.round(n*100)/100;const round=prefs.cents==="round";if(round)n=Math.round(n);
-  return new Intl.NumberFormat("ru-RU",{maximumFractionDigits:round||Number.isInteger(n)?0:2}).format(n)+"\u00a0"+c}
+  return new Intl.NumberFormat(LOC,{maximumFractionDigits:round||Number.isInteger(n)?0:2}).format(n)+"\u00a0"+c}
 function conv(n,c){c=c||"₽";if(c===prefs.base)return n;const r=prefs.rates[c];return r>0?n*r:null}
 function fmt(n){n=Math.round(n*100)/100;const round=prefs.cents==="round";if(round)n=Math.round(n);
-  return new Intl.NumberFormat("ru-RU",{maximumFractionDigits:round||Number.isInteger(n)?0:2}).format(n)+" "+cur()}
-const compactF=new Intl.NumberFormat("ru-RU",{notation:"compact",maximumFractionDigits:1});
+  return new Intl.NumberFormat(LOC,{maximumFractionDigits:round||Number.isInteger(n)?0:2}).format(n)+" "+cur()}
+const compactF=new Intl.NumberFormat(LOC,{notation:"compact",maximumFractionDigits:1});
 const compact=n=>compactF.format(n);
 function parseNum(v){v=String(v||"").replace(/[\s ]/g,"").replace(",",".");const n=parseFloat(v);return Number.isFinite(n)?n:NaN}
 function monthLabel(m){const [y,mm]=m.split("-").map(Number);return MONTHS[mm-1]+" "+y}
 function shiftMonth(m,d){let [y,mm]=m.split("-").map(Number);mm+=d;while(mm<1){mm+=12;y--}while(mm>12){mm-=12;y++}return y+"-"+pad(mm)}
 function daysIn(m){const [y,mm]=m.split("-").map(Number);return new Date(y,mm,0).getDate()}
 function dayLabel(s){const [y,m,d]=s.split("-").map(Number);
-  const t=new Intl.DateTimeFormat("ru-RU",{weekday:"short",day:"numeric",month:"long"}).format(new Date(y,m-1,d));
-  return s===today()?"Сегодня, "+t:t.charAt(0).toUpperCase()+t.slice(1)}
-const dayMonth=s=>{const [y,m,d]=s.split("-").map(Number);return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"long"}).format(new Date(y,m-1,d))};
-function plural(n,f){const a=n%10,b=n%100;return a===1&&b!==11?f[0]:a>=2&&a<=4&&(b<10||b>=20)?f[1]:f[2]}
+  const t=new Intl.DateTimeFormat(LOC,{weekday:"short",day:"numeric",month:"long"}).format(new Date(y,m-1,d));
+  return s===today()?T("Сегодня, ")+t:t.charAt(0).toUpperCase()+t.slice(1)}
+const dayMonth=s=>{const [y,m,d]=s.split("-").map(Number);return new Intl.DateTimeFormat(LOC,{day:"numeric",month:"long"}).format(new Date(y,m-1,d))};
+function plural(n,f){if(LANG!=="ru")return n===1?f[0]:f[2];const a=n%10,b=n%100;return a===1&&b!==11?f[0]:a>=2&&a<=4&&(b<10||b>=20)?f[1]:f[2]}
 function toast(t){const el=h("div",{class:"toast",role:"status"},t);document.body.append(el);setTimeout(()=>el.remove(),2400)}
 function notice(t,bad){const n=$("notice");n.textContent=t||"";n.hidden=!t;n.classList.toggle("bad",!!bad)}
 function genCode(){const a="ABCDEFGHJKMNPQRSTUVWXYZ23456789";let s="";const r=new Uint32Array(6);crypto.getRandomValues(r);for(const x of r)s+=a[x%a.length];return s}
@@ -146,7 +150,7 @@ const ICONS={
   growth:'<path d="M4 19h16"/><path d="M5 15l4.5-4.5 3 3L19 7"/><path d="M15 7h4v4"/>',
   dots:'<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>',
   transfer:'<path d="M5 9h13l-3.5-3.5M19 15H6l3.5 3.5"/>'};
-const ICON_NAMES={cart:"Продукты",dish:"Еда",cup:"Кофе",bus:"Транспорт",car:"Машина",fuel:"Бензин",plane:"Путешествия",home:"Дом",bolt:"Электричество",drop:"Вода",wifi:"Интернет",phone:"Телефон",tools:"Ремонт",heart:"Здоровье",pill:"Лекарства",gym:"Спорт",scissors:"Красота",bottle:"Малыш",ball:"Игрушки",book:"Учёба",shirt:"Одежда",ticket:"Билеты",game:"Игры",music:"Музыка",film:"Кино",sun:"Отдых",paw:"Питомцы",leaf:"Сад",gift:"Подарок",star:"Звезда",card:"Карта",bank:"Банк",wallet:"Кошелёк",briefcase:"Работа",coins:"Монеты",piggy:"Копилка",refund:"Возврат",percent:"Проценты",growth:"Рост",dots:"Другое",transfer:"Перевод"};
+const ICON_NAMES={cart:T("Продукты"),dish:T("Еда"),cup:T("Кофе"),bus:T("Транспорт"),car:T("Машина"),fuel:T("Бензин"),plane:T("Путешествия"),home:T("Дом"),bolt:T("Электричество"),drop:T("Вода"),wifi:T("Интернет"),phone:T("Телефон"),tools:T("Ремонт"),heart:T("Здоровье"),pill:T("Лекарства"),gym:T("Спорт"),scissors:T("Красота"),bottle:T("Малыш"),ball:T("Игрушки"),book:T("Учёба"),shirt:T("Одежда"),ticket:T("Билеты"),game:T("Игры"),music:T("Музыка"),film:T("Кино"),sun:T("Отдых"),paw:T("Питомцы"),leaf:T("Сад"),gift:T("Подарок"),star:T("Звезда"),card:T("Карта"),bank:T("Банк"),wallet:T("Кошелёк"),briefcase:T("Работа"),coins:T("Монеты"),piggy:T("Копилка"),refund:T("Возврат"),percent:T("Проценты"),growth:T("Рост"),dots:T("Другое"),transfer:T("Перевод")};
 const ICON_KEYS=Object.keys(ICONS).filter(k=>k!=="transfer");
 const DEF_EXP=[{id:"food",name:"Продукты",c:"--c1",icon:"cart"},{id:"cafe",name:"Кафе",c:"--c2",icon:"cup"},{id:"transport",name:"Транспорт",c:"--c3",icon:"bus"},
   {id:"home",name:"Дом и ЖКУ",c:"--c4",icon:"home"},{id:"health",name:"Здоровье",c:"--c5",icon:"heart"},{id:"kids",name:"Дети",c:"--c6",icon:"ball"},
@@ -154,20 +158,22 @@ const DEF_EXP=[{id:"food",name:"Продукты",c:"--c1",icon:"cart"},{id:"caf
   {id:"other",name:"Другое",c:"--c10",icon:"dots"}];
 const DEF_INC=[{id:"i_salary",name:"Зарплата",c:"--c1",icon:"wallet"},{id:"i_side",name:"Подработка",c:"--c2",icon:"briefcase"},{id:"i_gift",name:"Подарки",c:"--c3",icon:"gift"},
   {id:"i_refund",name:"Возвраты и кешбэк",c:"--c4",icon:"refund"},{id:"i_invest",name:"Проценты и инвестиции",c:"--c5",icon:"percent"},{id:"i_other",name:"Другое",c:"--c10",icon:"dots"}];
-let CATS=DEF_EXP.map(x=>({...x,hidden:false})),INC_CATS=DEF_INC.map(x=>({...x,hidden:false})),CAT={},ICAT={};
+const defCat=x=>({...x,name:T(x.name),_def:x.name,hidden:false});
+let CATS=DEF_EXP.map(defCat),INC_CATS=DEF_INC.map(defCat),CAT={},ICAT={};
 function indexCats(){CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));ICAT=Object.fromEntries(INC_CATS.map(c=>[c.id,c]))}
 indexCats();
 const isOtherCat=id=>id==="other"||id==="i_other";
 function normCatList(raw,defs,otherId){const out=[],seen=new Set();
   for(const c of Array.isArray(raw)?raw:[]){if(!c||!c.id||seen.has(String(c.id)))continue;const id=String(c.id);seen.add(id);
     const d=defs.find(x=>x.id===id)||{};
-    out.push({id,name:String(c.name||d.name||"Без названия").slice(0,30),c:/^--c([1-9]|10)$/.test(c.c)?c.c:(d.c||"--c10"),
+    const nm=String(c.name||d.name||T("Без названия")).slice(0,30),df=d.name&&nm===d.name?d.name:undefined;
+    out.push({id,name:df?T(df):nm,_def:df,c:/^--c([1-9]|10)$/.test(c.c)?c.c:(d.c||"--c10"),
       icon:typeof c.icon==="string"&&(Object.hasOwn(ICONS,c.icon)||/^img:[A-Za-z0-9_\-.~:@+]{1,200}$/.test(c.icon))?c.icon:(d.icon||"dots"),hidden:!!c.hidden&&id!==otherId})}
-  if(!out.length)return defs.map(x=>({...x,hidden:false}));
-  if(!seen.has(otherId))out.push({...defs.find(x=>x.id===otherId),hidden:false});
+  if(!out.length)return defs.map(defCat);
+  if(!seen.has(otherId))out.push(defCat(defs.find(x=>x.id===otherId)));
   return out}
 function applyCats(){const raw=(acc&&acc.cats)||{};CATS=normCatList(raw.exp,DEF_EXP,"other");INC_CATS=normCatList(raw.inc,DEF_INC,"i_other");indexCats()}
-const stripCat=x=>({id:x.id,name:x.name,c:x.c,icon:x.icon,hidden:!!x.hidden});
+const stripCat=x=>({id:x.id,name:x._def&&x.name===T(x._def)?x._def:x.name,c:x.c,icon:x.icon,hidden:!!x.hidden});
 let iconData={},iconUnsub=null,iconKey="";
 function catIcon(c,size){size=size||32;const box=h("span",{class:"cico",style:"--cc:var("+(c.c||"--c10")+");width:"+size+"px;height:"+size+"px","aria-hidden":"true"});
   if(c.icon&&String(c.icon).startsWith("img:")){const src=iconData[c.icon.slice(4)];if(src){box.classList.add("img");box.append(h("img",{src,alt:""}));return box}}
@@ -194,73 +200,73 @@ let catTab="exp",catEdit=null,catArm=false,iconArm=null,iconFor=null;
 const catListOf=k=>k==="inc"?INC_CATS:CATS;
 function catUseCount(kind,id){if(!archDone)return null;return histExp.filter(e=>(kind==="inc"?isInc(e):isExp(e))&&(e.cat||(kind==="inc"?"i_other":"other"))===id).length}
 function renderCatSet(){if(!acc||view!=="prefs")return;
-  $("catSetTitle").textContent="Категории счёта «"+(acc.name||"")+"»";
-  $("catTabs").replaceChildren(mseg([["exp","Расходы"],["inc","Доходы"]],catTab,v=>{catTab=v;catEdit=null;renderCatSet()},"Тип категорий"));
+  $("catSetTitle").textContent=T("Категории счёта «")+(acc.name||"")+T("»");
+  $("catTabs").replaceChildren(mseg([["exp",T("Расходы")],["inc",T("Доходы")]],catTab,v=>{catTab=v;catEdit=null;renderCatSet()},T("Тип категорий")));
   const list=catListOf(catTab);
   const rows=list.map((c,i)=>catEdit&&!catEdit.isNew&&catEdit.id===c.id?catEditor():h("div",{class:"catrow"+(c.hidden?" hid":"")},
-    catIcon(c,32),h("div",{class:"n"},h("div",null,c.name),c.hidden?h("div",{class:"sub"},"скрыта"):null),
-    readOnly?null:h("button",{type:"button",class:"icon-btn","aria-label":"Выше",disabled:i===0?true:null,onclick:()=>moveCat(i,-1)},"↑"),
-    readOnly?null:h("button",{type:"button",class:"icon-btn","aria-label":"Ниже",disabled:i===list.length-1?true:null,onclick:()=>moveCat(i,1)},"↓"),
-    readOnly?null:h("button",{type:"button",class:"ghost sm",onclick:()=>{catEdit={...c};catArm=false;iconArm=null;renderCatSet()}},"Изменить")));
+    catIcon(c,32),h("div",{class:"n"},h("div",null,c.name),c.hidden?h("div",{class:"sub"},T("скрыта")):null),
+    readOnly?null:h("button",{type:"button",class:"icon-btn","aria-label":T("Выше"),disabled:i===0?true:null,onclick:()=>moveCat(i,-1)},"↑"),
+    readOnly?null:h("button",{type:"button",class:"icon-btn","aria-label":T("Ниже"),disabled:i===list.length-1?true:null,onclick:()=>moveCat(i,1)},"↓"),
+    readOnly?null:h("button",{type:"button",class:"ghost sm",onclick:()=>{catEdit={...c};catArm=false;iconArm=null;renderCatSet()}},T("Изменить"))));
   if(catEdit&&catEdit.isNew)rows.push(catEditor());
   $("catList").replaceChildren(...rows);$("addCatBtn").hidden=readOnly||!!(catEdit&&catEdit.isNew);
   const others=allAccounts().filter(a=>!sameAcc(a,acc));
   if(readOnly||!others.length){$("catCopy").replaceChildren();return}
-  const sel=h("select",{class:"field",id:"catFrom",style:"flex:1;min-width:150px"},...others.map((a,i)=>h("option",{value:String(i)},"«"+(a.name||"")+"»")));
-  $("catCopy").replaceChildren(h("div",{class:"stack",style:"gap:8px"},h("label",{class:"label",for:"catFrom",style:"margin:0"},"Взять категории из другого счёта"),
-    h("div",{class:"inline"},sel,h("button",{type:"button",class:"ghost",onclick:ev=>importCats(others[+sel.value],ev.currentTarget)},"Добавить недостающие")),
-    h("div",{class:"hint",style:"margin:0"},"Добавятся категории, которых здесь нет. Существующие и их операции не изменятся.")))}
+  const sel=h("select",{class:"field",id:"catFrom",style:"flex:1;min-width:150px"},...others.map((a,i)=>h("option",{value:String(i)},T("«")+(a.name||"")+T("»"))));
+  $("catCopy").replaceChildren(h("div",{class:"stack",style:"gap:8px"},h("label",{class:"label",for:"catFrom",style:"margin:0"},T("Взять категории из другого счёта")),
+    h("div",{class:"inline"},sel,h("button",{type:"button",class:"ghost",onclick:ev=>importCats(others[+sel.value],ev.currentTarget)},T("Добавить недостающие"))),
+    h("div",{class:"hint",style:"margin:0"},T("Добавятся категории, которых здесь нет. Существующие и их операции не изменятся."))))}
 async function importCats(a,btn){if(!a||!acc)return;if(btn)btn.disabled=true;
   const merge=(curL,add)=>{const out=curL.map(x=>({...x}));for(const c of add){if(out.some(x=>x.id===c.id||x.name.toLowerCase()===c.name.toLowerCase()))continue;
     const oi=out.findIndex(x=>isOtherCat(x.id));out.splice(oi<0?out.length:oi,0,{...c,hidden:false})}return out};
   const exp=merge(CATS,normCatList(a.cats&&a.cats.exp,DEF_EXP,"other")),inc=merge(INC_CATS,normCatList(a.cats&&a.cats.inc,DEF_INC,"i_other"));
   const added=exp.length-CATS.length+inc.length-INC_CATS.length;
-  if(!added){toast("Все категории из «"+(a.name||"")+"» здесь уже есть");if(btn)btn.disabled=false;return}
+  if(!added){toast(T("Все категории из «")+(a.name||"")+T("» здесь уже есть"));if(btn)btn.disabled=false;return}
   const ac=acc;
   try{for(const id of [...exp,...inc].map(c=>String(c.icon)).filter(i=>i.startsWith("img:")).map(i=>i.slice(4)).filter(id=>!iconData[id])){
       const d=await iconCol(a).doc(id).get();if(d.exists&&okIcon(d.data().data))await iconCol(ac).doc(id).set({data:d.data().data,createdAt:Date.now(),by:uid||""})}
     const next={exp:exp.map(stripCat),inc:inc.map(stripCat)};await accDoc(ac).update({cats:next});ac.cats=next;applyCats();renderCats();renderCatSet();render();
-    toast("Добавлено "+added+" "+plural(added,["категория","категории","категорий"]))}
-  catch(e){toast("Не получилось добавить категории");if(btn)btn.disabled=false}}
+    toast(T("Добавлено ")+added+" "+plural(added,[T("категория"),T("категории"),T("категорий")]))}
+  catch(e){toast(T("Не получилось добавить категории"));if(btn)btn.disabled=false}}
 function catEditor(){const d=catEdit;
-  const name=h("input",{class:"field",id:"ce-name",maxlength:"30",placeholder:"Например, «Бензин» или «Кружки»",value:d.name||"",oninput:e=>{d.name=e.target.value}});
-  const colors=h("div",{class:"colors",role:"radiogroup","aria-label":"Цвет"},...Array.from({length:10},(_,i)=>{const v="--c"+(i+1);
-    return h("button",{type:"button",role:"radio","aria-checked":String(d.c===v),"aria-label":"Цвет "+(i+1),style:"background:var("+v+")",onclick:()=>{d.c=v;renderCatSet()}})}));
+  const name=h("input",{class:"field",id:"ce-name",maxlength:"30",placeholder:T("Например, «Бензин» или «Кружки»"),value:d.name||"",oninput:e=>{d.name=e.target.value}});
+  const colors=h("div",{class:"colors",role:"radiogroup","aria-label":T("Цвет")},...Array.from({length:10},(_,i)=>{const v="--c"+(i+1);
+    return h("button",{type:"button",role:"radio","aria-checked":String(d.c===v),"aria-label":T("Цвет ")+(i+1),style:"background:var("+v+")",onclick:()=>{d.c=v;renderCatSet()}})}));
   const ico=(key,label)=>h("button",{type:"button",class:"ico-btn",role:"radio","aria-checked":String(d.icon===key),title:label,"aria-label":label,onclick:()=>{d.icon=key;renderCatSet()}});
   const builtins=ICON_KEYS.map(k=>{const b=ico(k,ICON_NAMES[k]||k);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[k]+'</svg>';return b});
-  const customs=Object.entries(iconData).map(([id,src])=>{const b=ico("img:"+id,"Своя иконка");b.append(h("img",{src,alt:""}));
-    return h("div",{class:"ico-wrap"},b,readOnly?null:h("button",{type:"button",class:"ico-del","aria-label":iconArm===id?"Подтвердить удаление иконки":"Удалить свою иконку",title:iconArm===id?"Нажмите ещё раз, чтобы удалить":"Удалить иконку",onclick:()=>delIcon(id)},iconArm===id?"✓":"×"))});
-  const up=h("button",{type:"button",class:"ico-btn up",title:"Загрузить PNG или JPG","aria-label":"Загрузить свою иконку",onclick:()=>{iconFor=d;$("iconFile").value="";$("iconFile").click()}},"+");
+  const customs=Object.entries(iconData).map(([id,src])=>{const b=ico("img:"+id,T("Своя иконка"));b.append(h("img",{src,alt:""}));
+    return h("div",{class:"ico-wrap"},b,readOnly?null:h("button",{type:"button",class:"ico-del","aria-label":iconArm===id?T("Подтвердить удаление иконки"):T("Удалить свою иконку"),title:iconArm===id?T("Нажмите ещё раз, чтобы удалить"):T("Удалить иконку"),onclick:()=>delIcon(id)},iconArm===id?"✓":"×"))});
+  const up=h("button",{type:"button",class:"ico-btn up",title:T("Загрузить PNG или JPG"),"aria-label":T("Загрузить свою иконку"),onclick:()=>{iconFor=d;$("iconFile").value="";$("iconFile").click()}},"+");
   const n=d.isNew?0:catUseCount(catTab,d.id);
   const acts=[];
-  if(!d.isNew&&!isOtherCat(d.id))acts.push(h("button",{type:"button",class:"danger",onclick:()=>toggleHideCat(d.id)},d.hidden?"Снова предлагать при вводе":"Не предлагать при вводе"));
-  if(!d.isNew&&!isOtherCat(d.id)&&n===0)acts.push(catArm?h("button",{type:"button",class:"del",onclick:()=>deleteCat(d.id)},"Да, удалить"):h("button",{type:"button",class:"danger",onclick:()=>{catArm=true;renderCatSet()}},"Удалить категорию"));
-  const note=d.isNew?null:isOtherCat(d.id)?"Эту категорию нельзя удалить: в неё попадают операции без категории.":n===null?"Проверяем, есть ли операции с этой категорией…":n>0?"В категории "+n+" "+plural(n,["операция","операции","операций"])+", её можно только перестать предлагать при вводе.":null;
+  if(!d.isNew&&!isOtherCat(d.id))acts.push(h("button",{type:"button",class:"danger",onclick:()=>toggleHideCat(d.id)},d.hidden?T("Снова предлагать при вводе"):T("Не предлагать при вводе")));
+  if(!d.isNew&&!isOtherCat(d.id)&&n===0)acts.push(catArm?h("button",{type:"button",class:"del",onclick:()=>deleteCat(d.id)},T("Да, удалить")):h("button",{type:"button",class:"danger",onclick:()=>{catArm=true;renderCatSet()}},T("Удалить категорию")));
+  const note=d.isNew?null:isOtherCat(d.id)?T("Эту категорию нельзя удалить: в неё попадают операции без категории."):n===null?T("Проверяем, есть ли операции с этой категорией…"):n>0?T("В категории ")+n+" "+plural(n,[T("операция"),T("операции"),T("операций")])+T(", её можно только перестать предлагать при вводе."):null;
   return h("div",{class:"editor"},
-    h("div",{class:"inline",style:"align-items:flex-end;flex-wrap:nowrap"},catIcon(d,44),h("div",{style:"flex:1;min-width:0"},h("label",{class:"label",for:"ce-name"},"Название"),name)),
-    h("div",null,h("span",{class:"label"},"Цвет"),colors),
-    h("div",null,h("span",{class:"label"},"Иконка"),h("div",{class:"ico-grid",role:"radiogroup","aria-label":"Иконка"},...builtins,...customs,up),
-      h("div",{class:"hint"},"«+» — загрузить свою картинку PNG или JPG. Она обрежется до квадрата и будет видна всем участникам счёта.")),
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveCat},d.isNew?"Добавить категорию":"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{catEdit=null;renderCatSet()}},"Отмена")),
+    h("div",{class:"inline",style:"align-items:flex-end;flex-wrap:nowrap"},catIcon(d,44),h("div",{style:"flex:1;min-width:0"},h("label",{class:"label",for:"ce-name"},T("Название")),name)),
+    h("div",null,h("span",{class:"label"},T("Цвет")),colors),
+    h("div",null,h("span",{class:"label"},T("Иконка")),h("div",{class:"ico-grid",role:"radiogroup","aria-label":T("Иконка")},...builtins,...customs,up),
+      h("div",{class:"hint"},T("«+» — загрузить свою картинку PNG или JPG. Она обрежется до квадрата и будет видна всем участникам счёта."))),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveCat},d.isNew?T("Добавить категорию"):T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:()=>{catEdit=null;renderCatSet()}},T("Отмена"))),
     h("div",{class:"formmsg",id:"ceMsg",role:"status"}),
     acts.length?h("div",{class:"confirm"},...acts):null,
     note?h("div",{class:"hint",style:"margin:0"},note):null)}
 async function writeCats(kind,list,msgEl){if(!acc)return false;const a=acc;
   const next={exp:(kind==="exp"?list:CATS).map(stripCat),inc:(kind==="inc"?list:INC_CATS).map(stripCat)};
   try{await accDoc(a).update({cats:next});a.cats=next;applyCats();renderCats();render();renderHistory();renderCatSet();renderStats();renderTplSet();renderTplBar();return true}
-  catch(e){if(msgEl)writeErr(e,msgEl);else toast("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.");return false}}
+  catch(e){if(msgEl)writeErr(e,msgEl);else toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));return false}}
 async function saveCat(){const d=catEdit,msg=$("ceMsg");msg.classList.remove("bad");const name=String(d.name||"").trim().slice(0,30);
-  if(!name){msg.classList.add("bad");msg.textContent="Введите название категории.";$("ce-name").focus();return}
+  if(!name){msg.classList.add("bad");msg.textContent=T("Введите название категории.");$("ce-name").focus();return}
   const list=catListOf(catTab).map(x=>({...x}));
-  if(list.some(x=>x.id!==d.id&&x.name.toLowerCase()===name.toLowerCase())){msg.classList.add("bad");msg.textContent="Категория с таким названием уже есть.";return}
+  if(list.some(x=>x.id!==d.id&&x.name.toLowerCase()===name.toLowerCase())){msg.classList.add("bad");msg.textContent=T("Категория с таким названием уже есть.");return}
   const item={id:d.id,name,c:d.c,icon:d.icon,hidden:!!d.hidden};
   const i=list.findIndex(x=>x.id===d.id);
   if(i<0){const oi=list.findIndex(x=>isOtherCat(x.id));list.splice(oi<0?list.length:oi,0,item)}else list[i]=item;
-  if(await writeCats(catTab,list,msg)){catEdit=null;renderCatSet();toast(i<0?"Категория «"+name+"» добавлена":"Категория сохранена")}}
+  if(await writeCats(catTab,list,msg)){catEdit=null;renderCatSet();toast(i<0?T("Категория «")+name+T("» добавлена"):T("Категория сохранена"))}}
 async function toggleHideCat(id){const list=catListOf(catTab).map(x=>x.id===id?{...x,hidden:!x.hidden}:{...x});
-  if(await writeCats(catTab,list)){const c=list.find(x=>x.id===id);catEdit=null;renderCatSet();toast(c.hidden?"«"+c.name+"» больше не предлагается при вводе":"«"+c.name+"» снова предлагается при вводе")}}
+  if(await writeCats(catTab,list)){const c=list.find(x=>x.id===id);catEdit=null;renderCatSet();toast(c.hidden?T("«")+c.name+T("» больше не предлагается при вводе"):T("«")+c.name+T("» снова предлагается при вводе"))}}
 async function deleteCat(id){const list=catListOf(catTab).filter(x=>x.id!==id).map(x=>({...x}));
-  if(await writeCats(catTab,list)){catEdit=null;catArm=false;renderCatSet();toast("Категория удалена")}}
+  if(await writeCats(catTab,list)){catEdit=null;catArm=false;renderCatSet();toast(T("Категория удалена"))}}
 async function moveCat(i,dir){const list=catListOf(catTab).map(x=>({...x})),j=i+dir;if(j<0||j>=list.length)return;[list[i],list[j]]=[list[j],list[i]];await writeCats(catTab,list)}
 async function delIcon(id){if(iconArm!==id){iconArm=id;renderCatSet();return}
   iconArm=null;if(!acc)return;
@@ -268,12 +274,12 @@ async function delIcon(id){if(iconArm!==id){iconArm=id;renderCatSet();return}
     const key="img:"+id;if(catEdit&&catEdit.icon===key)catEdit.icon="dots";
     if(CATS.some(c=>c.icon===key)||INC_CATS.some(c=>c.icon===key)){const fix=l=>l.map(c=>c.icon===key?{...c,icon:"dots"}:{...c});
       const a=acc,next={exp:fix(CATS).map(stripCat),inc:fix(INC_CATS).map(stripCat)};await accDoc(a).update({cats:next});a.cats=next;applyCats()}
-    renderCatSet();renderCats();render();toast("Иконка удалена")}catch(e){toast("Не получилось удалить иконку")}}
+    renderCatSet();renderCats();render();toast(T("Иконка удалена"))}catch(e){toast(T("Не получилось удалить иконку"))}}
 $("addCatBtn").onclick=()=>{const list=catListOf(catTab);catEdit={id:(catTab==="inc"?"i_":"")+genId(),name:"",c:"--c"+(1+list.length%9),icon:"star",hidden:false,isNew:true};catArm=false;renderCatSet();
   setTimeout(()=>{const el=$("ce-name");if(el)el.focus()},0)};
 $("iconFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];if(!f||!iconFor||!acc)return;const target=iconFor;
-  try{const data=await fileToIcon(f);const ref=await iconCol(acc).add({data,createdAt:Date.now(),by:uid||""});iconData[ref.id]=data;target.icon="img:"+ref.id;renderCatSet();toast("Иконка загружена")}
-  catch(err){toast(err&&err.message==="type"?"Подходят только картинки PNG и JPG":err&&err.message==="big"?"Файл больше 15 МБ — выберите картинку поменьше":err&&err.code?"Не получилось сохранить иконку":"Не получилось прочитать картинку")}});
+  try{const data=await fileToIcon(f);const ref=await iconCol(acc).add({data,createdAt:Date.now(),by:uid||""});iconData[ref.id]=data;target.icon="img:"+ref.id;renderCatSet();toast(T("Иконка загружена"))}
+  catch(err){toast(err&&err.message==="type"?T("Подходят только картинки PNG и JPG"):err&&err.message==="big"?T("Файл больше 15 МБ — выберите картинку поменьше"):err&&err.code?T("Не получилось сохранить иконку"):T("Не получилось прочитать картинку"))}});
 
 /* tooltip for charts */
 const tip=h("div",{class:"tip",hidden:true,role:"status"});document.body.append(tip);
@@ -315,12 +321,12 @@ function renderDetails(){if(!acc)return;const tr=curKind==="tr",subs=subsOf(acc)
   const chip=(key,label,set)=>{const b=h("button",{type:"button",class:"dchip"+(detailOpen===key?" on":"")+(set?" set":""),"aria-expanded":String(detailOpen===key),
       onclick:()=>{detailOpen=detailOpen===key?"":key;renderDetails();const f={date:"date",note:"note"}[detailOpen];if(f)setTimeout(()=>$(f).focus(),0)}},h("span",null,label));
     b.insertAdjacentHTML("afterbegin",'<svg viewBox="0 0 24 24" aria-hidden="true">'+UI_ICONS[key]+'</svg>');return b};
-  const items=[chip("date",d===today()?"Сегодня":d===yd?"Вчера":shortDate(d).replace(/\s?г\.$/,""),d!==today())];
+  const items=[chip("date",d===today()?T("Сегодня"):d===yd?T("Вчера"):shortDate(d).replace(/\s?г\.$/,""),d!==today())];
   if(!tr&&subs.length>1)items.push(chip("sub",(subs.find(x=>x.id===formSub)||subs[0]).name,false));
-  if(pp.length)items.push(chip("who",curWho()||"Кто",false));
-  items.push(chip("note",note?note:"Комментарий",!!note));
+  if(pp.length)items.push(chip("who",curWho()||T("Кто"),false));
+  items.push(chip("note",note?note:T("Комментарий"),!!note));
   const g=goalActive&&goalsOf(acc).find(x=>x.id===goalActive);
-  if(g){const gb=h("button",{type:"button",class:"dchip on set","aria-label":"Не относить к цели «"+g.name+"»",onclick:()=>{goalActive=null;renderDetails()}},h("span",null,"Цель «"+g.name+"» ×"));items.unshift(gb)}
+  if(g){const gb=h("button",{type:"button",class:"dchip on set","aria-label":T("Не относить к цели «")+g.name+T("»"),onclick:()=>{goalActive=null;renderDetails()}},h("span",null,T("Цель «")+g.name+T("» ×")));items.unshift(gb)}
   $("details").replaceChildren(...items);
   $("dateRow").hidden=detailOpen!=="date";$("subWrap").hidden=detailOpen!=="sub"||tr||subs.length<2;$("whoWrap").hidden=detailOpen!=="who"||!pp.length;$("noteRow").hidden=detailOpen!=="note"}
 $("date").addEventListener("change",renderDetails);$("note").addEventListener("change",renderDetails);
@@ -331,15 +337,15 @@ const PREF_SECS={me:"prefMe",theme:"prefTheme",app:"prefApp",acc:"accSet",subs:"
 const MENU_ICONS={me:ICONS.bank,theme:ICONS.sun,app:ICONS.phone,acc:ICONS.wallet,subs:ICONS.piggy,cats:ICONS.star,tpls:ICONS.refund};
 function renderPrefMenu(){const row=(k,title,sub)=>{const ic=h("span",{class:"micon"});ic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+MENU_ICONS[k]+'</svg>';
     return h("button",{type:"button",class:"mrow",onclick:()=>openPrefSec(k)},ic,h("span",{class:"n"},h("b",null,title),h("small",null,sub)),h("span",{class:"chev","aria-hidden":"true"},"›"))};
-  const thName={system:"Как в системе",light:"Светлая",dark:"Тёмная"}[prefs.theme],acName=(ACCENTS.find(a=>a[0]===prefs.accent)||ACCENTS[0])[1];
-  const items=[h("div",{class:"mgroup"},"Приложение"),row("me","Аккаунт и резервная копия",(window.KASSA&&KASSA.email())||"Почта, имя, выход"),row("theme","Оформление",thName+" тема · "+acName.toLowerCase()+" акцент"),
-    row("app","Общие",(prefs.start==="stats"?"Открывать статистику":"Открывать главную")+" · "+(prefs.cents==="round"?"без копеек":"с копейками"))];
+  const thName={system:T("Как в системе"),light:T("Светлая"),dark:T("Тёмная")}[prefs.theme],acName=(ACCENTS.find(a=>a[0]===prefs.accent)||ACCENTS[0])[1];
+  const items=[h("div",{class:"mgroup"},T("Приложение")),row("me",T("Аккаунт и резервная копия"),(window.KASSA&&KASSA.email())||T("Почта, имя, выход")),row("theme",T("Оформление"),thName+T(" тема · ")+acName.toLowerCase()+T(" акцент")+" · "+(LANG==="en"?"English":T("Русский"))),
+    row("app",T("Общие"),(prefs.start==="stats"?T("Открывать статистику"):T("Открывать главную"))+" · "+(prefs.cents==="round"?T("без копеек"):T("с копейками")))];
   if(acc){const subsN=subsOf(acc).length,ts=tplsOf(acc).length;
-    items.push(h("div",{class:"mgroup"},"Счёт «"+(acc.name||"")+"»"),
-      row("acc","Счёт и участники",acc.type==="shared"?"Название, бюджет, код приглашения":"Название, валюта, бюджет"),
-      row("subs","Кошельки",subsN+" "+plural(subsN,["кошелёк","кошелька","кошельков"])),
-      row("cats","Категории",CATS.length+" расходов · "+INC_CATS.length+" доходов"),
-      row("tpls","Шаблоны платежей",ts?ts+" "+plural(ts,["шаблон","шаблона","шаблонов"]):"Пока нет"))}
+    items.push(h("div",{class:"mgroup"},T("Счёт «")+(acc.name||"")+T("»")),
+      row("acc",T("Счёт и участники"),acc.type==="shared"?T("Название, бюджет, код приглашения"):T("Название, валюта, бюджет")),
+      row("subs",T("Кошельки"),subsN+" "+plural(subsN,[T("кошелёк"),T("кошелька"),T("кошельков")])),
+      row("cats",T("Категории"),CATS.length+T(" расходов · ")+INC_CATS.length+T(" доходов")),
+      row("tpls",T("Шаблоны платежей"),ts?ts+" "+plural(ts,[T("шаблон"),T("шаблона"),T("шаблонов")]):T("Пока нет")))}
   $("setMenu").replaceChildren(...items)}
 function applyPrefSec(){if(prefSec&&["acc","subs","cats","tpls"].includes(prefSec)&&!acc)prefSec=null;
   $("setMenu").hidden=!!prefSec;$("prefBack").hidden=!prefSec;
@@ -372,34 +378,34 @@ const accDoc=a=>a.type==="personal"?db.doc("data/users/"+uid+"/"+a.id):db.doc("a
 const expCol=a=>a.type==="personal"?db.collection("data/users/"+uid+"/"+a.id+"/expenses"):db.collection("accounts/"+a.id+"/expenses");
 const people=a=>(a&&a.type==="shared"?(a.people||[]):[]).map(s=>String(s).trim()).filter(Boolean);
 
-function nameOf(id){if(!id)return "";if(id===uid)return "Вы";return names[id]||"Участник"}
+function nameOf(id){if(!id)return "";if(id===uid)return T("Вы");return names[id]||T("Участник")}
 async function ensureNames(ids){if(!user)return;const need=[...new Set(ids)].filter(i=>i&&!(i in names)&&!pendingNames.has(i));
   if(!need.length)return;need.forEach(i=>pendingNames.add(i));
   try{const ps=await user.profiles(need);for(const i of need){names[i]=(ps[i]&&ps[i].name)||"";pendingNames.delete(i)}render();renderPeople();renderStats()}
   catch(e){need.forEach(i=>{names[i]="";pendingNames.delete(i)})}}
 
-const kindText=a=>a.type==="personal"?"личный":"общий · "+(a.members||[]).length+" "+plural((a.members||[]).length,["участник","участника","участников"]);
+const kindText=a=>a.type==="personal"?T("личный"):T("общий · ")+(a.members||[]).length+" "+plural((a.members||[]).length,[T("участник"),T("участника"),T("участников")]);
 function renderTabs(){const list=allAccounts();
-  $("accName").textContent=acc?(acc.name||"Без названия"):list.length?"Выберите счёт":"Семейная касса";
-  $("accKind").textContent=acc?(acc.type==="personal"?"личный счёт":kindText(acc)):db?(list.length?"":"нет счетов"):"";
+  $("accName").textContent=acc?(acc.name||T("Без названия")):list.length?T("Выберите счёт"):T("Семейная касса");
+  $("accKind").textContent=acc?(acc.type==="personal"?T("личный счёт"):kindText(acc)):db?(list.length?"":T("нет счетов")):"";
   $("tabs").replaceChildren(...(list.length?list.map(a=>{const sel=!!acc&&sameAcc(a,acc);
     return h("button",{type:"button",class:"accrow",role:"option","aria-selected":String(sel),onclick:()=>{closeSheet();if(!sel)selectAcc(a)}},
       h("span",{class:"accav"+(a.type==="personal"?" p":""),"aria-hidden":"true"},(String(a.name||"?").trim().charAt(0)||"?").toUpperCase()),
-      h("span",{class:"n"},h("b",null,a.name||"Без названия"),h("small",null,kindText(a))),
+      h("span",{class:"n"},h("b",null,a.name||T("Без названия")),h("small",null,kindText(a))),
       h("span",{class:"accbal"+((ovBal[a.type+":"+a.id]||0)<0?" neg":"")},a.type+":"+a.id in ovBal?fmtC(ovBal[a.type+":"+a.id],a.currency||"₽"):"…"),
-      h("span",{class:"check","aria-hidden":"true"},sel?"✓":""))}):[h("div",{class:"empty"},"Счетов пока нет.")]));
+      h("span",{class:"check","aria-hidden":"true"},sel?"✓":""))}):[h("div",{class:"empty"},T("Счетов пока нет."))]));
   const known=list.filter(a=>a.type+":"+a.id in ovBal);
   if(list.length>1&&known.length===list.length){let sumv=0;const miss=new Set();
     for(const a of list){const v=conv(ovBal[a.type+":"+a.id],a.currency||"₽");if(v===null)miss.add(a.currency||"₽");else sumv+=v}
-    $("accTotal").replaceChildren(...[h("span",null,"Всего на всех счетах"),h("b",{class:sumv<0?"neg":""},fmtC(sumv,prefs.base)),
-      miss.size?h("small",null,"Без счетов в "+[...miss].join(", ")+": задайте курс в «Настройки → Общие».") :null].filter(Boolean))}
-  else $("accTotal").replaceChildren(...(list.length>1?[h("span",null,"Всего на всех счетах"),h("b",null,"…")]:[]));
+    $("accTotal").replaceChildren(...[h("span",null,T("Всего на всех счетах")),h("b",{class:sumv<0?"neg":""},fmtC(sumv,prefs.base)),
+      miss.size?h("small",null,T("Без счетов в ")+[...miss].join(", ")+T(": задайте курс в «Настройки → Общие».")) :null].filter(Boolean))}
+  else $("accTotal").replaceChildren(...(list.length>1?[h("span",null,T("Всего на всех счетах")),h("b",null,"…")]:[]));
   $("accNew").hidden=readOnly||!db;$("accJoin").hidden=readOnly||!db}
 function selectAcc(a){acc=a;lsSet("fk.acc",a.type+":"+a.id);dangerConfirm=false;
   catEdit=null;tplEdit=null;tplActive=null;tplSaveState=null;goalNew=null;goalEdit=null;
   $("newPanel").hidden=true;editingId=null;syncView();resubscribe();resubHist()}
 function openNew(first){closeSheet();$("newPanel").hidden=false;scrollTo({top:0});$("newIntro").hidden=!first;$("cancelNew").hidden=first;
-  $("newTitle").textContent=first?"Создайте первый счёт":"Новый счёт";$("newMsg").textContent="";$("joinMsg").textContent="";
+  $("newTitle").textContent=first?T("Создайте первый счёт"):T("Новый счёт");$("newMsg").textContent="";$("joinMsg").textContent="";
   if(!first)$("newName").focus()}
 function setNewType(t){newType=t;for(const b of $("newType").querySelectorAll("button"))b.setAttribute("aria-checked",String(b.dataset.type===t))}
 $("newType").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setNewType(b.dataset.type)});
@@ -410,13 +416,13 @@ function onAccounts(){if(!(gotP&&gotS))return;
   let next=acc&&list.find(a=>a.id===acc.id&&a.type===acc.type);
   if(!next)next=list.find(a=>a.type+":"+a.id===saved)||list[0]||null;
   acc=next;
-  if(!acc){syncView();if(!readOnly)openNew(true);else notice("Пока нет счетов, доступных вам.");return}
+  if(!acc){syncView();if(!readOnly)openNew(true);else notice(T("Пока нет счетов, доступных вам."));return}
   syncView();resubscribe();resubHist()}
 
 function syncView(){renderTabs();setView(view,false);
   if(!acc)return;
   const isShared=acc.type==="shared";
-  $("setTitle").textContent="Счёт «"+(acc.name||"")+"»";
+  $("setTitle").textContent=T("Счёт «")+(acc.name||"")+T("»");
   $("inviteBlock").hidden=!isShared;$("setPeopleWrap").hidden=!isShared;
   $("codeOut").textContent=acc.code||"——————";
   applyCats();resubIcons();resubDebts();loadSubSel();fillSettings(false);renderWho();renderDanger();renderPeople();renderCats();renderTplBar();renderSubs();render();renderStats();renderHistory();renderCatSet();renderTplSet()}
@@ -425,15 +431,15 @@ function renderCats(){if(curKind==="tr"&&!canTransfer())curKind="exp";
   const inc=curKind==="inc",vis=(inc?INC_CATS:CATS).filter(c=>!c.hidden);
   if(!vis.some(c=>c.id===(inc?curInc:curCat))){if(inc)curInc=vis[0].id;else curCat=vis[0].id}
   const sel=inc?curInc:curCat;
-  const kinds=[["exp","Расход"],["inc","Доход"]];if(canTransfer())kinds.push(["tr","Перевод"]);
-  $("kindSeg").replaceChildren(mseg(kinds,curKind,v=>{curKind=v;renderCats()},"Тип операции"));
-  $("catLabel").textContent=inc?"Источник":"Категория";$("whoLabel").textContent=inc?"Кто получил":"Кто потратил";
-  $("addBtn").textContent=curKind==="tr"?"Перевести":inc?"Добавить доход":"Добавить расход";
+  const kinds=[["exp",T("Расход")],["inc",T("Доход")]];if(canTransfer())kinds.push(["tr",T("Перевод")]);
+  $("kindSeg").replaceChildren(mseg(kinds,curKind,v=>{curKind=v;renderCats()},T("Тип операции")));
+  $("catLabel").textContent=inc?T("Источник"):T("Категория");$("whoLabel").textContent=inc?T("Кто получил"):T("Кто потратил");
+  $("addBtn").textContent=curKind==="tr"?T("Перевести"):inc?T("Добавить доход"):T("Добавить расход");
   const tiles=vis.map(c=>h("button",{type:"button",class:"ctile",role:"radio","aria-checked":String(c.id===sel),
     onclick:()=>{if(inc)curInc=c.id;else curCat=c.id;renderCats()}},catIcon(c,40),h("span",null,c.name)));
-  if(!readOnly)tiles.push(h("button",{type:"button",class:"ctile more",onclick:()=>{closeSheet();catTab=inc?"inc":"exp";setView("prefs",true);openPrefSec("cats")}},catIcon({c:"--c10",icon:"tools"},40),h("span",null,"Настроить")));
+  if(!readOnly)tiles.push(h("button",{type:"button",class:"ctile more",onclick:()=>{closeSheet();catTab=inc?"inc":"exp";setView("prefs",true);openPrefSec("cats")}},catIcon({c:"--c10",icon:"tools"},40),h("span",null,T("Настроить"))));
   $("cats").replaceChildren(...tiles);
-  $("entryTitle").textContent=curKind==="tr"?"Новый перевод":inc?"Новый доход":"Новый расход";
+  $("entryTitle").textContent=curKind==="tr"?T("Новый перевод"):inc?T("Новый доход"):T("Новый расход");
   renderFormSubs()}
 function curWho(){const p=people(acc);if(!p.length)return "";let v=lsGet("fk.who."+acc.id);if(!p.includes(v))v=p[0];return v}
 function renderWho(){if(!acc)return;const p=people(acc),sel=curWho();
@@ -456,30 +462,30 @@ function render(){
   $("meterWrap").hidden=!budget;
   if(budget){const p=total/budget,f=$("fill");f.style.width=Math.min(100,p*100)+"%";f.className="fill"+(p>1?" bad":p>.9?" warn":"");
     const left=budget-total;
-    $("meterMeta").replaceChildren(h("span",null,"Бюджет "+fmt(budget)+" · "+Math.round(p*100)+"%"),
-      left>=0?h("span",null,"осталось "+fmt(left)):h("span",{class:"over"},"перерасход "+fmt(-left)))}
+    $("meterMeta").replaceChildren(h("span",null,T("Бюджет ")+fmt(budget)+" · "+Math.round(p*100)+"%"),
+      left>=0?h("span",null,T("осталось ")+fmt(left)):h("span",{class:"over"},T("перерасход ")+fmt(-left)))}
   const st=$("stats");
-  if(isNow&&budget>total){const dl=daysIn(month)-new Date().getDate()+1;st.replaceChildren("Можно тратить ",h("b",null,fmt((budget-total)/dl))," в день до конца месяца")}
+  if(isNow&&budget>total){const dl=daysIn(month)-new Date().getDate()+1;st.replaceChildren(T("Можно тратить "),h("b",null,fmt((budget-total)/dl)),T(" в день до конца месяца"))}
   else{const daysPassed=isNow?new Date().getDate():isPast?daysIn(month):0;
-    st.replaceChildren(...(daysPassed&&total?["В среднем ",h("b",null,fmt(total/daysPassed))," в день"]:[]))}
+    st.replaceChildren(...(daysPassed&&total?[T("В среднем "),h("b",null,fmt(total/daysPassed)),T(" в день")]:[]))}
   if(acc.type==="shared")ensureNames(expenses.map(e=>e.by));
-  $("listTitle").textContent="Операции за "+MONTHS[+month.slice(5)-1].toLowerCase();
+  $("listTitle").textContent=T("Операции за ")+lc(MONTHS[+month.slice(5)-1]);
   renderList();renderDue();renderGoals();renderDebts()}
 const who=e=>e.member||nameOf(e.by)||"—";
 function group(list,key){const m={};for(const e of list){const k=key(e);m[k]=(m[k]||0)+(Number(e.amount)||0)}return Object.entries(m).sort((a,b)=>b[1]-a[1])}
 function personColor(name){const all=[...new Set([...people(acc),...histExp.map(who),...expenses.map(who)])].sort();
   const i=all.indexOf(name);return i<0||i>7?"var(--c10)":"var(--c"+(i+1)+")"}
 function renderBars(box,rows,name,color,total){
-  if(!rows.length){box.replaceChildren(h("div",{class:"empty"},"Пока пусто"));return}
+  if(!rows.length){box.replaceChildren(h("div",{class:"empty"},T("Пока пусто")));return}
   const max=rows[0][1]||1;
   box.replaceChildren(...rows.map(([k,v])=>h("div",{class:"brow"},
     h("div",{class:"name"},h("span",{class:"dot",style:"background:"+color(k)}),name(k)),
     h("div",{class:"val"},fmt(v),h("small",null,total?Math.round(v/total*100)+"%":"")),
     h("div",{class:"bt"},h("i",{style:"width:"+(v/max*100)+"%;background:"+color(k)})))))}
 function renderList(){const box=$("list");renderListMode();
-  if(!loaded){box.replaceChildren(h("div",{class:"empty"},"Загружаем операции…"));return}
+  if(!loaded){box.replaceChildren(h("div",{class:"empty"},T("Загружаем операции…")));return}
   if(calMode()){renderCalendar(box);return}
-  if(!expenses.filter(inSub).length){box.replaceChildren(h("div",{class:"empty"},acc.type==="shared"?"В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую — её сразу увидят все участники счёта.":"В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую."));return}
+  if(!expenses.filter(inSub).length){box.replaceChildren(h("div",{class:"empty"},acc.type==="shared"?T("В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую — её сразу увидят все участники счёта."):T("В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую.")));return}
   const sorted=expenses.filter(inSub).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
   const days={};for(const e of sorted)(days[e.date]=days[e.date]||[]).push(e);
   box.replaceChildren(...Object.keys(days).map(d=>{const items=days[d],out=sum(items.filter(isExp)),inn=sum(items.filter(isInc));
@@ -488,7 +494,7 @@ function renderList(){const box=$("list");renderListMode();
 
 /* ---------- rows and editor ---------- */
 let editingId=null,editingWhere="",edCache={id:null,el:null};
-const shortDate=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd))};
+const shortDate=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat(LOC,{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd))};
 function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)return editor(e);
   const c=catOf(e),inc=isInc(e),tr=isTr(e),multi=subsOf(acc).length>1;
   const sub=[showDate&&e.date?shortDate(e.date):"",tr?endName(e,"from")+" → "+endName(e,"to"):"",!tr&&e.note?c.name:"",
@@ -497,7 +503,7 @@ function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)ret
   const kids=[catIcon(c,34),
     h("div",{class:"what"},h("div",null,e.note||c.name),sub?h("div",{class:"sub"},sub):null),
     h("div",{class:"amt"+(tr||dbt?" tr":inc?" inc":"")},sign+fmt(Number(e.amount)||0))];
-  return readOnly?h("div",{class:"item"},...kids):h("button",{type:"button",class:"item","aria-label":"Изменить: "+(e.note||c.name)+", "+fmt(Number(e.amount)||0),onclick:()=>openEditor(e.id,where)},...kids)}
+  return readOnly?h("div",{class:"item"},...kids):h("button",{type:"button",class:"item","aria-label":T("Изменить: ")+(e.note||c.name)+", "+fmt(Number(e.amount)||0),onclick:()=>openEditor(e.id,where)},...kids)}
 function openEditor(id,where){editingId=id;editingWhere=where;edCache={id:null,el:null};renderList();renderHistory()}
 function closeEditor(){editingId=null;edCache={id:null,el:null};renderList();renderHistory()}
 function editor(e){if(isX(e))return xEditor(e);if(isDebt(e))return debtOpEditor(e);if(edCache.id===e.id&&edCache.el)return edCache.el;
@@ -507,52 +513,54 @@ function editor(e){if(isX(e))return xEditor(e);if(isDebt(e))return debtOpEditor(
   const kindBox=h("div"),catSel=h("select",{class:"field",id:"ed-cat"}),
     amount=h("input",{class:"field",id:"ed-amount",inputmode:"decimal",autocomplete:"off",value:String(e.amount??"")}),
     date=h("input",{type:"date",id:"ed-date",value:e.date||today()}),
-    note=h("input",{class:"field",id:"ed-note",maxlength:"80",placeholder:"Необязательно",value:e.note||""}),
+    note=h("input",{class:"field",id:"ed-note",maxlength:"80",placeholder:T("Необязательно"),value:e.note||""}),
     subSelE=h("select",{class:"field",id:"ed-sub"},...opt()),fromE=h("select",{class:"field",id:"ed-from"},...opt()),toE=h("select",{class:"field",id:"ed-to"},...opt()),
     msg=h("div",{class:"formmsg",role:"status"}),delBox=h("div",{class:"confirm"});
   subSelE.value=isTr(e)?(subSel!=="all"?subSel:"main"):subOf(e);
   fromE.value=isTr(e)?trEnd(e.from):subOf(e);toE.value=isTr(e)?trEnd(e.to):(subs.find(x=>x.id!==fromE.value)||subs[0]).id;
   let whoSel=null;const pp=[...new Set([...people(acc),e.member].filter(Boolean))];
   if(acc.type==="shared"&&pp.length){whoSel=h("select",{class:"field",id:"ed-who"},...pp.map(n=>h("option",{value:n},n)));whoSel.value=e.member||pp[0]}
-  const catLbl=h("label",{class:"label",for:"ed-cat"},"Категория");
-  const catBox=h("div",null,catLbl,catSel),subBox=h("div",null,h("label",{class:"label",for:"ed-sub"},"Кошелёк"),subSelE),
-    trBox=h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"ed-from"},"Откуда"),fromE),h("div",null,h("label",{class:"label",for:"ed-to"},"Куда"),toE));
+  const catLbl=h("label",{class:"label",for:"ed-cat"},T("Категория"));
+  const catBox=h("div",null,catLbl,catSel),subBox=h("div",null,h("label",{class:"label",for:"ed-sub"},T("Кошелёк")),subSelE),
+    trBox=h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"ed-from"},T("Откуда")),fromE),h("div",null,h("label",{class:"label",for:"ed-to"},T("Куда")),toE));
   const fillCats=()=>{const tr=st.kind==="tr";catBox.hidden=tr;trBox.hidden=!tr;subBox.hidden=tr||subs.length<2;if(tr)return;
-    const list=(st.kind==="inc"?INC_CATS:CATS).filter(c=>!c.hidden||c.id===st.cat);catLbl.textContent=st.kind==="inc"?"Источник":"Категория";
+    const list=(st.kind==="inc"?INC_CATS:CATS).filter(c=>!c.hidden||c.id===st.cat);catLbl.textContent=st.kind==="inc"?T("Источник"):T("Категория");
     catSel.replaceChildren(...list.map(c=>h("option",{value:c.id},c.name)));catSel.value=list.some(c=>c.id===st.cat)?st.cat:list[0].id};
-  const kinds=[["exp","Расход"],["inc","Доход"]];if(subs.length>1||isTr(e))kinds.push(["tr","Перевод"]);
-  const drawKind=()=>kindBox.replaceChildren(mseg(kinds,st.kind,v=>{st.kind=v;drawKind();fillCats()},"Тип операции"));
+  const kinds=[["exp",T("Расход")],["inc",T("Доход")]];if(subs.length>1||isTr(e))kinds.push(["tr",T("Перевод")]);
+  const drawKind=()=>kindBox.replaceChildren(mseg(kinds,st.kind,v=>{st.kind=v;drawKind();fillCats()},T("Тип операции")));
   catSel.onchange=()=>{st.cat=catSel.value};
   const drawDel=()=>delBox.replaceChildren(...(st.confirm
-    ?[h("button",{type:"button",class:"del",onclick:doDel},"Да, удалить"),h("button",{type:"button",onclick:()=>{st.confirm=false;drawDel()}},"Не удалять")]
-    :[h("button",{type:"button",class:"danger",onclick:()=>{st.confirm=true;drawDel()}},"Удалить операцию")]));
+    ?[h("button",{type:"button",class:"del",onclick:doDel},T("Да, удалить")),h("button",{type:"button",onclick:()=>{st.confirm=false;drawDel()}},T("Не удалять"))]
+    :[h("button",{type:"button",class:"danger",onclick:()=>{st.confirm=true;drawDel()}},T("Удалить операцию"))]));
   async function doDel(){const a=acc,data=stripId(e);try{await expCol(a).doc(e.id).delete();patchLocal(e.id,null);closeEditor();
-      offerUndo("Операция удалена",()=>restoreOps(a,[{id:e.id,data}]))}catch(err){writeErr(err,msg)}}
+      offerUndo(T("Операция удалена"),()=>restoreOps(a,[{id:e.id,data}]))}catch(err){writeErr(err,msg)}}
   async function save(){msg.classList.remove("bad");const a=Math.round(parseNum(amount.value)*100)/100;
-    if(!(a>0)||a>1e9){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";amount.focus();return}
+    if(!(a>0)||a>1e9){msg.classList.add("bad");msg.textContent=T("Введите сумму больше нуля.");amount.focus();return}
     const d=date.value||e.date||today();
     const patch={amount:a,date:d,month:d.slice(0,7),note:note.value.trim().slice(0,80)};
-    if(st.kind==="tr"){if(fromE.value===toE.value){msg.classList.add("bad");msg.textContent="Выберите разные кошельки: откуда и куда.";return}
+    if(st.kind==="tr"){if(fromE.value===toE.value){msg.classList.add("bad");msg.textContent=T("Выберите разные кошельки: откуда и куда.");return}
       Object.assign(patch,{kind:"transfer",from:fromE.value,to:toE.value})}
     else Object.assign(patch,{kind:st.kind==="inc"?"income":"expense",cat:catSel.value,sub:subSelE.value});
     if(whoSel)patch.member=whoSel.value;
     try{await expCol(acc).doc(e.id).update(patch);patchLocal(e.id,{...e,...patch});const moved=view==="spend"&&d.slice(0,7)!==month;closeEditor();
-      toast(moved?"Сохранено. Операция перенесена в "+monthLabel(d.slice(0,7)).toLowerCase():"Изменения сохранены")}catch(err){writeErr(err,msg)}}
+      toast(moved?T("Сохранено. Операция перенесена в ")+lc(monthLabel(d.slice(0,7))):T("Изменения сохранены"))}catch(err){writeErr(err,msg)}}
   drawKind();fillCats();drawDel();
-  const meta=acc.type==="shared"&&e.by?h("div",{class:"hint",style:"margin:0"},"Добавил(а): "+nameOf(e.by)+(e.createdAt>1e12?" · "+new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(new Date(e.createdAt)):"")):null;
+  const meta=acc.type==="shared"&&e.by?h("div",{class:"hint",style:"margin:0"},T("Добавил(а): ")+nameOf(e.by)+(e.createdAt>1e12?" · "+new Intl.DateTimeFormat(LOC,{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(new Date(e.createdAt)):"")):null;
   const el=h("div",{class:"editor"},kindBox,
-    h("div",null,h("label",{class:"label",for:"ed-amount"},"Сумма, "+cur()),amount),
-    h("div",{class:"row2"},h("div",null,h("label",{class:"label",for:"ed-date"},"Дата"),date),catBox),
+    h("div",null,h("label",{class:"label",for:"ed-amount"},T("Сумма, ")+cur()),amount),
+    h("div",{class:"row2"},h("div",null,h("label",{class:"label",for:"ed-date"},T("Дата")),date),catBox),
     subBox,trBox,
-    whoSel?h("div",null,h("label",{class:"label",for:"ed-who"},"Кто"),whoSel):null,
-    h("div",null,h("label",{class:"label",for:"ed-note"},"Комментарий"),note),
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:closeEditor},"Отмена")),
+    whoSel?h("div",null,h("label",{class:"label",for:"ed-who"},T("Кто")),whoSel):null,
+    h("div",null,h("label",{class:"label",for:"ed-note"},T("Комментарий")),note),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:closeEditor},T("Отмена"))),
     msg,delBox,meta);
   edCache={id:e.id,el};setTimeout(()=>{try{amount.focus({preventScroll:true})}catch(x){}},0);return el}
 
 /* ---------- sub-accounts ---------- */
 const subsOf=a=>{const list=Array.isArray(a&&a.subs)?a.subs.filter(x=>x&&x.id&&x.name):[];
-  const main=list.find(x=>x.id==="main")||{id:"main",name:"Основной",start:0};return [main,...list.filter(x=>x.id!=="main")]};
+  let main=list.find(x=>x.id==="main")||{id:"main",name:"Основной",start:0};if(main.name==="Основной")main={...main,name:T("Основной")};
+  return [main,...list.filter(x=>x.id!=="main")]};
+const subW=(id,name)=>id==="main"&&name===T("Основной")?"Основной":name;
 const subIds=()=>subsOf(acc).map(x=>x.id);
 const subOf=e=>subIds().includes(e.sub)?e.sub:"main";
 const subName=id=>(subsOf(acc).find(x=>x.id===id)||subsOf(acc)[0]).name;
@@ -590,25 +598,25 @@ function renderSubs(){const strip=$("subStrip");strip.hidden=!acc||view==="prefs
   const total=bal?subs.filter(x=>!isOff(x.id)).reduce((t,x)=>t+bal[x.id],0):null;
   const chip=(id,name,v)=>{const off=id!=="all"&&isOff(id);
     return h("button",{type:"button",class:"subchip"+(off?" off":""),"aria-pressed":String(subSel===id||one&&id==="main"),onclick:()=>pickSub(one?"all":id),
-      title:id==="all"?"Сумма кошельков, включённых во «Всего»":off?"Не входит во «Всего»":"Баланс кошелька"},
+      title:id==="all"?T("Сумма кошельков, включённых во «Всего»"):off?T("Не входит во «Всего»"):T("Баланс кошелька")},
       h("span",null,name),h("small",{class:v!==null&&v<0?"neg":""},v===null?"…":fmt(v)))};
-  const items=[];if(!one)items.push(chip("all","Всего",total));
+  const items=[];if(!one)items.push(chip("all",T("Всего"),total));
   for(const x of subs)items.push(chip(x.id,x.name,bal?bal[x.id]:null));
-  if(!readOnly)items.push(h("button",{type:"button",class:"subchip add",onclick:()=>{$("newSub").hidden=false;$("nsMsg").textContent="";$("nsName").focus()}},"+ Кошелёк"));
+  if(!readOnly)items.push(h("button",{type:"button",class:"subchip add",onclick:()=>{$("newSub").hidden=false;$("nsMsg").textContent="";$("nsName").focus()}},T("+ Кошелёк")));
   $("subs").replaceChildren(...items);renderSubToggle()}
 function renderSubToggle(){const box=$("subToggle"),subs=subsOf(acc);
   box.hidden=!acc||view==="prefs"||subs.length<2||subSel==="all";if(box.hidden)return;
   const x=subs.find(y=>y.id===subSel);if(!x){box.hidden=true;return}
-  const btn=switchBtn("Включать «"+x.name+"» во «Всего»",!x.off,()=>toggleOff(x.id,btn),"subOffSw");
+  const btn=switchBtn(T("Включать «")+x.name+T("» во «Всего»"),!x.off,()=>toggleOff(x.id,btn),"subOffSw");
   if(readOnly)btn.disabled=true;
-  box.replaceChildren(btn,h("div",{class:"hint",style:"margin:0"},x.off?"Сейчас этот кошелёк не входит во «Всего»: его баланс, операции, бюджет и статистика считаются отдельно.":"Баланс и операции этого кошелька входят во «Всего», бюджет и общую статистику."))}
+  box.replaceChildren(btn,h("div",{class:"hint",style:"margin:0"},x.off?T("Сейчас этот кошелёк не входит во «Всего»: его баланс, операции, бюджет и статистика считаются отдельно."):T("Баланс и операции этого кошелька входят во «Всего», бюджет и общую статистику.")))}
 async function toggleOff(id,btn){if(!acc||readOnly)return;const a=acc;
-  const next=subsOf(a).map(x=>({id:x.id,name:x.name,start:Number(x.start)||0,off:x.id===id?!x.off:!!x.off}));
+  const next=subsOf(a).map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:x.id===id?!x.off:!!x.off}));
   if(btn)btn.disabled=true;
   try{await accDoc(a).update({subs:next});a.subs=next;filledFor="";fillSettings(false);
-    const now=next.find(x=>x.id===id);toast(now.off?"«"+now.name+"» больше не входит во «Всего»":"«"+now.name+"» снова входит во «Всего»");
+    const now=next.find(x=>x.id===id);toast(now.off?T("«")+now.name+T("» больше не входит во «Всего»"):T("«")+now.name+T("» снова входит во «Всего»"));
     renderSubs();render();renderStats();renderHistory()}
-  catch(e){toast("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.");if(btn)btn.disabled=false}}
+  catch(e){toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));if(btn)btn.disabled=false}}
 function renderFormSubs(){if(!acc)return;const subs=subsOf(acc),tr=curKind==="tr";
   if(!subs.some(x=>x.id===formSub))formSub=subSel!=="all"?subSel:lsGet("fk.fsub."+acc.id);
   if(!subs.some(x=>x.id===formSub))formSub="main";
@@ -620,27 +628,27 @@ function renderFormSubs(){if(!acc)return;const subs=subsOf(acc),tr=curKind==="tr
   $("trFrom").replaceChildren(...subs.map(x=>h("option",{value:x.id},x.name)));$("trTo").replaceChildren(...toOptions());
   $("trFrom").value=trFrom;$("trTo").value=trTo;updAmt2();renderDetails()}
 function updAmt2(){const dest=curKind==="tr"?destOf(trTo):null,show=!!dest&&(dest.a.currency||"₽")!==cur();
-  $("trAmt2Wrap").hidden=!show;if(show)$("trAmt2Lbl").textContent="Придёт в «"+(dest.a.name||"")+"», "+(dest.a.currency||"₽")}
+  $("trAmt2Wrap").hidden=!show;if(show)$("trAmt2Lbl").textContent=T("Придёт в «")+(dest.a.name||"")+T("», ")+(dest.a.currency||"₽")}
 $("trFrom").onchange=e=>{trFrom=e.target.value};$("trTo").onchange=e=>{trTo=e.target.value;updAmt2()};
 $("nsCancel").onclick=()=>{$("newSub").hidden=true};
 $("nsCreate").onclick=async()=>{const msg=$("nsMsg");msg.classList.remove("bad");if(!acc)return;
   const name=$("nsName").value.trim().slice(0,30);
-  if(!name){msg.classList.add("bad");msg.textContent="Придумайте название кошелька.";$("nsName").focus();return}
+  if(!name){msg.classList.add("bad");msg.textContent=T("Придумайте название кошелька.");$("nsName").focus();return}
   const subs=subsOf(acc);
-  if(subs.some(x=>x.name.toLowerCase()===name.toLowerCase())){msg.classList.add("bad");msg.textContent="Кошелёк с таким названием уже есть.";return}
-  const st=parseNum($("nsStart").value),id=genId(),next=[...subs.map(x=>({id:x.id,name:x.name,start:Number(x.start)||0,off:!!x.off})),{id,name,start:Number.isFinite(st)?Math.round(st*100)/100:0,off:false}];
+  if(subs.some(x=>x.name.toLowerCase()===name.toLowerCase())){msg.classList.add("bad");msg.textContent=T("Кошелёк с таким названием уже есть.");return}
+  const st=parseNum($("nsStart").value),id=genId(),next=[...subs.map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:!!x.off})),{id,name,start:Number.isFinite(st)?Math.round(st*100)/100:0,off:false}];
   const btn=$("nsCreate");btn.disabled=true;
   try{await accDoc(acc).update({subs:next});acc.subs=next;$("nsName").value="";$("nsStart").value="";$("newSub").hidden=true;
-    filledFor="";fillSettings(false);toast("Кошелёк «"+name+"» добавлен");pickSub(id)}catch(e){writeErr(e,msg)}finally{btn.disabled=false}};
+    filledFor="";fillSettings(false);toast(T("Кошелёк «")+name+T("» добавлен"));pickSub(id)}catch(e){writeErr(e,msg)}finally{btn.disabled=false}};
 function fillSubs(){subDraft=subsOf(acc).map(x=>({id:x.id,name:x.name,start:Number(x.start)||0,off:!!x.off}));renderSubRows()}
 function renderSubRows(){$("subRows").replaceChildren(...subDraft.map((x,i)=>h("div",{class:"subrow"+(x.del?" del":"")},
-  h("div",null,h("label",{class:"label",for:"sbn-"+i},"Название"),h("input",{class:"field",id:"sbn-"+i,maxlength:"30",value:x.name,disabled:x.del?true:null,oninput:e=>{x.name=e.target.value}})),
-  h("div",null,h("label",{class:"label",for:"sbs-"+i},"На старте"),h("input",{class:"field",id:"sbs-"+i,inputmode:"decimal",value:String(x.start),disabled:x.del?true:null,oninput:e=>{x.start=e.target.value}})),
-  i===0?h("span"):h("button",{type:"button",class:"icon-btn","aria-label":(x.del?"Вернуть":"Удалить")+" кошелёк",title:x.del?"Вернуть":"Удалить",
+  h("div",null,h("label",{class:"label",for:"sbn-"+i},T("Название")),h("input",{class:"field",id:"sbn-"+i,maxlength:"30",value:x.name,disabled:x.del?true:null,oninput:e=>{x.name=e.target.value}})),
+  h("div",null,h("label",{class:"label",for:"sbs-"+i},T("На старте")),h("input",{class:"field",id:"sbs-"+i,inputmode:"decimal",value:String(x.start),disabled:x.del?true:null,oninput:e=>{x.start=e.target.value}})),
+  i===0?h("span"):h("button",{type:"button",class:"icon-btn","aria-label":(x.del?T("Вернуть"):T("Удалить"))+T(" кошелёк"),title:x.del?T("Вернуть"):T("Удалить"),
     onclick:()=>{if(x.isNew)subDraft.splice(i,1);else x.del=!x.del;renderSubRows()}},x.del?"↺":"×"),
-  subDraft.length>1&&!x.del?h("div",{class:"sw-line"},switchBtn("Включать во «Всего»",!x.off,()=>{x.off=!x.off;renderSubRows()},"sbo-"+i)):null)));
+  subDraft.length>1&&!x.del?h("div",{class:"sw-line"},switchBtn(T("Включать во «Всего»"),!x.off,()=>{x.off=!x.off;renderSubRows()},"sbo-"+i)):null)));
   const n=subDraft.filter(x=>x.del).length;
-  if(n)$("subRows").append(h("div",{class:"hint",style:"margin:0;color:var(--bad)"},(n===1?"Отмеченный кошелёк удалится":"Отмеченные кошельки удалятся")+" после сохранения, их операции перейдут в «"+(subDraft[0].name||"Основной")+"»."))}
+  if(n)$("subRows").append(h("div",{class:"hint",style:"margin:0;color:var(--bad)"},(n===1?T("Отмеченный кошелёк удалится"):T("Отмеченные кошельки удалятся"))+T(" после сохранения, их операции перейдут в «")+(subDraft[0].name||T("Основной"))+T("».")))}
 $("addSubRow").onclick=()=>{subDraft.push({id:genId(),name:"",start:0,isNew:true});renderSubRows();$("sbn-"+(subDraft.length-1)).focus()};
 async function reassignSub(a,id){const col=expCol(a);
   for(const f of ["sub","from","to"]){const qs=await col.where(f,"==",id).get();
@@ -654,13 +662,13 @@ const sameAcc=(a,b)=>!!a&&!!b&&a.type===b.type&&a.id===b.id;
 function destOf(to){if(!String(to||"").startsWith("x:"))return null;const [,t,id,sid]=String(to).split(":");
   const a=allAccounts().find(x=>x.type===t&&x.id===id);if(!a||sameAcc(a,acc))return null;return {a,sid:subsOf(a).some(s=>s.id===sid)?sid:"main"}}
 function toOptions(){const subs=subsOf(acc),others=allAccounts().filter(a=>!sameAcc(a,acc));
-  return [h("optgroup",{label:"Этот счёт"},...subs.map(x=>h("option",{value:x.id},x.name))),
+  return [h("optgroup",{label:T("Этот счёт")},...subs.map(x=>h("option",{value:x.id},x.name))),
     ...others.map(a=>{const ss=subsOf(a),cc=(a.currency||"₽")!==cur()?" ("+(a.currency||"₽")+")":"";
-      return h("optgroup",{label:"Счёт «"+(a.name||"")+"»"+cc},...ss.map(x=>h("option",{value:"x:"+a.type+":"+a.id+":"+x.id},ss.length>1?x.name:"«"+(a.name||"")+"»"+cc)))})]}
+      return h("optgroup",{label:T("Счёт «")+(a.name||"")+T("»")+cc},...ss.map(x=>h("option",{value:"x:"+a.type+":"+a.id+":"+x.id},ss.length>1?x.name:T("«")+(a.name||"")+T("»")+cc)))})]}
 const validTo=v=>subIds().includes(v)||!!destOf(v);
 function defaultTo(from){const s=subsOf(acc).find(x=>x.id!==from);if(s)return s.id;const o=allAccounts().find(a=>!sameAcc(a,acc));return o?"x:"+o.type+":"+o.id+":main":from}
 const isX=e=>isTr(e)&&(e.from==="ext"||e.to==="ext");
-const endName=(e,side)=>{const v=trEnd(side==="from"?e.from:e.to);return v==="ext"?"«"+((e.xacc&&e.xacc.name)||"другой счёт")+"»":subName(v)};
+const endName=(e,side)=>{const v=trEnd(side==="from"?e.from:e.to);return v==="ext"?T("«")+((e.xacc&&e.xacc.name)||T("другой счёт"))+T("»"):subName(v)};
 function trSign(e){const f=trEnd(e.from),t=trEnd(e.to);
   if(subSel==="all"){const fi=f!=="ext"&&!isOff(f),ti=t!=="ext"&&!isOff(t);return fi&&ti?"⇄ ":fi?"−":"+"}
   return f===subSel?"−":"+"}
@@ -675,7 +683,7 @@ async function createOp(o){
       const ref=await expCol(acc).add(doc);noteLocal(ref.id,doc);
       const other={amount:o.amount2||o.amount,member:"",by:uid,note:o.note||"",date:o.date,month:o.date.slice(0,7),createdAt:Date.now(),
         kind:"transfer",from:"ext",to:dest.sid,xacc:{type:acc.type,id:acc.id,name:acc.name||""},xsub:o.from,link};
-      try{await expCol(dest.a).add(other)}catch(e){toast("Списание записано, но в счёт «"+(dest.a.name||"")+"» перевод не попал. Проверьте доступ к нему.")}
+      try{await expCol(dest.a).add(other)}catch(e){toast(T("Списание записано, но в счёт «")+(dest.a.name||"")+T("» перевод не попал. Проверьте доступ к нему."))}
       return ref}
     const doc={...base,kind:"transfer",from:o.from,to:o.to};const ref=await expCol(acc).add(doc);noteLocal(ref.id,doc);return ref}
   if(o.kind==="debt"){const doc={...base,kind:"debt",dir:o.dir==="in"?"in":"out",sub:subIds().includes(o.sub)?o.sub:"main",debt:o.debt||""};
@@ -685,50 +693,50 @@ async function createOp(o){
 async function counterpart(e){const t=e.xacc||{};const a=allAccounts().find(x=>x.type===t.type&&x.id===t.id);if(!a||!e.link)return null;
   try{const qs=await expCol(a).where("link","==",e.link).limit(3).get();const d=qs.docs.find(x=>x.id!==e.id||!sameAcc(a,acc));return d?{a,id:d.id}:null}catch(err){return null}}
 function xEditor(e){if(edCache.id===e.id&&edCache.el)return edCache.el;
-  const out=e.to==="ext",other=(e.xacc&&e.xacc.name)||"другой счёт",st={confirm:false};
+  const out=e.to==="ext",other=(e.xacc&&e.xacc.name)||T("другой счёт"),st={confirm:false};
   const amount=h("input",{class:"field",id:"ed-amount",inputmode:"decimal",autocomplete:"off",value:String(e.amount??"")}),
     date=h("input",{type:"date",id:"ed-date",value:e.date||today()}),
-    note=h("input",{class:"field",id:"ed-note",maxlength:"80",placeholder:"Необязательно",value:e.note||""}),
+    note=h("input",{class:"field",id:"ed-note",maxlength:"80",placeholder:T("Необязательно"),value:e.note||""}),
     msg=h("div",{class:"formmsg",role:"status"}),delBox=h("div",{class:"confirm"});
   const drawDel=()=>delBox.replaceChildren(...(st.confirm
-    ?[h("button",{type:"button",class:"del",onclick:doDel},"Да, удалить в обоих счетах"),h("button",{type:"button",onclick:()=>{st.confirm=false;drawDel()}},"Не удалять")]
-    :[h("button",{type:"button",class:"danger",onclick:()=>{st.confirm=true;drawDel()}},"Удалить перевод")]));
+    ?[h("button",{type:"button",class:"del",onclick:doDel},T("Да, удалить в обоих счетах")),h("button",{type:"button",onclick:()=>{st.confirm=false;drawDel()}},T("Не удалять"))]
+    :[h("button",{type:"button",class:"danger",onclick:()=>{st.confirm=true;drawDel()}},T("Удалить перевод"))]));
   async function doDel(){const a=acc,data=stripId(e);try{const cp=await counterpart(e);let cpData=null;
       if(cp){const s2=await expCol(cp.a).doc(cp.id).get();cpData=s2.exists?s2.data():null}
       await expCol(a).doc(e.id).delete();patchLocal(e.id,null);if(cp)await expCol(cp.a).doc(cp.id).delete();closeEditor();
-      offerUndo(cp?"Перевод удалён в обоих счетах":"Перевод удалён в этом счёте. Во втором удалите вручную.",async()=>{await restoreOps(a,[{id:e.id,data}]);if(cp&&cpData)await expCol(cp.a).doc(cp.id).set(cpData)})}catch(err){writeErr(err,msg)}}
+      offerUndo(cp?T("Перевод удалён в обоих счетах"):T("Перевод удалён в этом счёте. Во втором удалите вручную."),async()=>{await restoreOps(a,[{id:e.id,data}]);if(cp&&cpData)await expCol(cp.a).doc(cp.id).set(cpData)})}catch(err){writeErr(err,msg)}}
   async function save(){msg.classList.remove("bad");const a=Math.round(parseNum(amount.value)*100)/100;
-    if(!(a>0)||a>1e9){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";amount.focus();return}
+    if(!(a>0)||a>1e9){msg.classList.add("bad");msg.textContent=T("Введите сумму больше нуля.");amount.focus();return}
     const d=date.value||e.date||today(),patch={amount:a,date:d,month:d.slice(0,7),note:note.value.trim().slice(0,80)};
     try{await expCol(acc).doc(e.id).update(patch);patchLocal(e.id,{...e,...patch});
       const cp=await counterpart(e);let both=false;
       if(cp){const same=(cp.a.currency||"₽")===cur();const p2={date:patch.date,month:patch.month,note:patch.note};if(same)p2.amount=a;await expCol(cp.a).doc(cp.id).update(p2);both=true}
-      closeEditor();toast(both?"Изменения сохранены в обоих счетах":"Сохранено в этом счёте")}catch(err){writeErr(err,msg)}}
+      closeEditor();toast(both?T("Изменения сохранены в обоих счетах"):T("Сохранено в этом счёте"))}catch(err){writeErr(err,msg)}}
   drawDel();
   const el=h("div",{class:"editor"},
-    h("div",{class:"hint",style:"margin:0"},out?"Перевод из кошелька «"+subName(trEnd(e.from))+"» в счёт «"+other+"».":"Перевод из счёта «"+other+"» в кошелёк «"+subName(trEnd(e.to))+"»."),
-    h("div",{class:"row2"},h("div",null,h("label",{class:"label",for:"ed-amount"},"Сумма, "+cur()),amount),h("div",null,h("label",{class:"label",for:"ed-date"},"Дата"),date)),
-    h("div",null,h("label",{class:"label",for:"ed-note"},"Комментарий"),note),
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:closeEditor},"Отмена")),
-    msg,delBox,h("div",{class:"hint",style:"margin:0"},"Дата и комментарий меняются в обоих счетах. Сумма — тоже, если у счетов одна валюта."));
+    h("div",{class:"hint",style:"margin:0"},out?T("Перевод из кошелька «")+subName(trEnd(e.from))+T("» в счёт «")+other+T("»."):T("Перевод из счёта «")+other+T("» в кошелёк «")+subName(trEnd(e.to))+T("».")),
+    h("div",{class:"row2"},h("div",null,h("label",{class:"label",for:"ed-amount"},T("Сумма, ")+cur()),amount),h("div",null,h("label",{class:"label",for:"ed-date"},T("Дата")),date)),
+    h("div",null,h("label",{class:"label",for:"ed-note"},T("Комментарий")),note),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:closeEditor},T("Отмена"))),
+    msg,delBox,h("div",{class:"hint",style:"margin:0"},T("Дата и комментарий меняются в обоих счетах. Сумма — тоже, если у счетов одна валюта.")));
   edCache={id:e.id,el};setTimeout(()=>{try{amount.focus({preventScroll:true})}catch(x){}},0);return el}
 
 /* ---------- payment templates ---------- */
 const tplsOf=a=>Array.isArray(a&&a.tpls)?a.tpls.filter(t=>t&&t.id&&t.name):[];
 let tplActive=null,tplSaveState=null,tplEdit=null,tplArm=false;
 function tplCat(t){return t.kind==="tr"?TR:t.kind==="inc"?(ICAT[t.cat]||ICAT.i_other):(CAT[t.cat]||CAT.other)}
-function tplDesc(t){const parts=[t.kind==="inc"?"Доход":t.kind==="tr"?"Перевод":"Расход"];
-  if(t.kind==="tr"){const d=destOf(t.to);parts.push(subName(trEnd(t.from))+" → "+(d?"«"+d.a.name+"»":subName(trEnd(t.to))))}else parts.push(tplCat(t).name);
-  parts.push(t.repeat==="month"?"каждый месяц "+(+t.day||1)+"-го":"без повтора");return parts.join(" · ")}
+function tplDesc(t){const parts=[t.kind==="inc"?T("Доход"):t.kind==="tr"?T("Перевод"):T("Расход")];
+  if(t.kind==="tr"){const d=destOf(t.to);parts.push(subName(trEnd(t.from))+" → "+(d?T("«")+d.a.name+T("»"):subName(trEnd(t.to))))}else parts.push(tplCat(t).name);
+  parts.push(t.repeat==="month"?T("каждый месяц ")+(+t.day||1)+T("-го"):T("без повтора"));return parts.join(" · ")}
 async function writeTpls(list,msgEl){if(!acc)return false;const a=acc;
   try{await accDoc(a).update({tpls:list});a.tpls=list;renderTplBar();renderDue();renderTplSet();return true}
-  catch(e){if(msgEl)writeErr(e,msgEl);else toast("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.");return false}}
+  catch(e){if(msgEl)writeErr(e,msgEl);else toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));return false}}
 function renderTplBar(){const bar=$("tplBar");if(!acc||readOnly){bar.hidden=true;return}bar.hidden=false;
   const ts=tplsOf(acc);
   const chips=ts.map(t=>h("button",{type:"button",class:"tchip"+(tplActive===t.id?" on":""),"aria-pressed":String(tplActive===t.id),onclick:()=>fillFromTpl(t)},
     catIcon(tplCat(t),22),h("span",null,t.name),t.amount?h("small",null,(t.kind==="inc"?"+":"")+fmt(t.amount)):null));
-  chips.push(h("button",{type:"button",class:"tchip add",onclick:openTplSave},ts.length?"+ Шаблон из формы":"+ Сохранить как шаблон"));
-  bar.replaceChildren(h("span",{class:"label",style:"margin:0"},"Шаблоны"),h("div",{class:"tscroll"},h("div",{class:"tchips"},...chips)));renderTplSave()}
+  chips.push(h("button",{type:"button",class:"tchip add",onclick:openTplSave},ts.length?T("+ Шаблон из формы"):T("+ Сохранить как шаблон")));
+  bar.replaceChildren(h("span",{class:"label",style:"margin:0"},T("Шаблоны")),h("div",{class:"tscroll"},h("div",{class:"tchips"},...chips)));renderTplSave()}
 function fillFromTpl(t,date){if(tplActive===t.id&&!date){tplActive=null;$("amount").value="";$("note").value="";renderTplBar();return}
   curKind=t.kind==="inc"?"inc":t.kind==="tr"&&canTransfer()?"tr":"exp";
   if(curKind==="exp"&&CAT[t.cat])curCat=t.cat;if(curKind==="inc"&&ICAT[t.cat])curInc=t.cat;
@@ -740,18 +748,18 @@ function fillFromTpl(t,date){if(tplActive===t.id&&!date){tplActive=null;$("amoun
 function openTplSave(){tplSaveState={name:"",monthly:false,day:new Date().getDate()};renderTplSave();setTimeout(()=>{const el=$("tsName");if(el)el.focus()},0)}
 function renderTplSave(){const box=$("tplSave");if(!tplSaveState){box.hidden=true;box.replaceChildren();return}box.hidden=false;const st=tplSaveState;
   box.replaceChildren(h("div",{class:"editor"},
-    h("div",null,h("label",{class:"label",for:"tsName"},"Название шаблона"),h("input",{class:"field",id:"tsName",maxlength:"30",placeholder:"Например, «Аренда» или «Интернет»",value:st.name,oninput:e=>{st.name=e.target.value}})),
-    switchBtn("Повторять каждый месяц",st.monthly,()=>{st.monthly=!st.monthly;renderTplSave()},"tsMonthly"),
-    st.monthly?h("div",null,h("label",{class:"label",for:"tsDay"},"Число месяца"),h("input",{class:"field",id:"tsDay",type:"number",min:"1",max:"31",inputmode:"numeric",value:String(st.day),style:"max-width:120px",oninput:e=>{st.day=e.target.value}})):null,
-    h("div",{class:"hint",style:"margin:0"},"В шаблон попадут тип, сумма, категория, кошелёк и комментарий из формы. Если сумму не вводить, её нужно будет указывать каждый раз."),
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveTplFromForm},"Сохранить шаблон"),h("button",{type:"button",class:"ghost",onclick:()=>{tplSaveState=null;renderTplSave()}},"Отмена")),
+    h("div",null,h("label",{class:"label",for:"tsName"},T("Название шаблона")),h("input",{class:"field",id:"tsName",maxlength:"30",placeholder:T("Например, «Аренда» или «Интернет»"),value:st.name,oninput:e=>{st.name=e.target.value}})),
+    switchBtn(T("Повторять каждый месяц"),st.monthly,()=>{st.monthly=!st.monthly;renderTplSave()},"tsMonthly"),
+    st.monthly?h("div",null,h("label",{class:"label",for:"tsDay"},T("Число месяца")),h("input",{class:"field",id:"tsDay",type:"number",min:"1",max:"31",inputmode:"numeric",value:String(st.day),style:"max-width:120px",oninput:e=>{st.day=e.target.value}})):null,
+    h("div",{class:"hint",style:"margin:0"},T("В шаблон попадут тип, сумма, категория, кошелёк и комментарий из формы. Если сумму не вводить, её нужно будет указывать каждый раз.")),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveTplFromForm},T("Сохранить шаблон")),h("button",{type:"button",class:"ghost",onclick:()=>{tplSaveState=null;renderTplSave()}},T("Отмена"))),
     h("div",{class:"formmsg",id:"tsMsg",role:"status"})))}
 async function saveTplFromForm(){const st=tplSaveState,msg=$("tsMsg");msg.classList.remove("bad");const name=String(st.name).trim().slice(0,30);
-  if(!name){msg.classList.add("bad");msg.textContent="Придумайте название шаблона.";$("tsName").focus();return}
+  if(!name){msg.classList.add("bad");msg.textContent=T("Придумайте название шаблона.");$("tsName").focus();return}
   const amt=Math.round(parseNum($("amount").value)*100)/100,day=Math.min(31,Math.max(1,parseInt(st.day,10)||1));
   const t={id:genId(),name,kind:curKind,amount:amt>0?amt:0,cat:curKind==="inc"?curInc:curKind==="exp"?curCat:"",sub:formSub||"main",
     from:curKind==="tr"?trFrom:"",to:curKind==="tr"?trTo:"",member:curWho(),note:$("note").value.trim().slice(0,80),repeat:st.monthly?"month":"none",day,skips:[]};
-  if(await writeTpls([...tplsOf(acc),t],msg)){tplSaveState=null;tplActive=t.id;renderTplBar();toast("Шаблон «"+name+"» сохранён")}}
+  if(await writeTpls([...tplsOf(acc),t],msg)){tplSaveState=null;tplActive=t.id;renderTplBar();toast(T("Шаблон «")+name+T("» сохранён"))}}
 
 function renderDue(){const box=$("dueCard"),tm=today().slice(0,7);
   if(!acc||month!==tm||!loaded){box.hidden=true;return}
@@ -763,18 +771,18 @@ function renderDue(){const box=$("dueCard"),tm=today().slice(0,7);
     return {t,day:Math.min(dim,Math.max(1,+t.day||1)),done:!!own||!!auto||(t.paid||[]).includes(tm),skip:(t.skips||[]).includes(tm)}});
   const rows=all.filter(r=>!r.done&&!r.skip).sort((a,b)=>a.day-b.day),doneN=all.filter(r=>r.done).length;
   box.hidden=false;
-  const head=h("div",{class:"sechead"},h("h2",{style:"margin:0"},"Регулярные платежи"),
-    h("span",{class:"hint",style:"margin:0"},rows.length?"осталось "+rows.length+(doneN?" · записано "+doneN:""):"всё записано"));
+  const head=h("div",{class:"sechead"},h("h2",{style:"margin:0"},T("Регулярные платежи")),
+    h("span",{class:"hint",style:"margin:0"},rows.length?T("осталось ")+rows.length+(doneN?T(" · записано ")+doneN:""):T("всё записано")));
   if(!rows.length){box.replaceChildren(head);return}
   box.replaceChildren(head,...rows.map(r=>{const t=r.t,due=r.day<=td;
     return h("div",{class:"due"+(due?" now":"")},catIcon(tplCat(t),32),
-      h("div",{class:"what"},h("div",null,t.name),h("div",{class:"sub"},(due?(r.day===td?"сегодня":"с "+dayMonth(tm+"-"+pad(r.day))):dayMonth(tm+"-"+pad(r.day)))+(t.kind==="inc"?" · доход":t.kind==="tr"?" · перевод":""))),
-      h("div",{class:"amt"+(t.kind==="inc"?" inc":"")},t.amount?(t.kind==="inc"?"+":"")+fmt(t.amount):"сумма не задана"),
+      h("div",{class:"what"},h("div",null,t.name),h("div",{class:"sub"},(due?(r.day===td?T("сегодня"):T("с ")+dayMonth(tm+"-"+pad(r.day))):dayMonth(tm+"-"+pad(r.day)))+(t.kind==="inc"?T(" · доход"):t.kind==="tr"?T(" · перевод"):""))),
+      h("div",{class:"amt"+(t.kind==="inc"?" inc":"")},t.amount?(t.kind==="inc"?"+":"")+fmt(t.amount):T("сумма не задана")),
       readOnly?null:h("div",{class:"due-act"},
-        h("button",{type:"button",class:"ghost sm",title:"Записать операцию по шаблону",onclick:ev=>runTpl(t,r.day,ev.currentTarget)},t.amount?(t.kind==="inc"?"Получено":"Оплачено"):"Указать сумму"),
-        h("button",{type:"button",class:"linkbtn muted",title:"Операция уже записана вручную или в другом счёте",onclick:()=>markTpl(t,"paid")},"Уже записано"),
-        h("button",{type:"button",class:"linkbtn muted",onclick:()=>markTpl(t,"skips")},"Не в этом месяце")))}),
-    h("div",{class:"hint",style:"margin:2px 0 0"},"Платёж отмечается сам, если в этом месяце есть операция с той же категорией и суммой."))}
+        h("button",{type:"button",class:"ghost sm",title:T("Записать операцию по шаблону"),onclick:ev=>runTpl(t,r.day,ev.currentTarget)},t.amount?(t.kind==="inc"?T("Получено"):T("Оплачено")):T("Указать сумму")),
+        h("button",{type:"button",class:"linkbtn muted",title:T("Операция уже записана вручную или в другом счёте"),onclick:()=>markTpl(t,"paid")},T("Уже записано")),
+        h("button",{type:"button",class:"linkbtn muted",onclick:()=>markTpl(t,"skips")},T("Не в этом месяце"))))}),
+    h("div",{class:"hint",style:"margin:2px 0 0"},T("Платёж отмечается сам, если в этом месяце есть операция с той же категорией и суммой.")))}
 function tplMatches(t,e){if(e.tpl)return false;
   if(t.kind==="tr"){if(!isTr(e)||trEnd(e.from)!==trEnd(t.from||"main"))return false;const d=destOf(t.to);
     if(d){if(e.to!=="ext"||!e.xacc||e.xacc.id!==d.a.id)return false}else if(trEnd(e.to)!==trEnd(t.to))return false}
@@ -787,64 +795,64 @@ async function runTpl(t,day,btn){const tm=today().slice(0,7),td=+today().slice(8
   if(needForm){fillFromTpl(t,date);return}
   if(btn)btn.disabled=true;
   try{await createOp({kind:t.kind,amount:t.amount,cat:t.cat,sub:subIds().includes(t.sub)?t.sub:"main",from:subIds().includes(t.from)?t.from:"main",to:t.to,member:t.member,note:t.note||t.name,date,tpl:t.id});
-    toast("«"+t.name+"» записан: "+(t.kind==="inc"?"+":"")+fmt(t.amount))}
-  catch(e){toast("Не получилось внести платёж. Проверьте интернет и попробуйте ещё раз.");if(btn)btn.disabled=false}}
+    toast(T("«")+t.name+T("» записан: ")+(t.kind==="inc"?"+":"")+fmt(t.amount))}
+  catch(e){toast(T("Не получилось внести платёж. Проверьте интернет и попробуйте ещё раз."));if(btn)btn.disabled=false}}
 async function markTpl(t,field){const tm=today().slice(0,7),list=tplsOf(acc).map(x=>x.id===t.id?{...x,[field]:[...(x[field]||[]).filter(m=>m>=shiftMonth(tm,-12)&&m!==tm),tm]}:x);
-  if(await writeTpls(list))toast(field==="paid"?"«"+t.name+"» отмечен как записанный":"«"+t.name+"» не ждём в этом месяце")}
+  if(await writeTpls(list))toast(field==="paid"?T("«")+t.name+T("» отмечен как записанный"):T("«")+t.name+T("» не ждём в этом месяце"))}
 
 /* templates in settings */
 function renderTplSet(){if(!acc||view!=="prefs")return;
   const ts=tplsOf(acc);
   const rows=ts.map(t=>tplEdit&&!tplEdit.isNew&&tplEdit.id===t.id?tplEditor():h("div",{class:"catrow"},catIcon(tplCat(t),32),
     h("div",{class:"n"},h("div",null,t.name),h("div",{class:"sub"},(t.amount?(t.kind==="inc"?"+":"")+fmt(t.amount)+" · ":"")+tplDesc(t))),
-    readOnly?null:h("button",{type:"button",class:"ghost sm",onclick:()=>{tplEdit=JSON.parse(JSON.stringify(t));tplArm=false;renderTplSet()}},"Изменить")));
+    readOnly?null:h("button",{type:"button",class:"ghost sm",onclick:()=>{tplEdit=JSON.parse(JSON.stringify(t));tplArm=false;renderTplSet()}},T("Изменить"))));
   if(tplEdit&&tplEdit.isNew)rows.push(tplEditor());
-  if(!rows.length)rows.push(h("div",{class:"empty",style:"padding:6px 0"},"Шаблонов пока нет. Добавьте сюда, например, аренду, интернет или зарплату."));
+  if(!rows.length)rows.push(h("div",{class:"empty",style:"padding:6px 0"},T("Шаблонов пока нет. Добавьте сюда, например, аренду, интернет или зарплату.")));
   $("tplList").replaceChildren(...rows);$("addTplBtn").hidden=readOnly||!!(tplEdit&&tplEdit.isNew)}
 function tplEditor(){const d=tplEdit,subs=subsOf(acc);
   const f=(id,label,el)=>h("div",null,h("label",{class:"label",for:id},label),el);
-  const kinds=[["exp","Расход"],["inc","Доход"]];if(canTransfer()||d.kind==="tr")kinds.push(["tr","Перевод"]);
-  const name=h("input",{class:"field",id:"te-name",maxlength:"30",placeholder:"Например, «Аренда»",value:d.name||"",oninput:e=>{d.name=e.target.value}});
-  const amt=h("input",{class:"field",id:"te-amt",inputmode:"decimal",autocomplete:"off",placeholder:"Вводить каждый раз",value:d.amountRaw!==undefined?d.amountRaw:(d.amount?String(d.amount).replace(".",","):""),oninput:e=>{d.amountRaw=e.target.value}});
+  const kinds=[["exp",T("Расход")],["inc",T("Доход")]];if(canTransfer()||d.kind==="tr")kinds.push(["tr",T("Перевод")]);
+  const name=h("input",{class:"field",id:"te-name",maxlength:"30",placeholder:T("Например, «Аренда»"),value:d.name||"",oninput:e=>{d.name=e.target.value}});
+  const amt=h("input",{class:"field",id:"te-amt",inputmode:"decimal",autocomplete:"off",placeholder:T("Вводить каждый раз"),value:d.amountRaw!==undefined?d.amountRaw:(d.amount?String(d.amount).replace(".",","):""),oninput:e=>{d.amountRaw=e.target.value}});
   const mid=[];
   if(d.kind==="tr"){const from=h("select",{class:"field",id:"te-from",onchange:e=>{d.from=e.target.value}},...subs.map(x=>h("option",{value:x.id},x.name)));
     from.value=subIds().includes(d.from)?d.from:subs[0].id;d.from=from.value;
     const to=h("select",{class:"field",id:"te-to",onchange:e=>{d.to=e.target.value}},...toOptions());
     to.value=validTo(d.to)&&d.to!==d.from?d.to:defaultTo(d.from);d.to=to.value;
-    mid.push(h("div",{class:"row2 half"},f("te-from","Откуда",from),f("te-to","Куда",to)))}
+    mid.push(h("div",{class:"row2 half"},f("te-from",T("Откуда"),from),f("te-to",T("Куда"),to)))}
   else{const list=(d.kind==="inc"?INC_CATS:CATS).filter(c=>!c.hidden||c.id===d.cat);
     const cat=h("select",{class:"field",id:"te-cat",onchange:e=>{d.cat=e.target.value}},...list.map(c=>h("option",{value:c.id},c.name)));
-    cat.value=list.some(c=>c.id===d.cat)?d.cat:list[0].id;d.cat=cat.value;mid.push(f("te-cat",d.kind==="inc"?"Источник":"Категория",cat));
+    cat.value=list.some(c=>c.id===d.cat)?d.cat:list[0].id;d.cat=cat.value;mid.push(f("te-cat",d.kind==="inc"?T("Источник"):T("Категория"),cat));
     if(subs.length>1){const sb=h("select",{class:"field",id:"te-sub",onchange:e=>{d.sub=e.target.value}},...subs.map(x=>h("option",{value:x.id},x.name)));
-      sb.value=subIds().includes(d.sub)?d.sub:"main";d.sub=sb.value;mid.push(f("te-sub","Кошелёк",sb))}}
+      sb.value=subIds().includes(d.sub)?d.sub:"main";d.sub=sb.value;mid.push(f("te-sub",T("Кошелёк"),sb))}}
   const pp=people(acc);let whoEl=null;
   if(pp.length){whoEl=h("select",{class:"field",id:"te-who",onchange:e=>{d.member=e.target.value}},...pp.map(n=>h("option",{value:n},n)));whoEl.value=pp.includes(d.member)?d.member:pp[0];d.member=whoEl.value}
-  const note=h("input",{class:"field",id:"te-note",maxlength:"80",placeholder:"Необязательно",value:d.note||"",oninput:e=>{d.note=e.target.value}});
+  const note=h("input",{class:"field",id:"te-note",maxlength:"80",placeholder:T("Необязательно"),value:d.note||"",oninput:e=>{d.note=e.target.value}});
   const day=h("input",{class:"field",id:"te-day",type:"number",min:"1",max:"31",inputmode:"numeric",style:"max-width:120px",value:String(d.day||1),oninput:e=>{d.day=e.target.value}});
-  const acts=d.isNew?null:h("div",{class:"confirm"},tplArm?h("button",{type:"button",class:"del",onclick:deleteTpl},"Да, удалить шаблон"):h("button",{type:"button",class:"danger",onclick:()=>{tplArm=true;renderTplSet()}},"Удалить шаблон"));
-  return h("div",{class:"editor"},mseg(kinds,d.kind,v=>{d.kind=v;renderTplSet()},"Тип"),
-    f("te-name","Название",name),f("te-amt","Сумма, "+cur(),amt),...mid,whoEl?f("te-who","Кто",whoEl):null,f("te-note","Комментарий",note),
-    switchBtn("Повторять каждый месяц",d.repeat==="month",()=>{d.repeat=d.repeat==="month"?"none":"month";renderTplSet()},"te-rep"),
-    d.repeat==="month"?f("te-day","Число месяца",day):null,
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveTpl},d.isNew?"Добавить шаблон":"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{tplEdit=null;renderTplSet()}},"Отмена")),
+  const acts=d.isNew?null:h("div",{class:"confirm"},tplArm?h("button",{type:"button",class:"del",onclick:deleteTpl},T("Да, удалить шаблон")):h("button",{type:"button",class:"danger",onclick:()=>{tplArm=true;renderTplSet()}},T("Удалить шаблон")));
+  return h("div",{class:"editor"},mseg(kinds,d.kind,v=>{d.kind=v;renderTplSet()},T("Тип")),
+    f("te-name",T("Название"),name),f("te-amt",T("Сумма, ")+cur(),amt),...mid,whoEl?f("te-who",T("Кто"),whoEl):null,f("te-note",T("Комментарий"),note),
+    switchBtn(T("Повторять каждый месяц"),d.repeat==="month",()=>{d.repeat=d.repeat==="month"?"none":"month";renderTplSet()},"te-rep"),
+    d.repeat==="month"?f("te-day",T("Число месяца"),day):null,
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveTpl},d.isNew?T("Добавить шаблон"):T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:()=>{tplEdit=null;renderTplSet()}},T("Отмена"))),
     h("div",{class:"formmsg",id:"teMsg",role:"status"}),acts)}
 async function saveTpl(){const d=tplEdit,msg=$("teMsg");msg.classList.remove("bad");const name=String(d.name||"").trim().slice(0,30);
-  if(!name){msg.classList.add("bad");msg.textContent="Придумайте название шаблона.";$("te-name").focus();return}
-  if(d.kind==="tr"&&d.from===d.to){msg.classList.add("bad");msg.textContent="Выберите разные «Откуда» и «Куда».";return}
+  if(!name){msg.classList.add("bad");msg.textContent=T("Придумайте название шаблона.");$("te-name").focus();return}
+  if(d.kind==="tr"&&d.from===d.to){msg.classList.add("bad");msg.textContent=T("Выберите разные «Откуда» и «Куда».");return}
   const raw=d.amountRaw!==undefined?d.amountRaw:String(d.amount||"");const amt=Math.round(parseNum(raw)*100)/100;
-  if(String(raw).trim()&&!(amt>0)){msg.classList.add("bad");msg.textContent="Сумма должна быть больше нуля или пустой.";return}
+  if(String(raw).trim()&&!(amt>0)){msg.classList.add("bad");msg.textContent=T("Сумма должна быть больше нуля или пустой.");return}
   const t={id:d.id,name,kind:d.kind,amount:amt>0?amt:0,cat:d.kind==="tr"?"":d.cat,sub:d.sub||"main",from:d.kind==="tr"?d.from:"",to:d.kind==="tr"?d.to:"",
     member:d.member||"",note:String(d.note||"").trim().slice(0,80),repeat:d.repeat==="month"?"month":"none",day:Math.min(31,Math.max(1,parseInt(d.day,10)||1)),skips:Array.isArray(d.skips)?d.skips:[],paid:Array.isArray(d.paid)?d.paid:[]};
   const list=tplsOf(acc).map(x=>({...x}));const i=list.findIndex(x=>x.id===t.id);if(i<0)list.push(t);else list[i]=t;
-  if(await writeTpls(list,msg)){tplEdit=null;renderTplSet();toast(i<0?"Шаблон «"+name+"» добавлен":"Шаблон сохранён")}}
+  if(await writeTpls(list,msg)){tplEdit=null;renderTplSet();toast(i<0?T("Шаблон «")+name+T("» добавлен"):T("Шаблон сохранён"))}}
 async function deleteTpl(){const id=tplEdit.id,a=acc,prev=tplsOf(a);if(await writeTpls(prev.filter(x=>x.id!==id))){tplEdit=null;tplArm=false;if(tplActive===id)tplActive=null;renderTplSet();
-  offerUndo("Шаблон удалён",async()=>{await accDoc(a).update({tpls:prev});a.tpls=prev;renderTplBar();renderDue();renderTplSet()})}}
+  offerUndo(T("Шаблон удалён"),async()=>{await accDoc(a).update({tpls:prev});a.tpls=prev;renderTplBar();renderDue();renderTplSet()})}}
 $("addTplBtn").onclick=()=>{tplEdit={id:genId(),name:"",kind:"exp",amount:0,cat:CATS.find(c=>!c.hidden).id,sub:"main",from:"main",to:"",member:"",note:"",repeat:"month",day:new Date().getDate(),skips:[],isNew:true};tplArm=false;renderTplSet();
   setTimeout(()=>{const el=$("te-name");if(el)el.focus()},0)};
 
 /* ---------- goals ---------- */
 const goalsOf=a=>Array.isArray(a&&a.goals)?a.goals.filter(g=>g&&g.id&&g.name):[];
-const goalName=id=>{const g=goalsOf(acc).find(x=>x.id===id);return g?"на «"+g.name+"»":""};
+const goalName=id=>{const g=goalsOf(acc).find(x=>x.id===id);return g?T("на «")+g.name+T("»"):""};
 let goalNew=null,goalEdit=null,goalArm=false,goalActive=null;
 function goalSaved(g,bal){if(!bal)return null;
   if(g.mode==="contrib"){let v=Number(g.start)||0;for(const e of histExp){if(e.goal!==g.id)continue;const a=Number(e.amount)||0;v+=isExp(e)?-a:a}return v}
@@ -853,71 +861,71 @@ function renderGoals(){const sec=$("goalsSec");if(!acc){sec.hidden=true;return}
   const gs=goalsOf(acc);sec.hidden=readOnly&&!gs.length;if(sec.hidden)return;
   $("addGoalBtn").hidden=readOnly||!!goalNew;renderGoalNew();
   const bal=histLoaded&&archDone?balances():null;
-  if(!gs.length){$("goals").replaceChildren(goalNew?h("span"):h("div",{class:"hint",style:"margin:0"},"Поставьте цель, например «Отпуск — 150 000 ₽ к июлю». Копить можно в отдельном кошельке или в общей копилке, а приложение подскажет, сколько откладывать в месяц."));return}
+  if(!gs.length){$("goals").replaceChildren(goalNew?h("span"):h("div",{class:"hint",style:"margin:0"},T("Поставьте цель, например «Отпуск — 150 000 ₽ к июлю». Копить можно в отдельном кошельке или в общей копилке, а приложение подскажет, сколько откладывать в месяц.")));return}
   $("goals").replaceChildren(...gs.map(g=>goalEdit&&goalEdit.id===g.id?goalEditor():goalCard(g,bal)))}
 function goalCard(g,bal){const subOk=subIds().includes(g.sub),contrib=g.mode==="contrib",have=goalSaved(g,bal),target=Number(g.target)||0;
   const p=have!==null&&target?Math.max(0,Math.min(1,have/target)):0,done=have!==null&&target>0&&have>=target;
   let pace="";
   if(have!==null&&!done&&g.deadline){const left=target-Math.max(0,have);
-    if(g.deadline<today())pace="Срок был "+shortDate(g.deadline)+" · не хватает "+fmt(left);
+    if(g.deadline<today())pace=T("Срок был ")+shortDate(g.deadline)+T(" · не хватает ")+fmt(left);
     else{const [y,m,d]=g.deadline.split("-").map(Number),days=Math.max(1,Math.round((new Date(y,m-1,d)-new Date(new Date().toDateString()))/864e5)),months=Math.round(days/30.44);
-      pace="До "+shortDate(g.deadline)+" · "+(months>=1?"откладывайте по "+fmt(Math.ceil(left/months))+" в месяц":"осталось "+days+" "+plural(days,["день","дня","дней"])+", не хватает "+fmt(left))}}
+      pace=T("До ")+shortDate(g.deadline)+" · "+(months>=1?T("откладывайте по ")+fmt(Math.ceil(left/months))+T(" в месяц"):T("осталось ")+days+" "+plural(days,[T("день"),T("дня"),T("дней")])+T(", не хватает ")+fmt(left))}}
   return h("div",{class:"goal"},
-    h("div",{class:"ghead"},h("b",null,g.name),h("span",{class:"gpct"},have===null?"…":done?"Готово":Math.round(p*100)+"%")),
+    h("div",{class:"ghead"},h("b",null,g.name),h("span",{class:"gpct"},have===null?"…":done?T("Готово"):Math.round(p*100)+"%")),
     h("div",{class:"track"},h("div",{class:"fill"+(done?" ok":""),style:"width:"+(p*100)+"%"})),
-    h("div",{class:"meta",style:"margin-top:0"},h("span",null,have===null?"Считаем…":fmt(Math.max(0,have))+" из "+fmt(target)),h("span",null,subOk?(contrib?"отложено в «":"в «")+subName(g.sub)+"»":contrib?"":"кошелёк удалён")),
-    done?h("div",{class:"hint",style:"margin:0;color:var(--good)"},"Цель достигнута."):pace?h("div",{class:"hint",style:"margin:0"},pace):null,
-    readOnly?null:h("div",{class:"inline",style:"align-items:center"},(subOk||contrib)&&!done?h("button",{type:"button",class:"ghost sm",onclick:()=>topUp(g)},"Отложить"):null,
-      h("button",{type:"button",class:"linkbtn",onclick:()=>{goalEdit={...g};goalArm=false;renderGoals()}},"Изменить")))}
+    h("div",{class:"meta",style:"margin-top:0"},h("span",null,have===null?T("Считаем…"):fmt(Math.max(0,have))+T(" из ")+fmt(target)),h("span",null,subOk?(contrib?T("отложено в «"):T("в «"))+subName(g.sub)+T("»"):contrib?"":T("кошелёк удалён"))),
+    done?h("div",{class:"hint",style:"margin:0;color:var(--good)"},T("Цель достигнута.")):pace?h("div",{class:"hint",style:"margin:0"},pace):null,
+    readOnly?null:h("div",{class:"inline",style:"align-items:center"},(subOk||contrib)&&!done?h("button",{type:"button",class:"ghost sm",onclick:()=>topUp(g)},T("Отложить")):null,
+      h("button",{type:"button",class:"linkbtn",onclick:()=>{goalEdit={...g};goalArm=false;renderGoals()}},T("Изменить"))))}
 function topUp(g){const subs=subsOf(acc),target=subIds().includes(g.sub)?g.sub:"main";
   if(subs.length>1&&subs.some(x=>x.id!==target)){curKind="tr";trTo=target;trFrom=(subs.find(x=>x.id!==target&&!x.off)||subs.find(x=>x.id!==target)).id}
   else{curKind="inc";formSub=target}
-  tplActive=null;goalActive=g.id;$("amount").value="";$("date").value=today();$("note").value="На цель «"+g.name+"»";detailOpen="";openEntry(true)}
+  tplActive=null;goalActive=g.id;$("amount").value="";$("date").value=today();$("note").value=T("На цель «")+g.name+T("»");detailOpen="";openEntry(true)}
 function renderGoalNew(){const box=$("goalNew");if(!goalNew){box.hidden=true;box.replaceChildren();return}box.hidden=false;const g=goalNew,subs=subsOf(acc);
-  const sel=h("select",{class:"field",id:"gnSub",onchange:e=>{g.mode=e.target.value;renderGoalNew()}},h("option",{value:"new"},"Новый кошелёк для этой цели"),...subs.map(x=>h("option",{value:x.id},"Кошелёк «"+x.name+"»")));sel.value=g.mode;
+  const sel=h("select",{class:"field",id:"gnSub",onchange:e=>{g.mode=e.target.value;renderGoalNew()}},h("option",{value:"new"},T("Новый кошелёк для этой цели")),...subs.map(x=>h("option",{value:x.id},T("Кошелёк «")+x.name+T("»"))));sel.value=g.mode;
   box.replaceChildren(h("div",{class:"editor"},
-    h("div",null,h("label",{class:"label",for:"gnName"},"Название цели"),h("input",{class:"field",id:"gnName",maxlength:"40",placeholder:"Например, «Отпуск» или «Новый ноутбук»",value:g.name,oninput:e=>{g.name=e.target.value}})),
-    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"gnTarget"},"Сколько нужно, "+cur()),h("input",{class:"field",id:"gnTarget",inputmode:"decimal",autocomplete:"off",value:g.target,oninput:e=>{g.target=e.target.value}})),
-      h("div",null,h("label",{class:"label",for:"gnDate"},"К какой дате"),h("input",{type:"date",id:"gnDate",value:g.deadline,min:today(),oninput:e=>{g.deadline=e.target.value}}))),
-    h("div",null,h("label",{class:"label",for:"gnSub"},"Где копить"),sel),
+    h("div",null,h("label",{class:"label",for:"gnName"},T("Название цели")),h("input",{class:"field",id:"gnName",maxlength:"40",placeholder:T("Например, «Отпуск» или «Новый ноутбук»"),value:g.name,oninput:e=>{g.name=e.target.value}})),
+    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"gnTarget"},T("Сколько нужно, ")+cur()),h("input",{class:"field",id:"gnTarget",inputmode:"decimal",autocomplete:"off",value:g.target,oninput:e=>{g.target=e.target.value}})),
+      h("div",null,h("label",{class:"label",for:"gnDate"},T("К какой дате")),h("input",{type:"date",id:"gnDate",value:g.deadline,min:today(),oninput:e=>{g.deadline=e.target.value}}))),
+    h("div",null,h("label",{class:"label",for:"gnSub"},T("Где копить")),sel),
     h("div",{class:"stack",style:"gap:10px"},
-      g.mode==="new"||!g.whole?h("div",null,h("label",{class:"label",for:"gnStart"},"Уже отложено"),h("input",{class:"field",id:"gnStart",inputmode:"decimal",autocomplete:"off",placeholder:"0",style:"max-width:200px",value:g.start,oninput:e=>{g.start=e.target.value}})):null,
-      g.mode==="new"?switchBtn("Включать накопления во «Всего»",g.inTotal,()=>{g.inTotal=!g.inTotal;renderGoalNew()},"gnTotal")
-        :switchBtn("Считать весь баланс кошелька",g.whole,()=>{g.whole=!g.whole;renderGoalNew()},"gnWhole"),
-      g.mode==="new"?null:h("div",{class:"hint",style:"margin:0"},g.whole?"Прогресс — весь баланс кошелька. Подходит, если кошелёк отведён только под эту цель.":"Прогресс — только то, что вы отложили кнопкой «Отложить» у цели. Траты из этого кошелька на цель не влияют.")),
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:createGoal},"Создать цель"),h("button",{type:"button",class:"ghost",onclick:()=>{goalNew=null;renderGoals()}},"Отмена")),
+      g.mode==="new"||!g.whole?h("div",null,h("label",{class:"label",for:"gnStart"},T("Уже отложено")),h("input",{class:"field",id:"gnStart",inputmode:"decimal",autocomplete:"off",placeholder:"0",style:"max-width:200px",value:g.start,oninput:e=>{g.start=e.target.value}})):null,
+      g.mode==="new"?switchBtn(T("Включать накопления во «Всего»"),g.inTotal,()=>{g.inTotal=!g.inTotal;renderGoalNew()},"gnTotal")
+        :switchBtn(T("Считать весь баланс кошелька"),g.whole,()=>{g.whole=!g.whole;renderGoalNew()},"gnWhole"),
+      g.mode==="new"?null:h("div",{class:"hint",style:"margin:0"},g.whole?T("Прогресс — весь баланс кошелька. Подходит, если кошелёк отведён только под эту цель."):T("Прогресс — только то, что вы отложили кнопкой «Отложить» у цели. Траты из этого кошелька на цель не влияют."))),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:createGoal},T("Создать цель")),h("button",{type:"button",class:"ghost",onclick:()=>{goalNew=null;renderGoals()}},T("Отмена"))),
     h("div",{class:"formmsg",id:"gnMsg",role:"status"})))}
 async function createGoal(){const g=goalNew,msg=$("gnMsg");msg.classList.remove("bad");const name=String(g.name).trim().slice(0,40),target=Math.round(parseNum(g.target)*100)/100;
-  if(!name){msg.classList.add("bad");msg.textContent="Назовите цель.";$("gnName").focus();return}
-  if(!(target>0)){msg.classList.add("bad");msg.textContent="Укажите, сколько нужно накопить.";$("gnTarget").focus();return}
-  const a=acc,subs=subsOf(a).map(x=>({id:x.id,name:x.name,start:Number(x.start)||0,off:!!x.off}));let sub=g.mode;
-  if(g.mode==="new"){let sname=name.slice(0,30);if(subs.some(x=>x.name.toLowerCase()===sname.toLowerCase()))sname=(name.slice(0,22)+" (цель)");
+  if(!name){msg.classList.add("bad");msg.textContent=T("Назовите цель.");$("gnName").focus();return}
+  if(!(target>0)){msg.classList.add("bad");msg.textContent=T("Укажите, сколько нужно накопить.");$("gnTarget").focus();return}
+  const a=acc,subs=subsOf(a).map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:!!x.off}));let sub=g.mode;
+  if(g.mode==="new"){let sname=name.slice(0,30);if(subs.some(x=>x.name.toLowerCase()===sname.toLowerCase()))sname=(name.slice(0,22)+T(" (цель)"));
     const st=parseNum(g.start);sub=genId();subs.push({id:sub,name:sname,start:Number.isFinite(st)&&st>0?Math.round(st*100)/100:0,off:!g.inTotal})}
   const st0=parseNum(g.start),contrib=g.mode!=="new"&&!g.whole;
   const goals=[...goalsOf(a),{id:genId(),name,target,deadline:g.deadline||"",sub,mode:contrib?"contrib":"wallet",start:contrib&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0,createdAt:Date.now()}];
-  try{await accDoc(a).update({subs,goals});a.subs=subs;a.goals=goals;goalNew=null;filledFor="";fillSettings(false);renderSubs();renderGoals();renderCats();toast("Цель «"+name+"» создана")}
+  try{await accDoc(a).update({subs,goals});a.subs=subs;a.goals=goals;goalNew=null;filledFor="";fillSettings(false);renderSubs();renderGoals();renderCats();toast(T("Цель «")+name+T("» создана"))}
   catch(e){writeErr(e,msg)}}
 function goalEditor(){const g=goalEdit;
   return h("div",{class:"goal"},h("div",{class:"stack",style:"gap:12px"},
-    h("div",null,h("label",{class:"label",for:"geName"},"Название цели"),h("input",{class:"field",id:"geName",maxlength:"40",value:g.name,oninput:e=>{g.name=e.target.value}})),
-    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"geTarget"},"Сколько нужно"),h("input",{class:"field",id:"geTarget",inputmode:"decimal",value:String(g.target).replace(".",","),oninput:e=>{g.target=e.target.value}})),
-      h("div",null,h("label",{class:"label",for:"geDate"},"К какой дате"),h("input",{type:"date",id:"geDate",value:g.deadline||"",oninput:e=>{g.deadline=e.target.value}}))),
-    subIds().includes(g.sub)?h("div",null,h("label",{class:"label",for:"geMode"},"Как считать прогресс"),(()=>{const sel=h("select",{class:"field",id:"geMode",onchange:e=>{g.mode=e.target.value;renderGoals()}},
-      h("option",{value:"wallet"},"Весь баланс кошелька «"+subName(g.sub)+"»"),h("option",{value:"contrib"},"Только отложенное на эту цель"));sel.value=g.mode==="contrib"?"contrib":"wallet";return sel})()):null,
-    g.mode==="contrib"?h("div",null,h("label",{class:"label",for:"geStart"},"Было отложено до начала учёта"),h("input",{class:"field",id:"geStart",inputmode:"decimal",style:"max-width:200px",value:String(g.start||0).replace(".",","),oninput:e=>{g.start=e.target.value}})):null,
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveGoal},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{goalEdit=null;renderGoals()}},"Отмена")),
+    h("div",null,h("label",{class:"label",for:"geName"},T("Название цели")),h("input",{class:"field",id:"geName",maxlength:"40",value:g.name,oninput:e=>{g.name=e.target.value}})),
+    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"geTarget"},T("Сколько нужно")),h("input",{class:"field",id:"geTarget",inputmode:"decimal",value:String(g.target).replace(".",","),oninput:e=>{g.target=e.target.value}})),
+      h("div",null,h("label",{class:"label",for:"geDate"},T("К какой дате")),h("input",{type:"date",id:"geDate",value:g.deadline||"",oninput:e=>{g.deadline=e.target.value}}))),
+    subIds().includes(g.sub)?h("div",null,h("label",{class:"label",for:"geMode"},T("Как считать прогресс")),(()=>{const sel=h("select",{class:"field",id:"geMode",onchange:e=>{g.mode=e.target.value;renderGoals()}},
+      h("option",{value:"wallet"},T("Весь баланс кошелька «")+subName(g.sub)+T("»")),h("option",{value:"contrib"},T("Только отложенное на эту цель")));sel.value=g.mode==="contrib"?"contrib":"wallet";return sel})()):null,
+    g.mode==="contrib"?h("div",null,h("label",{class:"label",for:"geStart"},T("Было отложено до начала учёта")),h("input",{class:"field",id:"geStart",inputmode:"decimal",style:"max-width:200px",value:String(g.start||0).replace(".",","),oninput:e=>{g.start=e.target.value}})):null,
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:saveGoal},T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:()=>{goalEdit=null;renderGoals()}},T("Отмена"))),
     h("div",{class:"formmsg",id:"geMsg",role:"status"}),
-    h("div",{class:"confirm"},goalArm?h("button",{type:"button",class:"del",onclick:deleteGoal},"Да, удалить цель"):h("button",{type:"button",class:"danger",onclick:()=>{goalArm=true;renderGoals()}},"Удалить цель")),
-    h("div",{class:"hint",style:"margin:0"},"Удаление цели не трогает кошелёк и накопленные деньги.")))}
+    h("div",{class:"confirm"},goalArm?h("button",{type:"button",class:"del",onclick:deleteGoal},T("Да, удалить цель")):h("button",{type:"button",class:"danger",onclick:()=>{goalArm=true;renderGoals()}},T("Удалить цель"))),
+    h("div",{class:"hint",style:"margin:0"},T("Удаление цели не трогает кошелёк и накопленные деньги."))))}
 async function saveGoal(){const g=goalEdit,msg=$("geMsg");msg.classList.remove("bad");const name=String(g.name).trim().slice(0,40),target=Math.round(parseNum(g.target)*100)/100;
-  if(!name||!(target>0)){msg.classList.add("bad");msg.textContent=!name?"Назовите цель.":"Укажите сумму больше нуля.";return}
+  if(!name||!(target>0)){msg.classList.add("bad");msg.textContent=!name?T("Назовите цель."):T("Укажите сумму больше нуля.");return}
   const st0=parseNum(g.start),mode=g.mode==="contrib"?"contrib":"wallet";
   const a=acc,goals=goalsOf(a).map(x=>x.id===g.id?{...x,name,target,deadline:g.deadline||"",mode,start:mode==="contrib"&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0}:x);
-  try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;renderGoals();toast("Цель сохранена")}catch(e){writeErr(e,msg)}}
+  try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;renderGoals();toast(T("Цель сохранена"))}catch(e){writeErr(e,msg)}}
 async function deleteGoal(){const a=acc,id=goalEdit.id,goals=goalsOf(a).filter(x=>x.id!==id);
   const prev=goalsOf(a);
   try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;goalArm=false;renderGoals();
-    offerUndo("Цель удалена",async()=>{await accDoc(a).update({goals:prev});a.goals=prev;renderGoals()})}catch(e){toast("Не получилось удалить цель")}}
+    offerUndo(T("Цель удалена"),async()=>{await accDoc(a).update({goals:prev});a.goals=prev;renderGoals()})}catch(e){toast(T("Не получилось удалить цель"))}}
 $("addGoalBtn").onclick=()=>{goalNew={name:"",target:"",deadline:"",mode:"new",start:"",inTotal:false,whole:false};goalEdit=null;renderGoals();setTimeout(()=>{const el=$("gnName");if(el)el.focus()},0)};
 
 
@@ -926,14 +934,14 @@ let undoEl=null,undoT=null;
 function offerUndo(text,restore){if(undoEl){undoEl.remove();clearTimeout(undoT)}
   const el=h("div",{class:"toast undo",role:"status"},h("span",null,text),
     h("button",{type:"button",class:"undobtn",onclick:async()=>{el.remove();undoEl=null;clearTimeout(undoT);
-      try{await restore();toast("Восстановлено")}catch(e){toast("Не получилось вернуть. Проверьте интернет и попробуйте ещё раз.")}}},"Вернуть"));
+      try{await restore();toast(T("Восстановлено"))}catch(e){toast(T("Не получилось вернуть. Проверьте интернет и попробуйте ещё раз."))}}},T("Вернуть")));
   document.body.append(el);undoEl=el;undoT=setTimeout(()=>{el.remove();if(undoEl===el)undoEl=null},8000)}
 const stripId=e=>{const {id,...d}=e;return d};
 async function restoreOps(a,list){for(const x of list){await expCol(a).doc(x.id).set(x.data);if(acc&&sameAcc(a,acc))patchLocal(x.id,x.data)}}
 
 /* ---------- debts ---------- */
 const debtCol=a=>db.collection(accDoc(a).path+"/debts");
-const dShort=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat("ru-RU",y===new Date().getFullYear()?{day:"numeric",month:"short"}:{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd)).replace(/\s?г\.$/,"")};
+const dShort=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat(LOC,y===new Date().getFullYear()?{day:"numeric",month:"short"}:{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd)).replace(/\s?г\.$/,"")};
 let debts=[],debtUnsub=null,debtKey="",debtNew=null,debtOpen=null,debtMode="",debtArm=false,debtShowClosed=false;
 function resubDebts(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===debtKey)return;
   debtKey=key;if(debtUnsub)debtUnsub();debts=[];debtNew=null;debtOpen=null;const a=acc;
@@ -941,7 +949,7 @@ function resubDebts(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key==
 const debtPaid=d=>(Array.isArray(d.entries)?d.entries:[]).reduce((t,x)=>t+(Number(x.amount)||0),0);
 const debtLeft=d=>Math.max(0,Math.round(((Number(d.amount)||0)-debtPaid(d))*100)/100);
 const debtOpenNow=d=>!d.closed&&debtLeft(d)>0;
-const debtDirText=d=>d.dir==="lent"?"должен вам":"вы должны";
+const debtDirText=d=>d.dir==="lent"?T("должен вам"):T("вы должны");
 function debtNames(){return [...new Set([...people(acc),...debts.map(d=>d.who)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ru"))}
 function walletPicker(id,val,onPick){const subs=subsOf(acc);if(subs.length<2)return null;
   const sel=h("select",{class:"field",id,onchange:e=>onPick(e.target.value)},...subs.map(x=>h("option",{value:x.id},x.name)));sel.value=subIds().includes(val)?val:"main";return sel}
@@ -951,26 +959,26 @@ function renderDebts(){const sec=$("debtSec");if(!acc){sec.hidden=true;return}
   sec.hidden=readOnly&&!debts.length;if(sec.hidden)return;
   $("addDebtBtn").hidden=readOnly||!!debtNew;
   const toMe=sum(open.filter(d=>d.dir==="lent").map(d=>({amount:debtLeft(d)}))),mine=sum(open.filter(d=>d.dir!=="lent").map(d=>({amount:debtLeft(d)})));
-  $("debtSum").replaceChildren(...(open.length?[toMe?h("span",null,"Вам должны ",h("b",{class:"pos"},fmt(toMe))):null,toMe&&mine?" · ":null,mine?h("span",null,"Вы должны ",h("b",{class:"neg"},fmt(mine))):null].filter(Boolean)
-    :[debts.length||debtNew?"":"Записывайте, кто кому одолжил, — приложение напомнит о сроке и учтёт возврат в кошельке."]));
+  $("debtSum").replaceChildren(...(open.length?[toMe?h("span",null,T("Вам должны "),h("b",{class:"pos"},fmt(toMe))):null,toMe&&mine?" · ":null,mine?h("span",null,T("Вы должны "),h("b",{class:"neg"},fmt(mine))):null].filter(Boolean)
+    :[debts.length||debtNew?"":T("Записывайте, кто кому одолжил, — приложение напомнит о сроке и учтёт возврат в кошельке.")]));
   renderDebtNew();
   const cards=open.map(debtCard);
   if(debtShowClosed)cards.push(...closed.map(debtCard));
   $("debts").replaceChildren(...cards);
-  const cb=$("debtClosedBtn");cb.hidden=!closed.length;cb.textContent=debtShowClosed?"Скрыть закрытые":"Закрытые долги ("+closed.length+")"}
+  const cb=$("debtClosedBtn");cb.hidden=!closed.length;cb.textContent=debtShowClosed?T("Скрыть закрытые"):T("Закрытые долги (")+closed.length+")"}
 $("debtClosedBtn").onclick=()=>{debtShowClosed=!debtShowClosed;renderDebts()};
 function debtCard(d){const left=debtLeft(d),paid=debtPaid(d),total=Number(d.amount)||0,isOpen=debtOpenNow(d),t=today();
   const overdue=isOpen&&d.due&&d.due<t,soon=isOpen&&d.due&&!overdue&&d.due<=ymd(new Date(Date.now()+7*864e5));
-  const meta=[d.date?"с "+dShort(d.date):"",d.due?(overdue?"срок прошёл "+dShort(d.due):"вернуть до "+dShort(d.due)):"",d.note||""].filter(Boolean).join(" · ");
+  const meta=[d.date?T("с ")+dShort(d.date):"",d.due?(overdue?T("срок прошёл ")+dShort(d.due):T("вернуть до ")+dShort(d.due)):"",d.note||""].filter(Boolean).join(" · ");
   const sel=debtOpen===d.id;
   const card=h("div",{class:"debt"+(overdue?" overdue":soon?" soon":"")+(isOpen?"":" done"),id:"debt-"+d.id},
-    h("div",{class:"dhead"},h("div",{class:"dwho"},h("b",null,d.who||"Без имени"),h("span",null," "+debtDirText(d))),
-      h("div",{class:"damt "+(d.dir==="lent"?"pos":"neg")},isOpen?fmt(left):d.forgiven?"прощён":"возвращён")),
+    h("div",{class:"dhead"},h("div",{class:"dwho"},h("b",null,d.who||T("Без имени")),h("span",null," "+debtDirText(d))),
+      h("div",{class:"damt "+(d.dir==="lent"?"pos":"neg")},isOpen?fmt(left):d.forgiven?T("прощён"):T("возвращён"))),
     paid>0&&isOpen?h("div",{class:"track"},h("div",{class:"fill",style:"width:"+Math.min(100,paid/total*100)+"%"})):null,
-    h("div",{class:"meta",style:"margin-top:0"},h("span",{class:overdue?"over":""},meta),paid>0&&isOpen?h("span",null,"возвращено "+fmt(paid)+" из "+fmt(total)):!isOpen?h("span",null,fmt(total)):null),
+    h("div",{class:"meta",style:"margin-top:0"},h("span",{class:overdue?"over":""},meta),paid>0&&isOpen?h("span",null,T("возвращено ")+fmt(paid)+T(" из ")+fmt(total)):!isOpen?h("span",null,fmt(total)):null),
     readOnly?null:h("div",{class:"inline",style:"align-items:center"},
-      isOpen?h("button",{type:"button",class:"ghost sm",onclick:()=>{debtOpen=sel&&debtMode==="pay"?null:d.id;debtMode="pay";debtArm=false;renderDebts()}},d.dir==="lent"?"Вернули":"Вернул"):null,
-      h("button",{type:"button",class:"linkbtn",onclick:()=>{debtOpen=sel&&debtMode==="edit"?null:d.id;debtMode="edit";debtArm=false;renderDebts()}},"Подробнее")));
+      isOpen?h("button",{type:"button",class:"ghost sm",onclick:()=>{debtOpen=sel&&debtMode==="pay"?null:d.id;debtMode="pay";debtArm=false;renderDebts()}},d.dir==="lent"?T("Вернули"):T("Вернул")):null,
+      h("button",{type:"button",class:"linkbtn",onclick:()=>{debtOpen=sel&&debtMode==="edit"?null:d.id;debtMode="edit";debtArm=false;renderDebts()}},T("Подробнее"))));
   if(sel&&debtMode==="pay"&&isOpen)card.append(debtPayForm(d));
   if(sel&&debtMode==="edit")card.append(debtEditForm(d));
   return card}
@@ -978,21 +986,21 @@ function debtPayForm(d){const st={amount:String(debtLeft(d)).replace(".",","),da
   const box=h("div",{class:"stack",style:"gap:10px;border-top:1px solid var(--line);padding-top:10px"});
   const draw=()=>{const wp=walletPicker("dp-sub",st.sub,v=>{st.sub=v});
     box.replaceChildren(
-      h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dp-amt"},"Сумма возврата"),h("input",{class:"field",id:"dp-amt",inputmode:"decimal",value:st.amount,oninput:e=>{st.amount=e.target.value}})),
-        h("div",null,h("label",{class:"label",for:"dp-date"},"Дата"),h("input",{type:"date",id:"dp-date",value:st.date,oninput:e=>{st.date=e.target.value}}))),
-      switchBtn(d.dir==="lent"?"Зачислить в кошелёк":"Списать из кошелька",st.wallet,()=>{st.wallet=!st.wallet;draw()},"dp-w"),
-      st.wallet&&wp?h("div",null,h("label",{class:"label",for:"dp-sub"},"Кошелёк"),wp):null,
-      h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{debtOpen=null;renderDebts()}},"Отмена")),
+      h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dp-amt"},T("Сумма возврата")),h("input",{class:"field",id:"dp-amt",inputmode:"decimal",value:st.amount,oninput:e=>{st.amount=e.target.value}})),
+        h("div",null,h("label",{class:"label",for:"dp-date"},T("Дата")),h("input",{type:"date",id:"dp-date",value:st.date,oninput:e=>{st.date=e.target.value}}))),
+      switchBtn(d.dir==="lent"?T("Зачислить в кошелёк"):T("Списать из кошелька"),st.wallet,()=>{st.wallet=!st.wallet;draw()},"dp-w"),
+      st.wallet&&wp?h("div",null,h("label",{class:"label",for:"dp-sub"},T("Кошелёк")),wp):null,
+      h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:()=>{debtOpen=null;renderDebts()}},T("Отмена"))),
       h("div",{class:"formmsg",id:"dpMsg",role:"status"}))};
   async function save(){const msg=$("dpMsg");msg.classList.remove("bad");const amt=Math.round(parseNum(st.amount)*100)/100;
-    if(!(amt>0)){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";return}
-    if(amt>debtLeft(d)+0.001){msg.classList.add("bad");msg.textContent="Это больше остатка долга ("+fmt(debtLeft(d))+").";return}
+    if(!(amt>0)){msg.classList.add("bad");msg.textContent=T("Введите сумму больше нуля.");return}
+    if(amt>debtLeft(d)+0.001){msg.classList.add("bad");msg.textContent=T("Это больше остатка долга (")+fmt(debtLeft(d))+").";return}
     const a=acc,date=st.date||today();
-    try{let op="";if(st.wallet){const ref=await createOp({kind:"debt",dir:d.dir==="lent"?"in":"out",amount:amt,sub:st.sub,debt:d.id,date,note:(d.dir==="lent"?"Возврат долга: ":"Вернул долг: ")+(d.who||"")});op=ref.id}
+    try{let op="";if(st.wallet){const ref=await createOp({kind:"debt",dir:d.dir==="lent"?"in":"out",amount:amt,sub:st.sub,debt:d.id,date,note:(d.dir==="lent"?T("Возврат долга: "):T("Вернул долг: "))+(d.who||"")});op=ref.id}
       const entries=[...(Array.isArray(d.entries)?d.entries:[]),{id:genId(),amount:amt,date,op}];
       const done=entries.reduce((t,x)=>t+(Number(x.amount)||0),0)>=(Number(d.amount)||0)-0.001;
       await debtCol(a).doc(d.id).update({entries,closed:done,...(done?{closedAt:Date.now()}:{})});
-      debtOpen=null;toast(done?"Долг закрыт полностью":"Записано: возвращено "+fmt(amt))}
+      debtOpen=null;toast(done?T("Долг закрыт полностью"):T("Записано: возвращено ")+fmt(amt))}
     catch(e){writeErr(e,msg)}}
   draw();return box}
 function debtEditForm(d){const st={who:d.who||"",amount:String(d.amount||"").replace(".",","),date:d.date||today(),due:d.due||"",note:d.note||""};
@@ -1000,72 +1008,72 @@ function debtEditForm(d){const st={who:d.who||"",amount:String(d.amount||"").rep
   const box=h("div",{class:"stack",style:"gap:10px;border-top:1px solid var(--line);padding-top:10px"});
   const f=(id,label,el)=>h("div",null,h("label",{class:"label",for:id},label),el);
   box.replaceChildren(
-    f("de-who","Кто",h("input",{class:"field",id:"de-who",maxlength:"40",value:st.who,oninput:e=>{st.who=e.target.value}})),
-    h("div",{class:"row2 half"},f("de-amt","Сумма долга",h("input",{class:"field",id:"de-amt",inputmode:"decimal",value:st.amount,oninput:e=>{st.amount=e.target.value}})),
-      f("de-due","Вернуть до",h("input",{type:"date",id:"de-due",value:st.due,oninput:e=>{st.due=e.target.value}}))),
-    f("de-note","Комментарий",h("input",{class:"field",id:"de-note",maxlength:"80",value:st.note,oninput:e=>{st.note=e.target.value}})),
-    entries.length?h("div",{class:"stack",style:"gap:4px"},h("span",{class:"label",style:"margin:0"},"Возвраты"),...entries.map(x=>h("div",{class:"inline",style:"justify-content:space-between;align-items:center"},
-      h("span",null,dShort(x.date)+" · "+fmt(Number(x.amount)||0)+(x.op?"":" · без кошелька")),
-      readOnly?null:h("button",{type:"button",class:"x","aria-label":"Удалить этот возврат",onclick:()=>delEntry(d,x)},"×")))):null,
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{debtOpen=null;renderDebts()}},"Закрыть")),
+    f("de-who",T("Кто"),h("input",{class:"field",id:"de-who",maxlength:"40",value:st.who,oninput:e=>{st.who=e.target.value}})),
+    h("div",{class:"row2 half"},f("de-amt",T("Сумма долга"),h("input",{class:"field",id:"de-amt",inputmode:"decimal",value:st.amount,oninput:e=>{st.amount=e.target.value}})),
+      f("de-due",T("Вернуть до"),h("input",{type:"date",id:"de-due",value:st.due,oninput:e=>{st.due=e.target.value}}))),
+    f("de-note",T("Комментарий"),h("input",{class:"field",id:"de-note",maxlength:"80",value:st.note,oninput:e=>{st.note=e.target.value}})),
+    entries.length?h("div",{class:"stack",style:"gap:4px"},h("span",{class:"label",style:"margin:0"},T("Возвраты")),...entries.map(x=>h("div",{class:"inline",style:"justify-content:space-between;align-items:center"},
+      h("span",null,dShort(x.date)+" · "+fmt(Number(x.amount)||0)+(x.op?"":T(" · без кошелька"))),
+      readOnly?null:h("button",{type:"button",class:"x","aria-label":T("Удалить этот возврат"),onclick:()=>delEntry(d,x)},"×")))):null,
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},T("Сохранить")),h("button",{type:"button",class:"ghost",onclick:()=>{debtOpen=null;renderDebts()}},T("Закрыть"))),
     h("div",{class:"formmsg",id:"deMsg",role:"status"}),
     h("div",{class:"confirm"},
-      debtOpenNow(d)?h("button",{type:"button",class:"danger",onclick:()=>forgive(d)},d.dir==="lent"?"Простить долг":"Отметить как закрытый"):h("button",{type:"button",class:"danger",onclick:()=>reopen(d)},"Вернуть в открытые"),
-      debtArm?h("button",{type:"button",class:"del",onclick:()=>deleteDebt(d)},"Да, удалить"):h("button",{type:"button",class:"danger",onclick:()=>{debtArm=true;renderDebts()}},"Удалить долг")),
-    h("div",{class:"hint",style:"margin:0"},"Удаление уберёт и связанные операции в кошельках."));
+      debtOpenNow(d)?h("button",{type:"button",class:"danger",onclick:()=>forgive(d)},d.dir==="lent"?T("Простить долг"):T("Отметить как закрытый")):h("button",{type:"button",class:"danger",onclick:()=>reopen(d)},T("Вернуть в открытые")),
+      debtArm?h("button",{type:"button",class:"del",onclick:()=>deleteDebt(d)},T("Да, удалить")):h("button",{type:"button",class:"danger",onclick:()=>{debtArm=true;renderDebts()}},T("Удалить долг"))),
+    h("div",{class:"hint",style:"margin:0"},T("Удаление уберёт и связанные операции в кошельках.")));
   async function save(){const msg=$("deMsg");msg.classList.remove("bad");const amt=Math.round(parseNum(st.amount)*100)/100,who=st.who.trim().slice(0,40);
-    if(!who){msg.classList.add("bad");msg.textContent="Укажите, кто.";return}
-    if(!(amt>0)){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";return}
-    if(amt<debtPaid(d)-0.001){msg.classList.add("bad");msg.textContent="Сумма меньше уже возвращённого ("+fmt(debtPaid(d))+").";return}
+    if(!who){msg.classList.add("bad");msg.textContent=T("Укажите, кто.");return}
+    if(!(amt>0)){msg.classList.add("bad");msg.textContent=T("Введите сумму больше нуля.");return}
+    if(amt<debtPaid(d)-0.001){msg.classList.add("bad");msg.textContent=T("Сумма меньше уже возвращённого (")+fmt(debtPaid(d))+").";return}
     const a=acc;
     try{const done=debtPaid(d)>=amt-0.001;
       await debtCol(a).doc(d.id).update({who,amount:amt,due:st.due||"",note:st.note.trim().slice(0,80),closed:done||(!!d.closed&&!!d.forgiven)});
-      if(d.op){try{await expCol(a).doc(d.op).update({amount:amt,note:(d.dir==="lent"?"Дал в долг: ":"Взял в долг: ")+who})}catch(e){}}
-      debtOpen=null;toast("Сохранено")}catch(e){writeErr(e,msg)}}
+      if(d.op){try{await expCol(a).doc(d.op).update({amount:amt,note:(d.dir==="lent"?T("Дал в долг: "):T("Взял в долг: "))+who})}catch(e){}}
+      debtOpen=null;toast(T("Сохранено"))}catch(e){writeErr(e,msg)}}
   return box}
 async function delEntry(d,x){const a=acc,entries=(d.entries||[]).filter(y=>y.id!==x.id);let opData=null;
   try{if(x.op){const s=await expCol(a).doc(x.op).get();if(s.exists){opData=s.data();await expCol(a).doc(x.op).delete();patchLocal(x.op,null)}}
     await debtCol(a).doc(d.id).update({entries,closed:false,forgiven:false});
-    offerUndo("Возврат удалён",async()=>{if(opData)await restoreOps(a,[{id:x.op,data:opData}]);const cur2=(await debtCol(a).doc(d.id).get()).data()||{};
+    offerUndo(T("Возврат удалён"),async()=>{if(opData)await restoreOps(a,[{id:x.op,data:opData}]);const cur2=(await debtCol(a).doc(d.id).get()).data()||{};
       const en=[...(cur2.entries||[]),x],done=en.reduce((t,y)=>t+(Number(y.amount)||0),0)>=(Number(cur2.amount)||0)-0.001;await debtCol(a).doc(d.id).update({entries:en,closed:done})})}
-  catch(e){toast("Не получилось удалить возврат")}}
-async function forgive(d){try{await debtCol(acc).doc(d.id).update({closed:true,forgiven:true,closedAt:Date.now()});debtOpen=null;toast(d.dir==="lent"?"Долг прощён":"Долг закрыт")}catch(e){toast("Не получилось сохранить")}}
-async function reopen(d){try{await debtCol(acc).doc(d.id).update({closed:false,forgiven:false});toast("Долг снова открыт")}catch(e){toast("Не получилось сохранить")}}
+  catch(e){toast(T("Не получилось удалить возврат"))}}
+async function forgive(d){try{await debtCol(acc).doc(d.id).update({closed:true,forgiven:true,closedAt:Date.now()});debtOpen=null;toast(d.dir==="lent"?T("Долг прощён"):T("Долг закрыт"))}catch(e){toast(T("Не получилось сохранить"))}}
+async function reopen(d){try{await debtCol(acc).doc(d.id).update({closed:false,forgiven:false});toast(T("Долг снова открыт"))}catch(e){toast(T("Не получилось сохранить"))}}
 async function deleteDebt(d){const a=acc,ids=[d.op,...(d.entries||[]).map(x=>x.op)].filter(Boolean),saved=[];
   try{for(const id of ids){const s=await expCol(a).doc(id).get();if(s.exists){saved.push({id,data:s.data()});await expCol(a).doc(id).delete();patchLocal(id,null)}}
     const {id,...data}=d;await debtCol(a).doc(d.id).delete();debtOpen=null;debtArm=false;
-    offerUndo("Долг «"+(d.who||"")+"» удалён",async()=>{await debtCol(a).doc(id).set(data);await restoreOps(a,saved)})}
-  catch(e){toast("Не получилось удалить долг")}}
+    offerUndo(T("Долг «")+(d.who||"")+T("» удалён"),async()=>{await debtCol(a).doc(id).set(data);await restoreOps(a,saved)})}
+  catch(e){toast(T("Не получилось удалить долг"))}}
 function renderDebtNew(){const box=$("debtNew");if(!debtNew){box.hidden=true;box.replaceChildren();return}box.hidden=false;const g=debtNew;
   const wp=walletPicker("dn-sub",g.sub,v=>{g.sub=v});
   const list=h("datalist",{id:"dn-names"},...debtNames().map(n=>h("option",{value:n})));
   box.replaceChildren(h("div",{class:"editor"},
-    mseg([["lent","Я дал в долг"],["borrowed","Я взял в долг"]],g.dir,v=>{g.dir=v;renderDebtNew()},"Направление"),
-    h("div",null,h("label",{class:"label",for:"dn-who"},g.dir==="lent"?"Кому":"У кого"),h("input",{class:"field",id:"dn-who",maxlength:"40",list:"dn-names",autocomplete:"off",placeholder:"Имя",value:g.who,oninput:e=>{g.who=e.target.value}}),list),
-    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dn-amt"},"Сумма, "+cur()),h("input",{class:"field",id:"dn-amt",inputmode:"decimal",autocomplete:"off",value:g.amount,oninput:e=>{g.amount=e.target.value}})),
-      h("div",null,h("label",{class:"label",for:"dn-due"},"Вернуть до"),h("input",{type:"date",id:"dn-due",value:g.due,oninput:e=>{g.due=e.target.value}}))),
-    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dn-date"},"Дата"),h("input",{type:"date",id:"dn-date",value:g.date,oninput:e=>{g.date=e.target.value}})),
-      h("div",null,h("label",{class:"label",for:"dn-note"},"Комментарий"),h("input",{class:"field",id:"dn-note",maxlength:"80",placeholder:"Необязательно",value:g.note,oninput:e=>{g.note=e.target.value}}))),
-    switchBtn(g.dir==="lent"?"Списать сумму из кошелька":"Зачислить сумму в кошелёк",g.wallet,()=>{g.wallet=!g.wallet;renderDebtNew()},"dn-w"),
-    g.wallet&&wp?h("div",null,h("label",{class:"label",for:"dn-sub"},"Кошелёк"),wp):null,
-    h("div",{class:"hint",style:"margin:0"},"Долги не считаются расходами и доходами — они меняют только баланс кошелька."),
-    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:createDebt},"Добавить долг"),h("button",{type:"button",class:"ghost",onclick:()=>{debtNew=null;renderDebts()}},"Отмена")),
+    mseg([["lent",T("Я дал в долг")],["borrowed",T("Я взял в долг")]],g.dir,v=>{g.dir=v;renderDebtNew()},T("Направление")),
+    h("div",null,h("label",{class:"label",for:"dn-who"},g.dir==="lent"?T("Кому"):T("У кого")),h("input",{class:"field",id:"dn-who",maxlength:"40",list:"dn-names",autocomplete:"off",placeholder:T("Имя"),value:g.who,oninput:e=>{g.who=e.target.value}}),list),
+    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dn-amt"},T("Сумма, ")+cur()),h("input",{class:"field",id:"dn-amt",inputmode:"decimal",autocomplete:"off",value:g.amount,oninput:e=>{g.amount=e.target.value}})),
+      h("div",null,h("label",{class:"label",for:"dn-due"},T("Вернуть до")),h("input",{type:"date",id:"dn-due",value:g.due,oninput:e=>{g.due=e.target.value}}))),
+    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dn-date"},T("Дата")),h("input",{type:"date",id:"dn-date",value:g.date,oninput:e=>{g.date=e.target.value}})),
+      h("div",null,h("label",{class:"label",for:"dn-note"},T("Комментарий")),h("input",{class:"field",id:"dn-note",maxlength:"80",placeholder:T("Необязательно"),value:g.note,oninput:e=>{g.note=e.target.value}}))),
+    switchBtn(g.dir==="lent"?T("Списать сумму из кошелька"):T("Зачислить сумму в кошелёк"),g.wallet,()=>{g.wallet=!g.wallet;renderDebtNew()},"dn-w"),
+    g.wallet&&wp?h("div",null,h("label",{class:"label",for:"dn-sub"},T("Кошелёк")),wp):null,
+    h("div",{class:"hint",style:"margin:0"},T("Долги не считаются расходами и доходами — они меняют только баланс кошелька.")),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:createDebt},T("Добавить долг")),h("button",{type:"button",class:"ghost",onclick:()=>{debtNew=null;renderDebts()}},T("Отмена"))),
     h("div",{class:"formmsg",id:"dnMsg",role:"status"})))}
 async function createDebt(){const g=debtNew,msg=$("dnMsg");msg.classList.remove("bad");const who=g.who.trim().slice(0,40),amt=Math.round(parseNum(g.amount)*100)/100;
-  if(!who){msg.classList.add("bad");msg.textContent=g.dir==="lent"?"Укажите, кому вы дали в долг.":"Укажите, у кого вы взяли в долг.";$("dn-who").focus();return}
-  if(!(amt>0)){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";$("dn-amt").focus();return}
-  if(g.due&&g.due<(g.date||today())){msg.classList.add("bad");msg.textContent="Срок возврата не может быть раньше даты долга.";$("dn-due").focus();return}
+  if(!who){msg.classList.add("bad");msg.textContent=g.dir==="lent"?T("Укажите, кому вы дали в долг."):T("Укажите, у кого вы взяли в долг.");$("dn-who").focus();return}
+  if(!(amt>0)){msg.classList.add("bad");msg.textContent=T("Введите сумму больше нуля.");$("dn-amt").focus();return}
+  if(g.due&&g.due<(g.date||today())){msg.classList.add("bad");msg.textContent=T("Срок возврата не может быть раньше даты долга.");$("dn-due").focus();return}
   const a=acc,ref=debtCol(a).doc(),date=g.date||today();
-  try{let op="";if(g.wallet){const r=await createOp({kind:"debt",dir:g.dir==="lent"?"out":"in",amount:amt,sub:g.sub,debt:ref.id,date,note:(g.dir==="lent"?"Дал в долг: ":"Взял в долг: ")+who});op=r.id}
+  try{let op="";if(g.wallet){const r=await createOp({kind:"debt",dir:g.dir==="lent"?"out":"in",amount:amt,sub:g.sub,debt:ref.id,date,note:(g.dir==="lent"?T("Дал в долг: "):T("Взял в долг: "))+who});op=r.id}
     await ref.set({who,dir:g.dir,amount:amt,date,due:g.due||"",note:g.note.trim().slice(0,80),sub:g.wallet?g.sub:"",op,entries:[],closed:false,createdAt:Date.now(),by:uid||""});
-    debtNew=null;toast(g.dir==="lent"?"Записано: "+who+" должен вам "+fmt(amt):"Записано: вы должны "+who+" "+fmt(amt))}
+    debtNew=null;toast(g.dir==="lent"?T("Записано: ")+who+T(" должен вам ")+fmt(amt):T("Записано: вы должны ")+who+" "+fmt(amt))}
   catch(e){writeErr(e,msg)}}
 $("addDebtBtn").onclick=()=>{debtNew={dir:"lent",who:"",amount:"",date:today(),due:"",note:"",wallet:true,sub:subSel!=="all"?subSel:"main"};debtOpen=null;renderDebts();setTimeout(()=>{const el=$("dn-who");if(el)el.focus()},0)};
 function debtOpEditor(e){const d=debts.find(x=>x.id===e.debt);
-  return h("div",{class:"editor"},h("div",null,"Это операция по долгу"+(d?" «"+(d.who||"")+"»":"")+". Сумму, дату и возвраты меняйте в карточке долга."),
+  return h("div",{class:"editor"},h("div",null,T("Это операция по долгу")+(d?T(" «")+(d.who||"")+T("»"):"")+T(". Сумму, дату и возвраты меняйте в карточке долга.")),
     h("div",{class:"inline"},d?h("button",{type:"button",class:"primary",onclick:()=>{closeEditor();setView("spend",true);debtOpen=d.id;debtMode="edit";debtShowClosed=debtShowClosed||!debtOpenNow(d);renderDebts();
-      setTimeout(()=>{const el=$("debt-"+d.id);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})},60)}},"Открыть долг"):null,
-      h("button",{type:"button",class:"ghost",onclick:closeEditor},"Закрыть")))}
+      setTimeout(()=>{const el=$("debt-"+d.id);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})},60)}},T("Открыть долг")):null,
+      h("button",{type:"button",class:"ghost",onclick:closeEditor},T("Закрыть"))))}
 
 /* ---------- calendar ---------- */
 let calDay;
@@ -1085,39 +1093,39 @@ function renderCalendar(box){const m=month,dim=daysIn(m),[y,mm]=m.split("-").map
   const cells=[...WD.map(w=>h("div",{class:"cwd","aria-hidden":"true"},w))];
   for(let i=0;i<first;i++)cells.push(h("div",{class:"cday empty","aria-hidden":"true"}));
   for(let d=1;d<=dim;d++){const ds=m+"-"+pad(d),out=outBy[d]||0,inn=inBy[d]||0,p=plan[d]||[],lvl=out?Math.max(.12,out/max):0;
-    const label=dayMonth(ds)+(out?", расходы "+fmt(out):"")+(inn?", доходы "+fmt(inn):"")+(p.length?", запланировано: "+p.map(x=>x.type==="tpl"?x.t.name:"долг "+(x.d.who||"")).join(", "):"");
+    const label=dayMonth(ds)+(out?T(", расходы ")+fmt(out):"")+(inn?T(", доходы ")+fmt(inn):"")+(p.length?T(", запланировано: ")+p.map(x=>x.type==="tpl"?x.t.name:T("долг ")+(x.d.who||"")).join(", "):"");
     cells.push(h("button",{type:"button",class:"cday"+(ds===t?" today":"")+(ds===calDay?" sel":"")+(ds>t?" future":""),style:lvl?"--lvl:"+lvl.toFixed(2):null,"aria-label":label,"aria-pressed":String(ds===calDay),
       onclick:()=>{calDay=calDay===ds?null:ds;renderList()}},
       h("span",{class:"cnum"},String(d)),out?h("span",{class:"csum"},compact(out)):null,
       h("span",{class:"cmarks"},inn?h("i",{class:"m-inc"}):null,p.some(x=>x.type==="tpl")?h("i",{class:"m-plan"}):null,p.some(x=>x.type==="debt")?h("i",{class:"m-debt"}):null)))}
-  const legend=h("div",{class:"legend calleg"},h("span",null,h("i",{class:"m-inc"}),"доход"),h("span",null,h("i",{class:"m-plan"}),"регулярный платёж"),h("span",null,h("i",{class:"m-debt"}),"срок долга"));
+  const legend=h("div",{class:"legend calleg"},h("span",null,h("i",{class:"m-inc"}),T("доход")),h("span",null,h("i",{class:"m-plan"}),T("регулярный платёж")),h("span",null,h("i",{class:"m-debt"}),T("срок долга")));
   const parts=[h("div",{class:"cal"},...cells),legend];
   if(calDay){const items=ops.filter(e=>e.date===calDay).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)),p=plan[+calDay.slice(8,10)]||[];
     const out=sum(items.filter(isExp)),inn=sum(items.filter(isInc));
     parts.push(h("div",{class:"day calsel"},h("div",{class:"dayh"},h("span",null,dayLabel(calDay)),h("span",null,out?fmt(out):null,inn?h("span",{class:"in"},"+"+fmt(inn)):null)),
       ...items.map(e=>itemRow(e,false,"ops")),
-      ...p.map(x=>x.type==="tpl"?h("div",{class:"planrow"},catIcon(tplCat(x.t),30),h("div",{class:"what"},h("div",null,x.t.name),h("div",{class:"sub"},"по графику"+(x.t.kind==="inc"?" · доход":""))),
+      ...p.map(x=>x.type==="tpl"?h("div",{class:"planrow"},catIcon(tplCat(x.t),30),h("div",{class:"what"},h("div",null,x.t.name),h("div",{class:"sub"},T("по графику")+(x.t.kind==="inc"?T(" · доход"):""))),
           h("div",{class:"amt muted"},x.t.amount?(x.t.kind==="inc"?"+":"")+fmt(x.t.amount):"—"),
-          readOnly||calDay>t?null:h("button",{type:"button",class:"ghost sm",onclick:ev=>runTpl(x.t,x.day,ev.currentTarget)},x.t.kind==="inc"?"Получено":"Оплачено"))
-        :h("div",{class:"planrow"},catIcon({c:"--c7",icon:"coins"},30),h("div",{class:"what"},h("div",null,"Срок долга: "+(x.d.who||"")),h("div",{class:"sub"},debtDirText(x.d))),h("div",{class:"amt muted"},fmt(debtLeft(x.d))))),
-      !items.length&&!p.length?h("div",{class:"empty"},"В этот день операций нет."):null,
-      readOnly?null:h("button",{type:"button",class:"ghost",style:"margin-top:10px",onclick:()=>{const d=calDay;openEntry(false);$("date").value=d;renderDetails()}},"+ Добавить на "+dayMonth(calDay))))}
-  else parts.push(h("div",{class:"hint"},"Нажмите на день, чтобы увидеть его операции."));
+          readOnly||calDay>t?null:h("button",{type:"button",class:"ghost sm",onclick:ev=>runTpl(x.t,x.day,ev.currentTarget)},x.t.kind==="inc"?T("Получено"):T("Оплачено")))
+        :h("div",{class:"planrow"},catIcon({c:"--c7",icon:"coins"},30),h("div",{class:"what"},h("div",null,T("Срок долга: ")+(x.d.who||"")),h("div",{class:"sub"},debtDirText(x.d))),h("div",{class:"amt muted"},fmt(debtLeft(x.d))))),
+      !items.length&&!p.length?h("div",{class:"empty"},T("В этот день операций нет.")):null,
+      readOnly?null:h("button",{type:"button",class:"ghost",style:"margin-top:10px",onclick:()=>{const d=calDay;openEntry(false);$("date").value=d;renderDetails()}},T("+ Добавить на ")+dayMonth(calDay))))}
+  else parts.push(h("div",{class:"hint"},T("Нажмите на день, чтобы увидеть его операции.")));
   box.replaceChildren(...parts)}
-function renderListMode(){$("listMode").replaceChildren(mseg([["list","Список"],["cal","Календарь"]],calMode()?"cal":"list",v=>{lsSet("fk.listMode",v);renderList()},"Вид"))}
+function renderListMode(){$("listMode").replaceChildren(mseg([["list",T("Список")],["cal",T("Календарь")]],calMode()?"cal":"list",v=>{lsSet("fk.listMode",v);renderList()},T("Вид")))}
 
 /* ---------- account deletion ---------- */
 let delArm=false;
 function renderDelAcc(){const box=$("delAcc");
-  if(!delArm){box.replaceChildren(h("button",{type:"button",class:"ghost danger",onclick:()=>{delArm=true;renderDelAcc();setTimeout(()=>$("delConfirm").focus(),0)}},"Удалить аккаунт"));return}
-  const inp=h("input",{class:"field",id:"delConfirm",autocomplete:"off",placeholder:"УДАЛИТЬ",style:"max-width:220px"});
-  const btn=h("button",{type:"button",class:"del",style:"padding:10px 14px;border-radius:12px",onclick:doDeleteAccount},"Удалить навсегда");
-  box.replaceChildren(h("div",{class:"stack",style:"gap:8px"},h("label",{for:"delConfirm"},"Чтобы подтвердить, введите слово ",h("b",null,"УДАЛИТЬ")),inp,
-    h("div",{class:"inline"},btn,h("button",{type:"button",class:"ghost",onclick:()=>{delArm=false;renderDelAcc()}},"Отмена")),h("div",{class:"formmsg",id:"delMsg",role:"status"})))}
+  if(!delArm){box.replaceChildren(h("button",{type:"button",class:"ghost danger",onclick:()=>{delArm=true;renderDelAcc();setTimeout(()=>$("delConfirm").focus(),0)}},T("Удалить аккаунт")));return}
+  const inp=h("input",{class:"field",id:"delConfirm",autocomplete:"off",placeholder:T("УДАЛИТЬ"),style:"max-width:220px"});
+  const btn=h("button",{type:"button",class:"del",style:"padding:10px 14px;border-radius:12px",onclick:doDeleteAccount},T("Удалить навсегда"));
+  box.replaceChildren(h("div",{class:"stack",style:"gap:8px"},h("label",{for:"delConfirm"},T("Чтобы подтвердить, введите слово "),h("b",null,T("УДАЛИТЬ"))),inp,
+    h("div",{class:"inline"},btn,h("button",{type:"button",class:"ghost",onclick:()=>{delArm=false;renderDelAcc()}},T("Отмена"))),h("div",{class:"formmsg",id:"delMsg",role:"status"})))}
 async function doDeleteAccount(ev){const msg=$("delMsg");msg.classList.remove("bad");
-  if($("delConfirm").value.trim().toUpperCase()!=="УДАЛИТЬ"){msg.classList.add("bad");msg.textContent="Введите слово УДАЛИТЬ.";return}
-  ev.currentTarget.disabled=true;msg.textContent="Удаляем аккаунт…";
-  try{await KASSA.deleteAccount()}catch(e){ev.currentTarget.disabled=false;msg.classList.add("bad");msg.textContent="Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз."}}
+  if($("delConfirm").value.trim().toUpperCase()!==T("УДАЛИТЬ")){msg.classList.add("bad");msg.textContent=T("Введите слово УДАЛИТЬ.");return}
+  ev.currentTarget.disabled=true;msg.textContent=T("Удаляем аккаунт…");
+  try{await KASSA.deleteAccount()}catch(e){ev.currentTarget.disabled=false;msg.classList.add("bad");msg.textContent=T("Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.")}}
 
 /* ---------- history ---------- */
 let histExp=[],histLoaded=false,histUnsub=null,histKey="",histShown=60,dl=null;
@@ -1131,7 +1139,7 @@ function resubHist(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===
   archFrom=shiftMonth(today().slice(0,7),-2)+"-01";
   histUnsub=expCol(a).where("date",">=",archFrom).orderBy("date","desc").limit(1000).onSnapshot(qs=>{if(histKey!==key)return;
     liveExp=qs.docs.map(d=>({id:d.id,...d.data()}));histLoaded=true;mergeHist();afterHist()},
-    ()=>{if(histKey!==key)return;histLoaded=true;afterHist();notice("Не удалось загрузить историю. Обновите страницу.",true)});
+    ()=>{if(histKey!==key)return;histLoaded=true;afterHist();notice(T("Не удалось загрузить историю. Обновите страницу."),true)});
   loadArchive(a,key)}
 /* older operations are read page by page, so there is no limit on how many an account can hold */
 async function loadArchive(a,key){let upper=archFrom,strict=true,guard=0;
@@ -1143,7 +1151,7 @@ async function loadArchive(a,key){let upper=archFrom,strict=true,guard=0;
       if(qs.size<1000||++guard>500)break;
       if(fresh===0){if(strict)break;strict=true;continue}
       upper=oldest;strict=false;mergeHist();afterHist()}}
-  catch(e){if(histKey===key)notice("Не удалось загрузить старые операции. Обновите страницу.",true)}
+  catch(e){if(histKey===key)notice(T("Не удалось загрузить старые операции. Обновите страницу."),true)}
   if(histKey!==key)return;archDone=true;mergeHist();afterHist()}
 function filteredHist(){const t=today(),tm=t.slice(0,7);let from="",to="";
   if(hf.period==="m1")from=tm+"-01";else if(hf.period==="m3")from=shiftMonth(tm,-2)+"-01";else if(hf.period==="y")from=shiftMonth(tm,-11)+"-01";
@@ -1162,27 +1170,27 @@ function filteredHist(){const t=today(),tm=t.slice(0,7);let from="",to="";
   rows.sort(hf.sort==="date_asc"?byDate:hf.sort==="amt_desc"?(a,b)=>A(b)-A(a):hf.sort==="amt_asc"?(a,b)=>A(a)-A(b):(a,b)=>-byDate(a,b));
   return rows}
 function histControls(){
-  $("hKind").replaceChildren(mseg([["all","Все"],["exp","Расходы"],["inc","Доходы"],["tr","Переводы"],["debt","Долги"]],hf.kind,v=>{hf.kind=v;if(v==="exp"&&ICAT[hf.cat]||v==="inc"&&CAT[hf.cat]||v==="tr"||v==="debt")hf.cat="";histShown=60;renderHistory()},"Тип"));
-  $("hPeriod").replaceChildren(mseg([["m1","Месяц"],["m3","3 мес"],["y","Год"],["all","Всё"],["custom","Даты"]],hf.period,v=>{hf.period=v;histShown=60;renderHistory()},"Период"));
+  $("hKind").replaceChildren(mseg([["all",T("Все")],["exp",T("Расходы")],["inc",T("Доходы")],["tr",T("Переводы")],["debt",T("Долги")]],hf.kind,v=>{hf.kind=v;if(v==="exp"&&ICAT[hf.cat]||v==="inc"&&CAT[hf.cat]||v==="tr"||v==="debt")hf.cat="";histShown=60;renderHistory()},T("Тип")));
+  $("hPeriod").replaceChildren(mseg([["m1",T("Месяц")],["m3",T("3 мес")],["y",T("Год")],["all",T("Всё")],["custom",T("Даты")]],hf.period,v=>{hf.period=v;histShown=60;renderHistory()},T("Период")));
   $("hRange").hidden=hf.period!=="custom";
   const groups=[];
-  if(hf.kind!=="inc")groups.push(h("optgroup",{label:"Расходы"},...CATS.map(c=>h("option",{value:c.id},c.name))));
-  if(hf.kind!=="exp")groups.push(h("optgroup",{label:"Доходы"},...INC_CATS.map(c=>h("option",{value:c.id},c.name))));
-  $("hCat").replaceChildren(h("option",{value:""},"Все категории"),...groups);$("hCat").value=hf.cat;$("hCat").disabled=hf.kind==="tr"||hf.kind==="debt";
+  if(hf.kind!=="inc")groups.push(h("optgroup",{label:T("Расходы")},...CATS.map(c=>h("option",{value:c.id},c.name))));
+  if(hf.kind!=="exp")groups.push(h("optgroup",{label:T("Доходы")},...INC_CATS.map(c=>h("option",{value:c.id},c.name))));
+  $("hCat").replaceChildren(h("option",{value:""},T("Все категории")),...groups);$("hCat").value=hf.cat;$("hCat").disabled=hf.kind==="tr"||hf.kind==="debt";
   const isS=!!acc&&acc.type==="shared";$("hWhoWrap").hidden=!isS;
   if(isS){const ns=[...new Set([...people(acc),...histExp.map(who)])].filter(x=>x&&x!=="—").sort();
-    $("hWho").replaceChildren(h("option",{value:""},"Все"),...ns.map(n=>h("option",{value:n},n)));if(!ns.includes(hf.who))hf.who="";$("hWho").value=hf.who}
+    $("hWho").replaceChildren(h("option",{value:""},T("Все")),...ns.map(n=>h("option",{value:n},n)));if(!ns.includes(hf.who))hf.who="";$("hWho").value=hf.who}
   $("hSort").value=hf.sort}
 function renderHistory(){if(view!=="history")return;histControls();
   const list=$("hList"),more=$("hMore");more.hidden=true;$("hCap").hidden=archDone||!histLoaded;
   if(!acc){list.replaceChildren();$("hSum").replaceChildren();return}
-  if(!histLoaded){list.replaceChildren(h("div",{class:"empty"},"Загружаем историю…"));$("hSum").replaceChildren();return}
+  if(!histLoaded){list.replaceChildren(h("div",{class:"empty"},T("Загружаем историю…")));$("hSum").replaceChildren();return}
   if(acc.type==="shared")ensureNames(histExp.map(e=>e.by));
   const rows=filteredHist(),out=sum(rows.filter(isExp)),inn=sum(rows.filter(isInc));
-  $("hSum").replaceChildren(h("span",null,"Найдено ",h("b",null,String(rows.length))," "+plural(rows.length,["операция","операции","операций"])),
-    ...[out?h("span",null,"Расходы ",h("b",null,fmt(out))):null,inn?h("span",null,"Доходы ",h("b",{class:"pos"},"+"+fmt(inn))):null].filter(Boolean));
+  $("hSum").replaceChildren(h("span",null,T("Найдено "),h("b",null,String(rows.length))," "+plural(rows.length,[T("операция"),T("операции"),T("операций")])),
+    ...[out?h("span",null,T("Расходы "),h("b",null,fmt(out))):null,inn?h("span",null,T("Доходы "),h("b",{class:"pos"},"+"+fmt(inn))):null].filter(Boolean));
   $("hCsv").hidden=!dl||!rows.length||readOnly;
-  if(!rows.length){list.replaceChildren(h("div",{class:"empty"},histExp.length?"Ничего не найдено. Измените поиск или сбросьте фильтры.":"Операций пока нет. Нажмите «+» внизу, чтобы добавить первую."));return}
+  if(!rows.length){list.replaceChildren(h("div",{class:"empty"},histExp.length?T("Ничего не найдено. Измените поиск или сбросьте фильтры."):T("Операций пока нет. Нажмите «+» внизу, чтобы добавить первую.")));return}
   const shown=rows.slice(0,histShown);
   if(hf.sort.startsWith("date")){
     const mT={},dT={};for(const e of rows){if(isTr(e)||isDebt(e))continue;const m=e.month||String(e.date).slice(0,7),k=isInc(e)?1:0,a=Number(e.amount)||0;
@@ -1195,7 +1203,7 @@ function renderHistory(){if(view!=="history")return;histControls();
       box.append(itemRow(e,false,"hist"))}
     list.replaceChildren(...blocks)}
   else list.replaceChildren(h("div",{class:"day"},...shown.map(e=>itemRow(e,true,"hist"))));
-  if(rows.length>histShown){more.hidden=false;more.textContent="Показать ещё "+Math.min(60,rows.length-histShown)+" из "+(rows.length-histShown)}}
+  if(rows.length>histShown){more.hidden=false;more.textContent=T("Показать ещё ")+Math.min(60,rows.length-histShown)+T(" из ")+(rows.length-histShown)}}
 $("hq").addEventListener("input",e=>{hf.q=e.target.value;histShown=60;renderHistory()});
 $("hCat").addEventListener("change",e=>{hf.cat=e.target.value;histShown=60;renderHistory()});
 $("hWho").addEventListener("change",e=>{hf.who=e.target.value;histShown=60;renderHistory()});
@@ -1206,15 +1214,15 @@ $("hMore").onclick=()=>{histShown+=60;renderHistory()};
 $("hReset").onclick=()=>{hf={...HF0};$("hq").value="";$("hFrom").value="";$("hTo").value="";histShown=60;renderHistory()};
 $("hCsv").onclick=async()=>{if(!dl||!acc)return;const rows=filteredHist();
   const esc=v=>{v=String(v??"");return /[";\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-  const lines=[["Дата","Тип","Категория","Кошелёк","Сумма","Валюта","Кто","Комментарий"],
-    ...rows.map(e=>[e.date,isTr(e)?"Перевод":isDebt(e)?(e.dir==="in"?"Долг: поступление":"Долг: списание"):isInc(e)?"Доход":"Расход",catOf(e).name,isTr(e)?endName(e,"from")+" → "+endName(e,"to"):subName(subOf(e)),String(Number(e.amount)||0).replace(".",","),cur(),acc.type==="shared"?who(e):"",e.note||""])].map(r=>r.map(esc).join(";"));
-  try{await dl.save({filename:"Семейная касса - "+(acc.name||"счёт").replace(/[\\/:*?"<>|]/g," ")+".csv",data:"\ufeff"+lines.join("\r\n")});toast("Файл сохранён")}
+  const lines=[[T("Дата"),T("Тип"),T("Категория"),T("Кошелёк"),T("Сумма"),T("Валюта"),T("Кто"),T("Комментарий")],
+    ...rows.map(e=>[e.date,isTr(e)?T("Перевод"):isDebt(e)?(e.dir==="in"?T("Долг: поступление"):T("Долг: списание")):isInc(e)?T("Доход"):T("Расход"),catOf(e).name,isTr(e)?endName(e,"from")+" → "+endName(e,"to"):subName(subOf(e)),String(Number(e.amount)||0).replace(".",","),cur(),acc.type==="shared"?who(e):"",e.note||""])].map(r=>r.map(esc).join(";"));
+  try{await dl.save({filename:T("Семейная касса - ")+(acc.name||T("счёт")).replace(/[\\/:*?"<>|]/g," ")+".csv",data:"\ufeff"+lines.join("\r\n")});toast(T("Файл сохранён"))}
   catch(err){const code=err&&err.code;if(code==="declined")return;
-    if(["unavailable","not_granted","capability_disabled","capability_removed"].includes(code)){dl=null;$("hCsv").hidden=true;toast("Скачивание недоступно в этом окне");return}
-    toast(code==="rate_limited"?"Подождите немного и попробуйте снова":"Не получилось сохранить файл")}};
+    if(["unavailable","not_granted","capability_disabled","capability_removed"].includes(code)){dl=null;$("hCsv").hidden=true;toast(T("Скачивание недоступно в этом окне"));return}
+    toast(code==="rate_limited"?T("Подождите немного и попробуйте снова"):T("Не получилось сохранить файл"))}};
 
 /* ---------- statistics ---------- */
-const PERIODS=[["m","Месяц",1],["q","3 мес",3],["h","6 мес",6],["y","Год",12]];
+const PERIODS=[["m",T("Месяц"),1],["q",T("3 мес"),3],["h",T("6 мес"),6],["y",T("Год"),12]];
 function periodInfo(){const n=(PERIODS.find(p=>p[0]===prefs.period)||PERIODS[0])[2];const cur=[],prev=[];
   for(let i=n-1;i>=0;i--)cur.push(shiftMonth(month,-i));for(let i=2*n-1;i>=n;i--)prev.push(shiftMonth(month,-i));return {n,cur,prev}}
 function elapsedDates(months){const t=today(),tm=t.slice(0,7),out=[];
@@ -1222,7 +1230,7 @@ function elapsedDates(months){const t=today(),tm=t.slice(0,7),out=[];
 
 function periodTitle(cur){if(cur.length===1)return monthLabel(cur[0]);
   const a=cur[0].split("-"),b=cur[cur.length-1].split("-");
-  return a[0]===b[0]?MONTHS[+a[1]-1]+" — "+MONTHS[+b[1]-1].toLowerCase()+" "+b[0]:monthLabel(cur[0])+" — "+monthLabel(cur[cur.length-1]).toLowerCase()}
+  return a[0]===b[0]?MONTHS[+a[1]-1]+" — "+lc(MONTHS[+b[1]-1])+" "+b[0]:monthLabel(cur[0])+" — "+lc(monthLabel(cur[cur.length-1]))}
 
 let allStat={key:"",ready:false,busy:false,ops:[],at:0};
 const accsKey=()=>allAccounts().map(a=>a.type+a.id).join(",");
@@ -1235,14 +1243,14 @@ async function loadAllStat(){const list=allAccounts(),key=accsKey();if(allStat.b
       out.push({...e,_cur:a.currency||"₽",_cat:isInc(e)?(I[e.cat]||I.i_other):(E[e.cat]||E.other)})}}
   allStat={key,ready:true,busy:false,ops:out,at:Date.now()};renderStats()}
 function renderStats(){if(view!=="stats")return;
-  $("periodSeg").replaceChildren(mseg(PERIODS.map(p=>[p[0],p[1]]),prefs.period,v=>{prefs.period=v;savePrefs();renderStats()},"Период"));
+  $("periodSeg").replaceChildren(mseg(PERIODS.map(p=>[p[0],p[1]]),prefs.period,v=>{prefs.period=v;savePrefs();renderStats()},T("Период")));
   const many=allAccounts().length>1;if(!many&&prefs.scope==="all")prefs.scope="acc";
-  $("scopeSeg").replaceChildren(...(many?[mseg([["acc","Этот счёт"],["all","Все счета"]],prefs.scope,v=>{prefs.scope=v;savePrefs();if(v==="all")allStat.at=0;renderStats()},"Какие счета")]:[]));
+  $("scopeSeg").replaceChildren(...(many?[mseg([["acc",T("Этот счёт")],["all",T("Все счета")]],prefs.scope,v=>{prefs.scope=v;savePrefs();if(v==="all")allStat.at=0;renderStats()},T("Какие счета"))]:[]));
   renderCustom();$("statNote").hidden=true;
   if(!acc){$("kpis").replaceChildren();$("charts").replaceChildren();return}
   const P=periodInfo(),all=prefs.scope==="all";
-  $("periodName").textContent=periodTitle(P.cur)+(all?" · все счета":subSel!=="all"?" · "+subName(subSel):"");
-  const loading=()=>{$("kpis").replaceChildren();$("charts").replaceChildren(h("div",{class:"empty"},all?"Собираем данные всех счетов…":"Считаем статистику…"))};
+  $("periodName").textContent=periodTitle(P.cur)+(all?T(" · все счета"):subSel!=="all"?" · "+subName(subSel):"");
+  const loading=()=>{$("kpis").replaceChildren();$("charts").replaceChildren(h("div",{class:"empty"},all?T("Собираем данные всех счетов…"):T("Считаем статистику…")))};
   if(!all){if(!histLoaded||!archDone)return loading();
     const allSet=new Set([...P.cur,...P.prev]);statsBody(P,histExp.filter(e=>allSet.has(e.month)&&inSub(e)));return}
   if(!allStat.ready||allStat.key!==accsKey()||Date.now()-allStat.at>120000){if(!allStat.ready||allStat.key!==accsKey())loading();loadAllStat();if(!allStat.ready||allStat.key!==accsKey())return}
@@ -1251,8 +1259,8 @@ function renderStats(){if(view!=="stats")return;
     if(!seen.has(id)){seen.add(id);(inc?minc:mexp).push({...e._cat,id,hidden:false})}
     if(!allSet.has(e.month))continue;const v=conv(Number(e.amount)||0,e._cur);if(v===null){miss.add(e._cur);continue}
     ops.push({...e,amount:v,cat:id})}
-  mexp.push({...DEF_EXP.find(x=>x.id==="other"),hidden:false});minc.push({...DEF_INC.find(x=>x.id==="i_other"),hidden:false});
-  if(miss.size){$("statNote").hidden=false;$("statNote").textContent="Не учтены счета в "+[...miss].join(", ")+": задайте курс в «Настройки → Общие». Суммы показаны в "+prefs.base+"."}
+  mexp.push(defCat(DEF_EXP.find(x=>x.id==="other")));minc.push(defCat(DEF_INC.find(x=>x.id==="i_other")));
+  if(miss.size){$("statNote").hidden=false;$("statNote").textContent=T("Не учтены счета в ")+[...miss].join(", ")+T(": задайте курс в «Настройки → Общие». Суммы показаны в ")+prefs.base+"."}
   const keep={CATS,INC_CATS};CATS=mexp;INC_CATS=minc;indexCats();curOverride=prefs.base;statAll=true;
   try{statsBody(P,ops)}finally{CATS=keep.CATS;INC_CATS=keep.INC_CATS;indexCats();curOverride=null;statAll=false}}
 function statsBody(P,S){const curSet=new Set(P.cur),inCur=e=>curSet.has(e.month);
@@ -1261,33 +1269,33 @@ function statsBody(P,S){const curSet=new Set(P.cur),inCur=e=>curSet.has(e.month)
   const ctx={...P,E,Prev,I,IP,total:sum(E),prevTotal:sum(Prev),incTotal:sum(I),prevInc:sum(IP),days:elapsedDates(P.cur)};
   renderKpis(ctx);
   const on=prefs.charts.filter(c=>c.on);
-  if(!S.length){$("charts").replaceChildren(h("div",{class:"card empty",style:"padding:18px"},"За этот период операций нет. Нажмите «+», чтобы добавить, или выберите период подлиннее."));return}
-  if(!on.length){$("charts").replaceChildren(h("div",{class:"empty"},"Все графики скрыты. Включите нужные в блоке «Выбрать графики» ниже."));return}
+  if(!S.length){$("charts").replaceChildren(h("div",{class:"card empty",style:"padding:18px"},T("За этот период операций нет. Нажмите «+», чтобы добавить, или выберите период подлиннее.")));return}
+  if(!on.length){$("charts").replaceChildren(h("div",{class:"empty"},T("Все графики скрыты. Включите нужные в блоке «Выбрать графики» ниже.")));return}
   const cards=on.map(cfg=>chartCard(cfg,ctx));
   $("charts").replaceChildren(...cards.map(c=>c.el));
   for(const c of cards)c.draw();
   lastChartW=$("charts").clientWidth}
 
-function trend(a,b,goodUp){if(!b||!a)return b?"":"Прошлый период без записей";const d=(a-b)/b,up=d>0;
-  return [h("span",{class:up===goodUp?"down":"up"},(up?"↑ ":"↓ ")+Math.abs(Math.round(d*100))+"%")," к прошлому периоду"]}
+function trend(a,b,goodUp){if(!b||!a)return b?"":T("Прошлый период без записей");const d=(a-b)/b,up=d>0;
+  return [h("span",{class:up===goodUp?"down":"up"},(up?"↑ ":"↓ ")+Math.abs(Math.round(d*100))+"%"),T(" к прошлому периоду")]}
 function renderKpis(c){const k=[];
   const budget=accBudget()*c.n;
-  k.push(kpi("Потрачено",fmt(c.total),trend(c.total,c.prevTotal,false)));
-  if(c.I.length||c.IP.length){k.push(kpi("Доходы","+"+fmt(c.incTotal),trend(c.incTotal,c.prevInc,true)));
+  k.push(kpi(T("Потрачено"),fmt(c.total),trend(c.total,c.prevTotal,false)));
+  if(c.I.length||c.IP.length){k.push(kpi(T("Доходы"),"+"+fmt(c.incTotal),trend(c.incTotal,c.prevInc,true)));
     const bal=c.incTotal-c.total;
-    k.push(kpi("Разница",(bal>0?"+":"")+fmt(bal),c.incTotal?(bal>=0?"отложено "+Math.round(bal/c.incTotal*100)+"% дохода":"расходы больше доходов"):"доходов в периоде нет"))}
-  k.push(kpi("В среднем в день",c.days.length?fmt(c.total/c.days.length):"—",c.days.length+" "+plural(c.days.length,["день","дня","дней"])+" в периоде"));
-  if(budget){const p=c.total/budget;k.push(kpi("Бюджет за период",Math.round(p*100)+"%",p>1?"перерасход "+fmt(c.total-budget):"осталось "+fmt(budget-c.total)))}
+    k.push(kpi(T("Разница"),(bal>0?"+":"")+fmt(bal),c.incTotal?(bal>=0?T("отложено ")+Math.round(bal/c.incTotal*100)+T("% дохода"):T("расходы больше доходов")):T("доходов в периоде нет")))}
+  k.push(kpi(T("В среднем в день"),c.days.length?fmt(c.total/c.days.length):"—",c.days.length+" "+plural(c.days.length,[T("день"),T("дня"),T("дней")])+T(" в периоде")));
+  if(budget){const p=c.total/budget;k.push(kpi(T("Бюджет за период"),Math.round(p*100)+"%",p>1?T("перерасход ")+fmt(c.total-budget):T("осталось ")+fmt(budget-c.total)))}
   const top=group(c.E,e=>e.cat||"other")[0];
-  k.push(kpi("Больше всего",top?(CAT[top[0]]||CAT.other).name:"—",top&&c.total?Math.round(top[1]/c.total*100)+"% всех трат":""));
-  if(k.length%2)k.push(kpi("Записей",String(c.E.length+c.I.length),c.E.length?"средний расход "+fmt(c.total/c.E.length):""));
+  k.push(kpi(T("Больше всего"),top?(CAT[top[0]]||CAT.other).name:"—",top&&c.total?Math.round(top[1]/c.total*100)+T("% всех трат"):""));
+  if(k.length%2)k.push(kpi(T("Записей"),String(c.E.length+c.I.length),c.E.length?T("средний расход ")+fmt(c.total/c.E.length):""));
   $("kpis").replaceChildren(...k)}
 function kpi(label,value,sub){return h("div",{class:"kpi"},h("span",{class:"k"},label),h("span",{class:"v"},value),h("span",{class:"s"},sub))}
 
 function chartCard(cfg,ctx){const def=CHART[cfg.id];
   const setType=v=>{cfg.type=v;savePrefs();renderStats()};
-  const opts=[mseg(def.types,cfg.type,setType,"Вид графика")];
-  if(cfg.id==="structure"&&(acc.type==="shared"||statAll))opts.unshift(mseg([["cat","Категории"],["person","Люди"]],cfg.group,v=>{cfg.group=v;savePrefs();renderStats()},"Группировка"));
+  const opts=[mseg(def.types,cfg.type,setType,T("Вид графика"))];
+  if(cfg.id==="structure"&&(acc.type==="shared"||statAll))opts.unshift(mseg([["cat",T("Категории")],["person",T("Люди")]],cfg.group,v=>{cfg.group=v;savePrefs();renderStats()},T("Группировка")));
   const body=h("div",{class:"cbody"});
   const el=h("section",{class:"card chart-card","aria-label":def.name},h("div",{class:"chead"},h("span",{class:"ctitle"},def.name),h("div",{class:"copts"},...opts)),body);
   return {el,draw:()=>{const W=Math.max(240,body.clientWidth||480);DRAW[cfg.id](body,cfg,ctx,W)}}}
@@ -1306,24 +1314,24 @@ const DRAW={
 structure(body,cfg,c,W){
   const isP=cfg.group==="person"&&(acc.type==="shared"||statAll);
   let rows=group(c.E,isP?who:e=>e.cat||"other");
-  if(!rows.length)return emptyMsg(body,"В этом периоде расходов нет.");
-  if(isP&&rows.length>8){const rest=rows.slice(7).reduce((t,r)=>t+r[1],0);rows=[...rows.slice(0,7),["Остальные",rest]]}
+  if(!rows.length)return emptyMsg(body,T("В этом периоде расходов нет."));
+  if(isP&&rows.length>8){const rest=rows.slice(7).reduce((t,r)=>t+r[1],0);rows=[...rows.slice(0,7),[T("Остальные"),rest]]}
   share(body,cfg.type,rows,isP?k=>k:k=>(CAT[k]||CAT.other).name,isP?personColor:k=>"var("+(CAT[k]||CAT.other).c+")",c.total,W)},
 
 income(body,cfg,c,W){
   const rows=group(c.I,e=>ICAT[e.cat]?e.cat:"i_other");
-  if(!rows.length)return emptyMsg(body,"В этом периоде доходов нет. Нажмите «+» и переключите форму на «Доход».");
+  if(!rows.length)return emptyMsg(body,T("В этом периоде доходов нет. Нажмите «+» и переключите форму на «Доход»."));
   share(body,cfg.type,rows,k=>ICAT[k].name,k=>"var("+ICAT[k].c+")",c.incTotal,W)},
 
 flow(body,cfg,c,W){
-  if(!c.I.length&&!c.E.length)return emptyMsg(body,"В этом периоде операций нет.");
+  if(!c.I.length&&!c.E.length)return emptyMsg(body,T("В этом периоде операций нет."));
   let units;
   if(c.n>1)units=c.cur.map(m=>({label:MSHORT[+m.slice(5)-1],tip:monthLabel(m),f:e=>e.month===m}));
   else{const d=daysIn(month);units=[];for(let a=1;a<=d;a+=7){const b=Math.min(d,a+6);
     units.push({label:a+"–"+b,tip:a+"–"+dayMonth(month+"-"+pad(b)),f:e=>{const dd=+String(e.date).slice(8,10);return dd>=a&&dd<=b}})}}
   const inc=units.map(u=>sum(c.I.filter(u.f))),exp=units.map(u=>sum(c.E.filter(u.f))),net=inc.map((v,i)=>v-exp[i]);
   const N=units.length,H=220,m={l:48,r:10,t:16,b:26};
-  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Доходы и расходы"});
+  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":T("Доходы и расходы")});
   const iw=W-m.l-m.r,ih=H-m.t-m.b,band=iw/N,cx=i=>m.l+band*i+band/2;
   let hi,lo;
   if(cfg.type==="net"){const M=niceMax(Math.max(...net.map(Math.abs)));hi=net.some(v=>v>0)||!net.some(v=>v<0)?M:0;lo=net.some(v=>v<0)?-M:0}
@@ -1341,14 +1349,14 @@ flow(body,cfg,c,W){
     units.forEach((u,i)=>{if(inc[i])svg.append(s("path",{d:barPath(cx(i)-bw-1,y(inc[i]),bw,y(0)-y(inc[i]),Math.min(4,bw/2)),fill:"var(--inc)"}));
       if(exp[i])svg.append(s("path",{d:barPath(cx(i)+1,y(exp[i]),bw,y(0)-y(exp[i]),Math.min(4,bw/2)),fill:"var(--exp)"}))})}
   units.forEach((u,i)=>svg.append(s("rect",{class:"hit",x:m.l+band*i,y:m.t,width:band,height:ih,
-    "data-tip":u.tip+" · доходы +"+fmt(inc[i])+" · расходы "+fmt(exp[i])+" · разница "+(net[i]>0?"+":"")+fmt(net[i])})));
-  body.replaceChildren(svg,legend(cfg.type==="net"?[["var(--inc)","Доходы больше расходов"],["var(--exp)","Расходы больше доходов"]]:[["var(--inc)","Доходы"],["var(--exp)","Расходы"]]))},
+    "data-tip":u.tip+T(" · доходы +")+fmt(inc[i])+T(" · расходы ")+fmt(exp[i])+T(" · разница ")+(net[i]>0?"+":"")+fmt(net[i])})));
+  body.replaceChildren(svg,legend(cfg.type==="net"?[["var(--inc)",T("Доходы больше расходов")],["var(--exp)",T("Расходы больше доходов")]]:[["var(--inc)",T("Доходы")],["var(--exp)",T("Расходы")]]))},
 };
 function share(body,type,rows,nameF,colF,total,W){
   if(type==="bars"){const box=h("div",{class:"bars"});body.replaceChildren(box);renderBars(box,rows,nameF,colF,total);return}
   const c={total};
   const R=Math.min(96,Math.floor((W-8)/2)),r=R*.6,S=R*2+4,cx=S/2,cy=S/2;
-  const svg=s("svg",{width:S,height:S,viewBox:`0 0 ${S} ${S}`,role:"img","aria-label":"Кольцевая диаграмма: "+rows.map(([k,v])=>nameF(k)+" "+Math.round(v/c.total*100)+"%").join(", ")});
+  const svg=s("svg",{width:S,height:S,viewBox:`0 0 ${S} ${S}`,role:"img","aria-label":T("Кольцевая диаграмма: ")+rows.map(([k,v])=>nameF(k)+" "+Math.round(v/c.total*100)+"%").join(", ")});
   let a=-Math.PI/2;
   for(const [k,v] of rows){const frac=v/c.total;let a1=a+frac*Math.PI*2;
     const tipT=nameF(k)+" · "+fmt(v)+" · "+Math.round(frac*100)+"%";
@@ -1358,7 +1366,7 @@ function share(body,type,rows,nameF,colF,total,W){
     svg.append(s("path",{d:`M${x0},${y0}A${R},${R} 0 ${large} 1 ${x1},${y1}L${x2},${y2}A${r},${r} 0 ${large} 0 ${x3},${y3}Z`,
       fill:colF(k),stroke:"var(--surface)","stroke-width":2,"stroke-linejoin":"round","data-tip":tipT}));a=a1}
   svg.append(s("text",{x:cx,y:cy-2,"text-anchor":"middle",class:"strong",style:"font-size:15px"},compact(c.total)+" "+cur()),
-    s("text",{x:cx,y:cy+16,"text-anchor":"middle"},"всего"));
+    s("text",{x:cx,y:cy+16,"text-anchor":"middle"},T("всего")));
   const list=h("div",{class:"dlist"},...rows.map(([k,v])=>h("div",{class:"drow"},h("span",{class:"dot",style:"background:"+colF(k)}),
     h("span",{class:"n"},nameF(k)),h("span",{class:"v"},fmt(v)),h("span",{class:"p"},Math.round(v/c.total*100)+"%"))));
   body.replaceChildren(h("div",{class:"donut-wrap"},svg,list))}
@@ -1372,14 +1380,14 @@ dynamics(body,cfg,c,W){
     last=month<t.slice(0,7)?d-1:month===t.slice(0,7)?+t.slice(8,10)-1:-1}
   else{vals=c.cur.map(m=>sum(c.E.filter(e=>e.month===m)));labels=c.cur.map(m=>MSHORT[+m.slice(5)-1]);tips=c.cur.map(monthLabel);
     last=c.cur.findLastIndex(m=>m<=t.slice(0,7))}
-  if(last<0||!c.total)return emptyMsg(body,"В этом периоде трат нет.");
+  if(last<0||!c.total)return emptyMsg(body,T("В этом периоде трат нет."));
   const N=vals.length,budget=accBudget()*c.n;
   let plot=vals,pace=null;
   if(cfg.type==="cum"){let acc2=0;plot=vals.map(v=>acc2+=v);if(budget)pace=vals.map((_,i)=>budget*(i+1)/N)}
   const shown=plot.slice(0,last+1);
   const max=niceMax(Math.max(...shown,pace?budget:0));
   const H=220,m={l:44,r:10,t:14,b:26};
-  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Динамика трат"});
+  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":T("Динамика трат")});
   const {iw,y}=frame(svg,W,H,max,m);const band=iw/N,cx=i=>m.l+band*i+band/2;
   const every=byDay?(N>20?5:2):1;
   labels.forEach((l,i)=>{if(byDay&&!(i===0||(i+1)%every===0))return;
@@ -1388,44 +1396,44 @@ dynamics(body,cfg,c,W){
     vals.forEach((v,i)=>{if(v>0)svg.append(s("path",{d:barPath(cx(i)-bw/2,y(v),bw,y(0)-y(v),Math.min(4,bw/2)),fill:"var(--accent)"}))});
     const avg=c.total/(byDay?c.days.length:last+1);
     if(avg>0&&avg<=max){svg.append(s("line",{x1:m.l,x2:W-m.r,y1:y(avg),y2:y(avg),stroke:"var(--fg)","stroke-width":1,"stroke-dasharray":"4 4",opacity:.55}),
-      s("text",{x:W-m.r,y:y(avg)-6,"text-anchor":"end",class:"strong"},"в среднем "+compact(avg)))}}
+      s("text",{x:W-m.r,y:y(avg)-6,"text-anchor":"end",class:"strong"},T("в среднем ")+compact(avg)))}}
   else{const pts=shown.map((v,i)=>[cx(i),y(v)]);
     const line=pts.map((p,i)=>(i?"L":"M")+p[0]+","+p[1]).join("");
     svg.append(s("path",{d:line+`L${pts[pts.length-1][0]},${y(0)}L${pts[0][0]},${y(0)}Z`,fill:"var(--accent)",opacity:.12}));
     if(pace){svg.append(s("path",{d:pace.map((v,i)=>(i?"L":"M")+cx(i)+","+y(v)).join(""),fill:"none",stroke:"var(--muted)","stroke-width":1.5,"stroke-dasharray":"5 4"}),
-      s("text",{x:cx(N-1),y:y(budget)-6,"text-anchor":"end"},"бюджет "+compact(budget)))}
+      s("text",{x:cx(N-1),y:y(budget)-6,"text-anchor":"end"},T("бюджет ")+compact(budget)))}
     svg.append(s("path",{d:line,fill:"none",stroke:"var(--accent)","stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
     const lp=pts[pts.length-1];svg.append(s("circle",{cx:lp[0],cy:lp[1],r:4.5,fill:"var(--accent)",stroke:"var(--surface)","stroke-width":2}),
       s("text",{x:Math.min(lp[0],W-m.r-4),y:lp[1]-10,"text-anchor":lp[0]>W-80?"end":"middle",class:"strong"},compact(shown[shown.length-1])))}
-  vals.forEach((v,i)=>{const extra=cfg.type==="cum"?(i<=last?" · всего с начала: "+fmt(plot[i]):""):"";
+  vals.forEach((v,i)=>{const extra=cfg.type==="cum"?(i<=last?T(" · всего с начала: ")+fmt(plot[i]):""):"";
     svg.append(s("rect",{class:"hit",x:m.l+band*i,y:m.t,width:band,height:H-m.t-m.b,"data-tip":tips[i]+" · "+fmt(v)+extra}))});
   body.replaceChildren(svg);
-  if(pace)body.append(legend([["var(--accent)","Траты нарастающим итогом"],["var(--muted)","Равномерный расход бюджета"]]))},
+  if(pace)body.append(legend([["var(--accent)",T("Траты нарастающим итогом")],["var(--muted)",T("Равномерный расход бюджета")]]))},
 
 compare(body,cfg,c,W){
-  if(!c.Prev.length)return emptyMsg(body,"В прошлом периоде записей нет, сравнивать пока не с чем.");
+  if(!c.Prev.length)return emptyMsg(body,T("В прошлом периоде записей нет, сравнивать пока не с чем."));
   const pct=(a,b)=>b?Math.round((a-b)/b*100):null;
-  const delta=(a,b)=>{const p=pct(a,b);if(p===null)return h("span",null,"новое");if(p===0)return h("span",null,"без изменений");
+  const delta=(a,b)=>{const p=pct(a,b);if(p===null)return h("span",null,T("новое"));if(p===0)return h("span",null,T("без изменений"));
     return h("span",null,h("span",{class:p>0?"up":"down"},p>0?"↑ ":"↓ "),Math.abs(p)+"%")};
-  const prevLbl=c.n===1?"Прошлый месяц":"Прошлые "+c.n+" мес.";
-  const curLbl=c.n===1?"Этот месяц":"Эти "+c.n+" мес.";
-  const rowsData=cfg.type==="total"?[["__all","Всего",c.total,c.prevTotal]]:
+  const prevLbl=c.n===1?T("Прошлый месяц"):T("Прошлые ")+c.n+T(" мес.");
+  const curLbl=c.n===1?T("Этот месяц"):T("Эти ")+c.n+T(" мес.");
+  const rowsData=cfg.type==="total"?[["__all",T("Всего"),c.total,c.prevTotal]]:
     CATS.map(k=>[k.id,k.name,sum(c.E.filter(e=>(e.cat||"other")===k.id)),sum(c.Prev.filter(e=>(e.cat||"other")===k.id))]).filter(r=>r[2]||r[3]).sort((a,b)=>b[2]-a[2]||b[3]-a[3]);
   const max=Math.max(...rowsData.map(r=>Math.max(r[2],r[3])))||1;
   body.replaceChildren(legend([["var(--accent)",curLbl],["var(--prev)",prevLbl]]),
-    h("div",{class:"cmp",style:"margin-top:12px"},...rowsData.map(([id,n,a,b])=>h("div",{class:"crow","data-tip":n+": "+fmt(a)+" против "+fmt(b)},
+    h("div",{class:"cmp",style:"margin-top:12px"},...rowsData.map(([id,n,a,b])=>h("div",{class:"crow","data-tip":n+": "+fmt(a)+T(" против ")+fmt(b)},
       h("div",{class:"n"},id==="__all"?null:h("span",{class:"dot",style:"background:var("+CAT[id].c+")"}),n),
       h("div",{class:"d"},fmt(a)," · ",delta(a,b)),
       h("div",{class:"bb"},h("i",{style:"width:"+(a/max*100)+"%;background:var(--accent)"}),h("i",{style:"width:"+(b/max*100)+"%;background:var(--prev)"}))))))},
 
 catmonths(body,cfg,c,W){
-  if(c.n===1)return emptyMsg(body,"Этот график сравнивает месяцы. Выберите период «3 мес», «6 мес» или «Год».");
+  if(c.n===1)return emptyMsg(body,T("Этот график сравнивает месяцы. Выберите период «3 мес», «6 мес» или «Год»."));
   const share=cfg.type==="share";
   const data=c.cur.map(m=>{const ex=c.E.filter(e=>e.month===m);const t=sum(ex);return {m,t,parts:CATS.map(k=>[k,sum(ex.filter(e=>(e.cat||"other")===k.id))]).filter(p=>p[1]>0)}});
-  if(!c.total)return emptyMsg(body,"В этом периоде трат нет.");
+  if(!c.total)return emptyMsg(body,T("В этом периоде трат нет."));
   const H=230,m={l:44,r:10,t:12,b:26};
   const max=share?1:niceMax(Math.max(...data.map(d=>d.t)));
-  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Категории по месяцам"});
+  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":T("Категории по месяцам")});
   const iw=W-m.l-m.r,ih=H-m.t-m.b,y=v=>m.t+ih-(v/max)*ih;
   for(let i=0;i<=4;i++){const v=max*i/4;svg.append(s("line",{class:i?"gl":"base",x1:m.l,x2:W-m.r,y1:y(v),y2:y(v)}));
     if(i)svg.append(s("text",{x:m.l-6,y:y(v)+4,"text-anchor":"end"},share?Math.round(v*100)+"%":compact(v)))}
@@ -1442,26 +1450,26 @@ catmonths(body,cfg,c,W){
   body.replaceChildren(svg,legend(used.map(k=>["var("+k.c+")",k.name])))},
 
 weekday(body,cfg,c,W){
-  if(!c.total)return emptyMsg(body,"В этом периоде трат нет.");
+  if(!c.total)return emptyMsg(body,T("В этом периоде трат нет."));
   const sums=Array(7).fill(0),cnt=Array(7).fill(0);
   const wd=s=>{const [y,m,d]=s.split("-").map(Number);return (new Date(y,m-1,d).getDay()+6)%7};
   for(const e of c.E)if(e.date)sums[wd(String(e.date))]+=Number(e.amount)||0;
   for(const d of c.days)cnt[wd(d)]++;
   const vals=cfg.type==="avg"?sums.map((v,i)=>cnt[i]?v/cnt[i]:0):sums;
   const H=200,m={l:44,r:10,t:18,b:26},max=niceMax(Math.max(...vals));
-  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Траты по дням недели"});
+  const svg=s("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":T("Траты по дням недели")});
   const {iw,y}=frame(svg,W,H,max,m);const band=iw/7,bw=Math.min(36,band*.6);
   const topI=vals.indexOf(Math.max(...vals));
   vals.forEach((v,i)=>{const x=m.l+band*i+band/2;
     svg.append(s("text",{x,y:H-8,"text-anchor":"middle"},WD[i]));
     if(v>0)svg.append(s("path",{d:barPath(x-bw/2,y(v),bw,y(0)-y(v),4),fill:i===topI?"var(--accent)":"var(--prev)"}),
       s("text",{x,y:y(v)-6,"text-anchor":"middle",class:i===topI?"strong":""},compact(v)));
-    svg.append(s("rect",{class:"hit",x:m.l+band*i,y:m.t,width:band,height:H-m.t-m.b,"data-tip":WD[i]+" · "+(cfg.type==="avg"?"в среднем "+fmt(v)+" за день":fmt(v)+" за период")}))});
-  body.replaceChildren(svg,h("div",{class:"hint",style:"margin:6px 0 0"},"Выделен день, когда тратите больше всего."))},
+    svg.append(s("rect",{class:"hit",x:m.l+band*i,y:m.t,width:band,height:H-m.t-m.b,"data-tip":WD[i]+" · "+(cfg.type==="avg"?T("в среднем ")+fmt(v)+T(" за день"):fmt(v)+T(" за период"))}))});
+  body.replaceChildren(svg,h("div",{class:"hint",style:"margin:6px 0 0"},T("Выделен день, когда тратите больше всего.")))},
 
 top(body,cfg,c){
   const list=[...c.E].sort((a,b)=>(Number(b.amount)||0)-(Number(a.amount)||0)).slice(0,+cfg.type);
-  if(!list.length)return emptyMsg(body,"В этом периоде трат нет.");
+  if(!list.length)return emptyMsg(body,T("В этом периоде трат нет."));
   const isS=acc.type==="shared";
   body.replaceChildren(h("div",{class:"top"},...list.map(e=>{const k=CAT[e.cat]||CAT.other;
     return h("div",{class:"trow"},catIcon(k,30),
@@ -1473,8 +1481,8 @@ function renderCustom(){const L=prefs.charts;
   $("custList").replaceChildren(...L.map((c,i)=>h("div",{class:"cust-row"},
     h("input",{type:"checkbox",id:"chk-"+c.id,checked:c.on?true:null,onchange:e=>{c.on=e.target.checked;savePrefs();renderStats()}}),
     h("label",{for:"chk-"+c.id},CHART[c.id].name),
-    h("button",{type:"button",class:"icon-btn","aria-label":"Выше",disabled:i===0?true:null,onclick:()=>{move(i,-1)}},"↑"),
-    h("button",{type:"button",class:"icon-btn","aria-label":"Ниже",disabled:i===L.length-1?true:null,onclick:()=>{move(i,1)}},"↓"))))}
+    h("button",{type:"button",class:"icon-btn","aria-label":T("Выше"),disabled:i===0?true:null,onclick:()=>{move(i,-1)}},"↑"),
+    h("button",{type:"button",class:"icon-btn","aria-label":T("Ниже"),disabled:i===L.length-1?true:null,onclick:()=>{move(i,1)}},"↓"))))}
 function move(i,d){const L=prefs.charts,j=i+d;if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];savePrefs();renderStats()}
 
 let lastChartW=0,rsT=null;
@@ -1483,20 +1491,21 @@ new ResizeObserver(()=>{clearTimeout(rsT);rsT=setTimeout(()=>{const w=$("charts"
 /* ---------- settings view ---------- */
 function renderRates(){const curs=[...new Set(allAccounts().map(a=>a.currency||"₽"))].filter(c=>c!==prefs.base);
   $("baseCur").replaceChildren(...CURS.map(([v,t])=>h("option",{value:v},t)));$("baseCur").value=prefs.base;
-  $("rateRows").replaceChildren(...(curs.length?[h("span",{class:"label",style:"margin:0"},"Курсы для пересчёта"),
+  $("rateRows").replaceChildren(...(curs.length?[h("span",{class:"label",style:"margin:0"},T("Курсы для пересчёта")),
     ...curs.map(c=>h("div",{class:"inline",style:"align-items:center;flex-wrap:nowrap"},h("label",{for:"rate-"+c.charCodeAt(0),style:"white-space:nowrap"},"1 "+c+" ="),
-      h("input",{class:"field",id:"rate-"+c.charCodeAt(0),inputmode:"decimal",style:"max-width:140px",placeholder:"курс",value:prefs.rates[c]?String(prefs.rates[c]).replace(".",","):"",
+      h("input",{class:"field",id:"rate-"+c.charCodeAt(0),inputmode:"decimal",style:"max-width:140px",placeholder:T("курс"),value:prefs.rates[c]?String(prefs.rates[c]).replace(".",","):"",
         oninput:e=>{const v=parseNum(e.target.value);if(v>0)prefs.rates[c]=v;else delete prefs.rates[c];savePrefs();opsCache.clear()}}),h("span",null,prefs.base))),
-    h("div",{class:"hint",style:"margin:0"},"Курсы задаются вручную: приложение не может получать их из интернета.")]
-    :[h("div",{class:"hint",style:"margin:0"},"Все ваши счета в одной валюте, курсы не нужны.")]))}
+    h("div",{class:"hint",style:"margin:0"},T("Курсы задаются вручную: приложение не может получать их из интернета."))]
+    :[h("div",{class:"hint",style:"margin:0"},T("Все ваши счета в одной валюте, курсы не нужны."))]))}
 $("baseCur").addEventListener("change",e=>{prefs.base=e.target.value;savePrefs();renderRates()});
 function renderPrefs(){if(!prefSec)renderPrefMenu();renderRates();
-  bigSeg($("themeSeg"),[["system","Как в системе","Светлая или тёмная"],["light","Светлая",""],["dark","Тёмная",""]],prefs.theme,v=>{prefs.theme=v;applyTheme();savePrefs();renderPrefs();renderStats()});
+  bigSeg($("langSeg"),[["ru",T("Русский"),""],["en","English",""]],LANG,changeLang);
+  bigSeg($("themeSeg"),[["system",T("Как в системе"),T("Светлая или тёмная")],["light",T("Светлая"),""],["dark",T("Тёмная"),""]],prefs.theme,v=>{prefs.theme=v;applyTheme();savePrefs();renderPrefs();renderStats()});
   $("accentSw").replaceChildren(...ACCENTS.map(([id,n,c])=>h("button",{type:"button",class:"sw",role:"radio","aria-checked":String(prefs.accent===id),"aria-label":n,title:n,style:"background:"+c,
     onclick:()=>{prefs.accent=id;applyTheme();savePrefs();renderPrefs()}})));
-  bigSeg($("startSeg"),[["spend","Главная","Сводка, цели и операции"],["stats","Статистика","Графики за период"]],prefs.start,v=>{prefs.start=v;savePrefs();renderPrefs()});
-  bigSeg($("centsSeg"),[["show","С копейками","1 234,50 ₽"],["round","Округлять","1 235 ₽"]],prefs.cents,v=>{prefs.cents=v;savePrefs();renderPrefs();render()})}
-$("resetCharts").onclick=()=>{prefs.charts=defaultCharts();savePrefs();toast("Графики вернулись к стандартному набору")};
+  bigSeg($("startSeg"),[["spend",T("Главная"),T("Сводка, цели и операции")],["stats",T("Статистика"),T("Графики за период")]],prefs.start,v=>{prefs.start=v;savePrefs();renderPrefs()});
+  bigSeg($("centsSeg"),[["show",T("С копейками"),T("1 234,50 ₽")],["round",T("Округлять"),T("1 235 ₽")]],prefs.cents,v=>{prefs.cents=v;savePrefs();renderPrefs();render()})}
+$("resetCharts").onclick=()=>{prefs.charts=defaultCharts();savePrefs();toast(T("Графики вернулись к стандартному набору"))};
 
 function fillSettings(force){if(!acc)return;const key=acc.type+":"+acc.id;if(!force&&filledFor===key)return;filledFor=key;
   $("setName").value=acc.name||"";$("setPeople").value=people(acc).join(", ");
@@ -1506,69 +1515,69 @@ async function renderPeople(){if(!acc||acc.type!=="shared")return;const ids=acc.
   if(!acc||acc.type!=="shared")return;
   $("people").replaceChildren(...ids.map(id=>{const p=ps[id]||{};
     return h("div",{class:"person"},p.avatarUrl?h("img",{src:p.avatarUrl,alt:""}):h("span",{class:"dot",style:"width:28px;height:28px;background:var(--soft)"}),
-      h("div",null,h("div",null,id===uid?"Вы":(p.name||"Участник")),h("div",{class:"tag"},id===acc.owner?"создал счёт":"участник")))}));
-  if(!ids.length)$("people").replaceChildren(h("div",{class:"hint"},"Пока никого"))}
+      h("div",null,h("div",null,id===uid?T("Вы"):(p.name||T("Участник"))),h("div",{class:"tag"},id===acc.owner?T("создал счёт"):T("участник"))))}));
+  if(!ids.length)$("people").replaceChildren(h("div",{class:"hint"},T("Пока никого")))}
 function renderDanger(){const z=$("dangerZone");if(!acc||readOnly){z.replaceChildren();return}
   const isOwner=acc.type==="personal"||!acc.owner||acc.owner===uid;
   if(!dangerConfirm){z.replaceChildren(h("button",{type:"button",class:"ghost danger",onclick:()=>{dangerConfirm=true;renderDanger()}},
-    isOwner?"Удалить счёт":"Выйти из счёта"));return}
+    isOwner?T("Удалить счёт"):T("Выйти из счёта")));return}
   z.replaceChildren(h("div",{class:"stack",style:"gap:10px"},
-    h("div",{class:"hint"},isOwner?"Счёт и все его траты удалятся без возможности восстановления"+(acc.type==="shared"?" — у всех участников.":"."):"Счёт пропадёт из вашего списка. Траты останутся у остальных участников."),
-    h("div",{class:"confirm"},h("button",{type:"button",class:"del",onclick:()=>isOwner?deleteAcc():leaveAcc()},isOwner?"Да, удалить":"Да, выйти"),
-      h("button",{type:"button",onclick:()=>{dangerConfirm=false;renderDanger()}},"Отмена"))))}
+    h("div",{class:"hint"},isOwner?T("Счёт и все его траты удалятся без возможности восстановления")+(acc.type==="shared"?T(" — у всех участников."):"."):T("Счёт пропадёт из вашего списка. Траты останутся у остальных участников.")),
+    h("div",{class:"confirm"},h("button",{type:"button",class:"del",onclick:()=>isOwner?deleteAcc():leaveAcc()},isOwner?T("Да, удалить"):T("Да, выйти")),
+      h("button",{type:"button",onclick:()=>{dangerConfirm=false;renderDanger()}},T("Отмена")))))}
 
 $("copyCode").onclick=()=>{const code=$("codeOut").textContent;
-  try{navigator.clipboard.writeText(code).then(()=>toast("Код скопирован"),()=>selectCode())}catch(e){selectCode()}};
-function selectCode(){const r=document.createRange();r.selectNodeContents($("codeOut"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Код выделен — скопируйте его")}
+  try{navigator.clipboard.writeText(code).then(()=>toast(T("Код скопирован")),()=>selectCode())}catch(e){selectCode()}};
+function selectCode(){const r=document.createRange();r.selectNodeContents($("codeOut"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast(T("Код выделен — скопируйте его"))}
 
 /* ---------- data ---------- */
 function resubscribe(){if(!db||!acc)return;const key=acc.type+":"+acc.id+":"+month;if(key===subKey)return;
   subKey=key;if(unsub)unsub();loaded=false;expenses=[];render();const a=acc;
   unsub=expCol(a).where("month","==",month).onSnapshot(qs=>{if(!acc||acc.id!==a.id)return;
     expenses=qs.docs.map(d=>({id:d.id,...d.data()}));loaded=true;render()},
-    err=>{loaded=true;render();notice(err.code==="revoked"?"Доступ к счетам закрыт.":"Не удалось загрузить траты. Обновите страницу.",true)})}
+    err=>{loaded=true;render();notice(err.code==="revoked"?T("Доступ к счетам закрыт."):T("Не удалось загрузить траты. Обновите страницу."),true)})}
 function setReadOnly(){readOnly=true;$("fab").disabled=true;closeSheet();$("saveSet").hidden=true;$("saveSubs").hidden=true;$("newPanel").hidden=true;
-  notice("Доступ только на просмотр.");renderTabs();renderDanger();if(acc)renderList()}
+  notice(T("Доступ только на просмотр."));renderTabs();renderDanger();if(acc)renderList()}
 function writeErr(e,el){const c=e&&e.code;el.classList.add("bad");
-  el.textContent=c==="rate_limited"?"Слишком много попыток ввести код. Попробуйте через час.":c==="quota_exceeded"?"База заполнена: удалите старые операции, чтобы добавить новые.":c==="denied"?"Нет доступа: вы не участник этого счёта или вышли из аккаунта.":c==="invalid_argument"?"Запись не найдена — возможно, её уже удалили. Обновите страницу.":c==="invalid_argument_data"?"Данные не прошли проверку. Проверьте поля и попробуйте ещё раз.":"Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."}
+  el.textContent=c==="rate_limited"?T("Слишком много попыток ввести код. Попробуйте через час."):c==="quota_exceeded"?T("База заполнена: удалите старые операции, чтобы добавить новые."):c==="denied"?T("Нет доступа: вы не участник этого счёта или вышли из аккаунта."):c==="invalid_argument"?T("Запись не найдена — возможно, её уже удалили. Обновите страницу."):c==="invalid_argument_data"?T("Данные не прошли проверку. Проверьте поля и попробуйте ещё раз."):T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.")}
 
 $("form").addEventListener("submit",async ev=>{ev.preventDefault();const msg=$("formMsg");msg.classList.remove("bad");
   const amount=Math.round(parseNum($("amount").value)*100)/100;
-  if(!(amount>0)||amount>1e9){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";$("amount").focus();return}
+  if(!(amount>0)||amount>1e9){msg.classList.add("bad");msg.textContent=T("Введите сумму больше нуля.");$("amount").focus();return}
   if(!db||!acc)return;
   const date=$("date").value||today(),btn=$("addBtn"),inc=curKind==="inc",tr=curKind==="tr";let amount2=0;
-  if(tr){if(trFrom===trTo){msg.classList.add("bad");msg.textContent="Выберите разные «Откуда» и «Куда».";return}
+  if(tr){if(trFrom===trTo){msg.classList.add("bad");msg.textContent=T("Выберите разные «Откуда» и «Куда».");return}
     const dest=destOf(trTo);
     if(dest&&(dest.a.currency||"₽")!==cur()){amount2=Math.round(parseNum($("trAmt2").value)*100)/100;
-      if(!(amount2>0)){msg.classList.add("bad");msg.textContent="Укажите, сколько придёт в счёт «"+(dest.a.name||"")+"» в "+(dest.a.currency||"₽")+".";$("trAmt2").focus();return}}}
+      if(!(amount2>0)){msg.classList.add("bad");msg.textContent=T("Укажите, сколько придёт в счёт «")+(dest.a.name||"")+T("» в ")+(dest.a.currency||"₽")+".";$("trAmt2").focus();return}}}
   btn.disabled=true;
   try{const dest=tr?destOf(trTo):null;
     await createOp({kind:curKind,amount,amount2,cat:inc?curInc:curCat,sub:formSub||"main",from:trFrom,to:trTo,member:curWho(),note:$("note").value.trim().slice(0,80),date,tpl:tplActive,goal:goalActive});
     $("amount").value="";$("note").value="";$("trAmt2").value="";msg.textContent="";tplActive=null;goalActive=null;renderTplBar();closeSheet();
-    if(tr)toast("Переведено "+fmt(amount)+": "+subName(trFrom)+" → "+(dest?"«"+(dest.a.name||"")+"»":subName(trTo)));
-    else toast(date.slice(0,7)===month?(inc?"Доход добавлен: +":"Расход добавлен: ")+fmt(amount):"Добавлено в "+monthLabel(date.slice(0,7)).toLowerCase())}
+    if(tr)toast(T("Переведено ")+fmt(amount)+": "+subName(trFrom)+" → "+(dest?T("«")+(dest.a.name||"")+T("»"):subName(trTo)));
+    else toast(date.slice(0,7)===month?(inc?T("Доход добавлен: +"):T("Расход добавлен: "))+fmt(amount):T("Добавлено в ")+lc(monthLabel(date.slice(0,7))))}
   catch(e){writeErr(e,msg)}finally{btn.disabled=false}});
 
 $("saveSet").onclick=async()=>{const msg=$("setMsg");msg.classList.remove("bad");if(!acc)return;
   const b=parseNum($("setBudget").value);
-  const patch={name:$("setName").value.trim().slice(0,40)||acc.name||"Счёт",budget:b>0?Math.round(b):0,currency:$("setCur").value};
+  const patch={name:$("setName").value.trim().slice(0,40)||acc.name||T("Счёт"),budget:b>0?Math.round(b):0,currency:$("setCur").value};
   if(acc.type==="shared")patch.people=[...new Set($("setPeople").value.split(",").map(s=>s.trim().slice(0,30)).filter(Boolean))].slice(0,12);
   const a=acc;
-  try{await accDoc(a).update(patch);Object.assign(a,patch);renderTabs();msg.textContent="Сохранено";render()}catch(e){writeErr(e,msg)}};
+  try{await accDoc(a).update(patch);Object.assign(a,patch);renderTabs();msg.textContent=T("Сохранено");render()}catch(e){writeErr(e,msg)}};
 $("saveSubs").onclick=async()=>{const msg=$("subMsg");msg.classList.remove("bad");if(!acc)return;
   const keep=subDraft.filter(x=>!x.del&&(String(x.name).trim()||x.id==="main"));
-  const names=keep.map(x=>String(x.name).trim().toLowerCase()||"основной");
-  if(new Set(names).size!==names.length){msg.classList.add("bad");msg.textContent="У кошельков должны быть разные названия.";return}
-  const subs=keep.map(x=>{const st=parseNum(x.start);return {id:x.id,name:String(x.name).trim().slice(0,30)||"Основной",start:Number.isFinite(st)?Math.round(st*100)/100:0,off:!!x.off}});
+  const names=keep.map(x=>String(x.name).trim().toLowerCase()||T("основной"));
+  if(new Set(names).size!==names.length){msg.classList.add("bad");msg.textContent=T("У кошельков должны быть разные названия.");return}
+  const subs=keep.map(x=>{const st=parseNum(x.start);return {id:x.id,name:subW(x.id,String(x.name).trim().slice(0,30)||T("Основной")),start:Number.isFinite(st)?Math.round(st*100)/100:0,off:!!x.off}});
   const removed=subDraft.filter(x=>x.del&&!x.isNew).map(x=>x.id);
   const a=acc;
-  try{if(removed.length){msg.textContent="Переносим операции…";for(const id of removed)await reassignSub(a,id)}
-    await accDoc(a).update({subs});a.subs=subs;fillSubs();loadSubSel();renderSubs();render();msg.textContent="Сохранено"}catch(e){writeErr(e,msg)}};
+  try{if(removed.length){msg.textContent=T("Переносим операции…");for(const id of removed)await reassignSub(a,id)}
+    await accDoc(a).update({subs});a.subs=subs;fillSubs();loadSubSel();renderSubs();render();msg.textContent=T("Сохранено")}catch(e){writeErr(e,msg)}};
 
 $("createBtn").onclick=async()=>{const msg=$("newMsg");msg.classList.remove("bad");
   const name=$("newName").value.trim().slice(0,40);
-  if(!name){msg.classList.add("bad");msg.textContent="Придумайте название счёта.";$("newName").focus();return}
-  if(!uid){msg.classList.add("bad");msg.textContent="Не удалось определить ваш аккаунт. Выйдите и войдите снова.";return}
+  if(!name){msg.classList.add("bad");msg.textContent=T("Придумайте название счёта.");$("newName").focus();return}
+  if(!uid){msg.classList.add("bad");msg.textContent=T("Не удалось определить ваш аккаунт. Выйдите и войдите снова.");return}
   const b=parseNum($("newBudget").value);
   const base={name,currency:$("newCur").value,budget:b>0?Math.round(b):0,createdAt:Date.now()};
   const btn=$("createBtn");btn.disabled=true;
@@ -1576,28 +1585,28 @@ $("createBtn").onclick=async()=>{const msg=$("newMsg");msg.classList.remove("bad
     const ref=await (newType==="personal"?db.collection("data/users/"+uid):db.collection("accounts")).add(doc);
     lsSet("fk.acc",newType+":"+ref.id);acc={id:ref.id,...doc};
     $("newName").value="";$("newBudget").value="";$("newPanel").hidden=true;
-    toast(newType==="shared"?"Общий счёт создан — код приглашения в настройках":"Личный счёт создан");
+    toast(newType==="shared"?T("Общий счёт создан — код приглашения в настройках"):T("Личный счёт создан"));
     if(newType==="shared"){view="prefs";prefSec="acc"}syncView();resubscribe();if(newType==="shared")fillSettings(true)}
   catch(e){writeErr(e,msg)}finally{btn.disabled=false}};
 
 $("joinBtn").onclick=async()=>{const msg=$("joinMsg");msg.classList.remove("bad");
   const code=$("joinCode").value.trim().toUpperCase().replace(/\s/g,"");
-  if(code.length<6){msg.classList.add("bad");msg.textContent="Код состоит из 6 символов.";return}
-  if(!uid){msg.classList.add("bad");msg.textContent="Не удалось определить ваш аккаунт. Выйдите и войдите снова.";return}
+  if(code.length<6){msg.classList.add("bad");msg.textContent=T("Код состоит из 6 символов.");return}
+  if(!uid){msg.classList.add("bad");msg.textContent=T("Не удалось определить ваш аккаунт. Выйдите и войдите снова.");return}
   try{const id=await db.joinByCode(code);
-    if(!id){msg.classList.add("bad");msg.textContent="Счёт с таким кодом не найден. Проверьте код.";return}
+    if(!id){msg.classList.add("bad");msg.textContent=T("Счёт с таким кодом не найден. Проверьте код.");return}
     const snap=await db.doc("accounts/"+id).get(),data=snap.data()||{};
     lsSet("fk.acc","shared:"+id);acc={id,...data};if(!shared.some(x=>x.id===id))shared.push(acc);
-    $("joinCode").value="";$("newPanel").hidden=true;toast("Вы в счёте «"+(data.name||"")+"»");syncView();resubscribe()}
+    $("joinCode").value="";$("newPanel").hidden=true;toast(T("Вы в счёте «")+(data.name||"")+T("»"));syncView();resubscribe()}
   catch(e){writeErr(e,msg)}};
 
 async function leaveAcc(){const a=acc;try{await accDoc(a).update({members:(a.members||[]).filter(x=>x!==uid)});
-  acc=null;subKey="";histKey="";iconKey="";debtKey="";toast("Вы вышли из счёта")}catch(e){writeErr(e,$("setMsg"))}}
-async function deleteAcc(){const a=acc,msg=$("setMsg");msg.classList.remove("bad");msg.textContent="Удаляем…";
+  acc=null;subKey="";histKey="";iconKey="";debtKey="";toast(T("Вы вышли из счёта"))}catch(e){writeErr(e,$("setMsg"))}}
+async function deleteAcc(){const a=acc,msg=$("setMsg");msg.classList.remove("bad");msg.textContent=T("Удаляем…");
   try{if(unsub){unsub();unsub=null}if(histUnsub){histUnsub();histUnsub=null}if(iconUnsub){iconUnsub();iconUnsub=null}if(debtUnsub){debtUnsub();debtUnsub=null}subKey="";histKey="";iconKey="";debtKey="";
     for(;;){const qs=await expCol(a).limit(200).get();if(qs.empty)break;for(const d of qs.docs)await expCol(a).doc(d.id).delete()}
     for(const col of [debtCol(a),iconCol(a)]){const qs=await col.get();for(const d of qs.docs)await col.doc(d.id).delete()}
-    await accDoc(a).delete();acc=null;msg.textContent="";toast("Счёт удалён");onAccounts()}
+    await accDoc(a).delete();acc=null;msg.textContent="";toast(T("Счёт удалён"));onAccounts()}
   catch(e){writeErr(e,msg)}}
 
 function changeMonth(d){month=shiftMonth(month,d);calDay=undefined;render();resubscribe();if(view==="stats")renderStats()}
@@ -1605,13 +1614,13 @@ $("prev").onclick=()=>changeMonth(-1);
 $("next").onclick=()=>changeMonth(1);
 $("date").value=today();
 applyTheme();renderCats();renderPrefs();setView(view);
-$("tabs").replaceChildren(h("div",{class:"empty"},"Загружаем счета…"));
+$("tabs").replaceChildren(h("div",{class:"empty"},T("Загружаем счета…")));
 
 if(deepDel){setView("prefs",true);openPrefSec("me")}
 (async()=>{
   const c=window.claude;
   db=c&&c.use?await c.use("db"):null;
-  if(!db){$("tabs").replaceChildren();$("accKind").textContent="";notice("Не удалось подключиться к базе. Проверьте интернет и обновите страницу.",true);return}
+  if(!db){$("tabs").replaceChildren();$("accKind").textContent="";notice(T("Не удалось подключиться к базе. Проверьте интернет и обновите страницу."),true);return}
   c.use("downloads").then(x=>{dl=x;renderHistory()},()=>{});
   user=await c.use("user");
   uid=user?await user.id():null;
@@ -1619,14 +1628,16 @@ if(deepDel){setView("prefs",true);openPrefSec("me")}
   if(can===false)setReadOnly();
   if(uid){
     db.doc("data/users/"+uid+"/prefs").get().then(snap=>{if(!snap.exists)return;
-      const startBefore=prefs.start;prefs=normPrefs(snap.data());lsSet("fk.prefs",JSON.stringify(prefs));applyTheme();
+      const startBefore=prefs.start;prefs=normPrefs(snap.data());
+      if(prefs.lang!==LANG){if(!LANG_SET&&prefs.lang){lsSet("fk.prefs",JSON.stringify(prefs));setLang(prefs.lang);return}prefs.lang=LANG;savePrefs()}
+      lsSet("fk.prefs",JSON.stringify(prefs));applyTheme();
       if(!navTouched&&prefs.start!==startBefore)view=prefs.start;setView(view)}).catch(()=>{});
     db.collection("data/users/"+uid).where("type","==","personal").onSnapshot(qs=>{
       personal=qs.docs.map(d=>({id:d.id,...d.data()}));gotP=true;refreshAcc();onAccounts()},()=>{gotP=true;onAccounts()})}
   else gotP=true;
   const sq=uid&&!readOnly?db.collection("accounts").where("members","array-contains",uid):db.collection("accounts");
   sq.onSnapshot(qs=>{shared=qs.docs.map(d=>({id:d.id,...d.data()}));gotS=true;refreshAcc();onAccounts()},
-    ()=>{gotS=true;onAccounts();notice("Не удалось загрузить общие счета. Обновите страницу.",true)});
+    ()=>{gotS=true;onAccounts();notice(T("Не удалось загрузить общие счета. Обновите страницу."),true)});
   if(prefSec==="me"){fillMe();if(deepDel)setTimeout(()=>{const el=$("delAcc");if(el)el.scrollIntoView({block:"center"})},300)}
 })();
 function refreshAcc(){if(!acc)return;const f=allAccounts().find(a=>a.id===acc.id&&a.type===acc.type);if(f)acc=f}
@@ -1634,9 +1645,9 @@ function refreshAcc(){if(!acc)return;const f=allAccounts().find(a=>a.id===acc.id
 /* ---------- account, backup and restore (standalone version) ---------- */
 function fillMe(){delArm=deepDel;renderDelAcc();$("meEmail").textContent=(window.KASSA&&KASSA.email())||"—";$("meName").value=(window.KASSA&&KASSA.myName())||"";$("bkMsg").textContent="";
   $("usage").textContent="";if(db&&db.usage)db.usage().then(u=>{const mb=(u.bytes||0)/1048576;
-    $("usage").textContent="Сейчас в базе "+u.docs+" "+plural(u.docs,["запись","записи","записей"])+" (≈ "+(mb<0.1?"меньше 0,1":mb.toFixed(1).replace(".",","))+" МБ). Бесплатного тарифа хватает на 500 МБ."}).catch(()=>{})}
-$("meNameSave").onclick=async()=>{const n=$("meName").value.trim().slice(0,60);if(!n){toast("Введите имя");return}
-  try{await KASSA.setName(n);names[uid]=n;toast("Имя сохранено");renderPeople()}catch(e){toast("Не получилось сохранить имя")}};
+    $("usage").textContent=T("Сейчас в базе ")+u.docs+" "+plural(u.docs,[T("запись"),T("записи"),T("записей")])+" (≈ "+(mb<0.1?T("меньше 0,1"):mb.toFixed(1).replace(".",","))+T(" МБ). Бесплатного тарифа хватает на 500 МБ.")}).catch(()=>{})}
+$("meNameSave").onclick=async()=>{const n=$("meName").value.trim().slice(0,60);if(!n){toast(T("Введите имя"));return}
+  try{await KASSA.setName(n);names[uid]=n;toast(T("Имя сохранено"));renderPeople()}catch(e){toast(T("Не получилось сохранить имя"))}};
 $("signOut").onclick=()=>KASSA.signOut();
 async function collectBackup(){const docs=[],seen=new Set(),add=(path,data)=>{if(!seen.has(path)){seen.add(path);docs.push({path,data})}};
   const mine=await db.collection("data/users/"+uid).get();for(const d of mine.docs)add("data/users/"+uid+"/"+d.id,d.data());
@@ -1646,19 +1657,19 @@ async function collectBackup(){const docs=[],seen=new Set(),add=(path,data)=>{if
     const ic=await iconCol(a).get();for(const d of ic.docs)add(iconCol(a).path+"/"+d.id,d.data());
     const dc=await debtCol(a).get();for(const d of dc.docs)add(debtCol(a).path+"/"+d.id,d.data())}
   return {app:"semeynaya-kassa",version:1,user:uid,exportedAt:new Date().toISOString(),docs}}
-$("bkExport").onclick=async ev=>{const btn=ev.currentTarget,msg=$("bkMsg");msg.classList.remove("bad");btn.disabled=true;msg.textContent="Собираем данные…";
+$("bkExport").onclick=async ev=>{const btn=ev.currentTarget,msg=$("bkMsg");msg.classList.remove("bad");btn.disabled=true;msg.textContent=T("Собираем данные…");
   try{const b=await collectBackup();await dl.save({filename:"semeynaya-kassa-"+today()+".json",data:JSON.stringify(b)});
-    msg.textContent="Готово: "+b.docs.length+" "+plural(b.docs.length,["запись","записи","записей"])+" в файле."}
-  catch(e){msg.classList.add("bad");msg.textContent="Не получилось собрать копию. Проверьте интернет и попробуйте ещё раз."}finally{btn.disabled=false}};
+    msg.textContent=T("Готово: ")+b.docs.length+" "+plural(b.docs.length,[T("запись"),T("записи"),T("записей")])+T(" в файле.")}
+  catch(e){msg.classList.add("bad");msg.textContent=T("Не получилось собрать копию. Проверьте интернет и попробуйте ещё раз.")}finally{btn.disabled=false}};
 $("bkImportBtn").onclick=()=>{$("bkFile").value="";$("bkFile").click()};
 $("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const msg=$("bkMsg");msg.classList.remove("bad");
-  let b;try{b=JSON.parse(await f.text())}catch(x){msg.classList.add("bad");msg.textContent="Это не файл резервной копии.";return}
-  if(!b||b.app!=="semeynaya-kassa"||!Array.isArray(b.docs)){msg.classList.add("bad");msg.textContent="Это не файл резервной копии «Семейной кассы».";return}
+  let b;try{b=JSON.parse(await f.text())}catch(x){msg.classList.add("bad");msg.textContent=T("Это не файл резервной копии.");return}
+  if(!b||b.app!=="semeynaya-kassa"||!Array.isArray(b.docs)){msg.classList.add("bad");msg.textContent=T("Это не файл резервной копии «Семейной кассы».");return}
   const old=String(b.user||""),map=v=>old&&old!==uid?v.split(old).join(uid):v;
   const rows=b.docs.filter(d=>d&&typeof d.path==="string"&&d.data&&typeof d.data==="object").map(d=>({path:map(d.path),data:JSON.parse(map(JSON.stringify(d.data)))}))
     .filter(d=>d.path.startsWith("data/users/"+uid+"/")||d.path.startsWith("accounts/"))
     .sort((x,y)=>x.path.split("/").length-y.path.split("/").length);
-  let ok=0,fail=0;msg.textContent="Восстанавливаем 0 из "+rows.length+"…";
+  let ok=0,fail=0;msg.textContent=T("Восстанавливаем 0 из ")+rows.length+"…";
   let kept=0;
   for(const r of rows){
     if(/^accounts\/[^/]+$/.test(r.path)){
@@ -1667,6 +1678,6 @@ $("bkFile").addEventListener("change",async e=>{const f=e.target.files&&e.target
       if(exists){kept++;ok++;continue}
       r.data.members=[uid];r.data.owner=uid}
     try{await db.doc(r.path).set(r.data);ok++}catch(x){fail++}
-    if((ok+fail)%25===0)msg.textContent="Восстанавливаем "+(ok+fail)+" из "+rows.length+"…"}
-  msg.textContent="Восстановлено "+ok+" из "+rows.length+(fail?" · не удалось "+fail+" (обычно это общие счета, где вы не участник)":"")+". Обновляем приложение…";
+    if((ok+fail)%25===0)msg.textContent=T("Восстанавливаем ")+(ok+fail)+T(" из ")+rows.length+"…"}
+  msg.textContent=T("Восстановлено ")+ok+T(" из ")+rows.length+(fail?T(" · не удалось ")+fail+T(" (обычно это общие счета, где вы не участник)"):"")+T(". Обновляем приложение…");
   setTimeout(()=>location.reload(),1800)});
