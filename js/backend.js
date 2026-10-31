@@ -132,7 +132,8 @@
       try{const r=codeType==="signup"?await sb.auth.resend({type:"signup",email:codeEmail}):await sb.auth.signInWithOtp({email:codeEmail,options:{shouldCreateUser:false}});
         if(r.error)throw r.error;say("auCodeMsg","Новый код отправлен.");startCool()}catch(e){say("auCodeMsg",human(String(e.message||e)),true)}};
     $("auBack").onclick=()=>{hideCode();msg("")};
-    setMode("in")}
+    setMode("in");
+    if(new URLSearchParams(location.search).get("deleted")==="1"){msg("Аккаунт и ваши данные удалены. Спасибо, что пользовались «Семейной кассой».");history.replaceState(null,"",location.pathname)}}
   async function boot(){if(!sb){document.getElementById("authScreen").hidden=false;document.getElementById("auForm").hidden=true;
       document.getElementById("auMsg").textContent="Приложение ещё не подключено к базе: заполните js/config.js.";return}
     const {data}=await sb.auth.getSession();
@@ -141,6 +142,9 @@
     if(data.session){setSession(data.session);const {data:p}=await sb.from("profiles").select("name").eq("id",uid).maybeSingle();
       if(!p){const n=data.session.user.user_metadata&&data.session.user.user_metadata.name;await saveName(n||String(data.session.user.email||"").split("@")[0])}else nameCache[uid]=p.name}
     else showAuth()}
+  window.KASSA.deleteAccount=async()=>{const {error}=await sb.rpc("delete_my_account");if(error)throw err(error);
+    try{for(const k of Object.keys(localStorage))if(k.startsWith("fk.")||k.startsWith("sb-"))localStorage.removeItem(k)}catch(e){}
+    location.replace(location.pathname+"?deleted=1")};
   window.KASSA.signOut=async()=>{await sb.auth.signOut();location.reload()};
   window.KASSA.email=()=>session&&session.user?session.user.email:"";
   window.KASSA.myName=()=>nameCache[uid]||"";

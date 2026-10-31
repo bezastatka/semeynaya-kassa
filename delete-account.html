@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Удаление аккаунта — Семейная касса</title>
+<meta name="description" content="Как удалить аккаунт «Семейной кассы» и какие данные при этом удаляются.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="stylesheet" href="app.css">
+<style>
+body{padding-block:24px 48px}
+.legal{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:6px;font-size:15.5px;line-height:1.6}
+.legal h1{font-family:var(--display);font-weight:500;font-size:26px;line-height:1.25;margin:0 0 4px;text-wrap:balance}
+.legal h2{font-size:18px;margin:18px 0 2px}
+.legal p,.legal ul,.legal ol{margin:0 0 6px;max-width:65ch}
+.legal ul,.legal ol{padding-left:22px}
+.legal .cta{display:inline-block;margin:8px 0 4px;text-decoration:none;text-align:center}
+.legal .back{font-weight:600}
+</style>
+</head>
+<body>
+<main class="legal">
+  <p><a class="back" href="./">‹ К приложению</a></p>
+  <h1>Удаление аккаунта «Семейная касса»</h1>
+  <p>Вы можете удалить свой аккаунт и данные в любой момент — это бесплатно и занимает минуту.</p>
+
+  <h2>Как удалить</h2>
+  <ol>
+    <li>Откройте приложение и войдите в аккаунт.</li>
+    <li>Перейдите в <b>Настройки → Аккаунт и резервная копия</b>.</li>
+    <li>При желании нажмите <b>Скачать копию</b>, чтобы сохранить свои записи.</li>
+    <li>Нажмите <b>Удалить аккаунт</b>, введите слово <b>УДАЛИТЬ</b> и подтвердите.</li>
+  </ol>
+  <p><a class="primary cta" href="./?action=delete-account">Открыть удаление аккаунта</a></p>
+  <p class="hint" style="margin:0">Забыли пароль? На экране входа выберите «По коду» — код придёт на вашу почту.</p>
+
+  <h2>Что удаляется сразу</h2>
+  <ul>
+    <li>аккаунт: почта, пароль, имя;</li>
+    <li>личные счета со всеми операциями, кошельками, целями, долгами, шаблонами и категориями;</li>
+    <li>загруженные иконки и настройки приложения;</li>
+    <li>общие счета, в которых, кроме вас, никого нет.</li>
+  </ul>
+
+  <h2>Что остаётся</h2>
+  <ul>
+    <li>Общие счета с другими участниками остаются у них вместе с записями, которые вы туда добавляли. Вас убирают из участников, ваше имя рядом с записями больше не показывается. Если счёт создавали вы, он переходит следующему участнику.</li>
+    <li>Копии в резервных архивах поставщика базы данных удаляются по истечении срока их хранения.</li>
+  </ul>
+
+  <h2>Нет доступа к аккаунту?</h2>
+  <p>Оставьте обращение на <a href="https://github.com/bezastatka/semeynaya-kassa/issues">странице проекта на GitHub</a> — без личных данных, просто напишите, что хотите удалить аккаунт, и с вами свяжутся, чтобы подтвердить, что аккаунт ваш.</p>
+  <p><a href="privacy.html">Политика конфиденциальности</a></p>
+</main>
+</body>
+</html>

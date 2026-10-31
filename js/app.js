@@ -1,8 +1,11 @@
 const isInc=e=>e.kind==="income";
 const TR={id:"transfer",name:"Перевод",c:"--c10",icon:"transfer"};
 const isTr=e=>e.kind==="transfer";
-const isExp=e=>e.kind!=="income"&&e.kind!=="transfer";
-const catOf=e=>isTr(e)?TR:isInc(e)?(ICAT[e.cat]||ICAT.i_other):(CAT[e.cat]||CAT.other);
+const isExp=e=>e.kind!=="income"&&e.kind!=="transfer"&&e.kind!=="debt";
+const isDebt=e=>e.kind==="debt";
+const deepDel=new URLSearchParams(location.search).get("action")==="delete-account";
+const DEBTC={id:"debt",name:"Долг",c:"--c7",icon:"coins"};
+const catOf=e=>isTr(e)?TR:isDebt(e)?DEBTC:isInc(e)?(ICAT[e.cat]||ICAT.i_other):(CAT[e.cat]||CAT.other);
 const accBudget=()=>!statAll&&subSel==="all"?Number(acc&&acc.budget)||0:0;
 const CURS=[["₽","₽ — рубль"],["€","€ — евро"],["$","$ — доллар"],["₸","₸ — тенге"],["₴","₴ — гривна"],["Br","Br — белорусский рубль"]];
 const MONTHS=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
@@ -416,7 +419,7 @@ function syncView(){renderTabs();setView(view,false);
   $("setTitle").textContent="Счёт «"+(acc.name||"")+"»";
   $("inviteBlock").hidden=!isShared;$("setPeopleWrap").hidden=!isShared;
   $("codeOut").textContent=acc.code||"——————";
-  applyCats();resubIcons();loadSubSel();fillSettings(false);renderWho();renderDanger();renderPeople();renderCats();renderTplBar();renderSubs();render();renderStats();renderHistory();renderCatSet();renderTplSet()}
+  applyCats();resubIcons();resubDebts();loadSubSel();fillSettings(false);renderWho();renderDanger();renderPeople();renderCats();renderTplBar();renderSubs();render();renderStats();renderHistory();renderCatSet();renderTplSet()}
 
 function renderCats(){if(curKind==="tr"&&!canTransfer())curKind="exp";
   const inc=curKind==="inc",vis=(inc?INC_CATS:CATS).filter(c=>!c.hidden);
@@ -461,7 +464,7 @@ function render(){
     st.replaceChildren(...(daysPassed&&total?["В среднем ",h("b",null,fmt(total/daysPassed))," в день"]:[]))}
   if(acc.type==="shared")ensureNames(expenses.map(e=>e.by));
   $("listTitle").textContent="Операции за "+MONTHS[+month.slice(5)-1].toLowerCase();
-  renderList();renderDue();renderGoals()}
+  renderList();renderDue();renderGoals();renderDebts()}
 const who=e=>e.member||nameOf(e.by)||"—";
 function group(list,key){const m={};for(const e of list){const k=key(e);m[k]=(m[k]||0)+(Number(e.amount)||0)}return Object.entries(m).sort((a,b)=>b[1]-a[1])}
 function personColor(name){const all=[...new Set([...people(acc),...histExp.map(who),...expenses.map(who)])].sort();
@@ -473,8 +476,9 @@ function renderBars(box,rows,name,color,total){
     h("div",{class:"name"},h("span",{class:"dot",style:"background:"+color(k)}),name(k)),
     h("div",{class:"val"},fmt(v),h("small",null,total?Math.round(v/total*100)+"%":"")),
     h("div",{class:"bt"},h("i",{style:"width:"+(v/max*100)+"%;background:"+color(k)})))))}
-function renderList(){const box=$("list");
-  if(!loaded){box.replaceChildren(h("div",{class:"empty"},"Загружаем траты…"));return}
+function renderList(){const box=$("list");renderListMode();
+  if(!loaded){box.replaceChildren(h("div",{class:"empty"},"Загружаем операции…"));return}
+  if(calMode()){renderCalendar(box);return}
   if(!expenses.filter(inSub).length){box.replaceChildren(h("div",{class:"empty"},acc.type==="shared"?"В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую — её сразу увидят все участники счёта.":"В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую."));return}
   const sorted=expenses.filter(inSub).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
   const days={};for(const e of sorted)(days[e.date]=days[e.date]||[]).push(e);
@@ -489,14 +493,14 @@ function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)ret
   const c=catOf(e),inc=isInc(e),tr=isTr(e),multi=subsOf(acc).length>1;
   const sub=[showDate&&e.date?shortDate(e.date):"",tr?endName(e,"from")+" → "+endName(e,"to"):"",!tr&&e.note?c.name:"",
     !tr&&multi&&subSel==="all"?subName(subOf(e)):"",e.goal?goalName(e.goal):"",acc.type==="shared"?who(e):""].filter(Boolean).join(" · ");
-  const sign=tr?trSign(e):inc?"+":"";
+  const dbt=isDebt(e),sign=tr?trSign(e):dbt?(e.dir==="in"?"+":"−"):inc?"+":"";
   const kids=[catIcon(c,34),
     h("div",{class:"what"},h("div",null,e.note||c.name),sub?h("div",{class:"sub"},sub):null),
-    h("div",{class:"amt"+(tr?" tr":inc?" inc":"")},sign+fmt(Number(e.amount)||0))];
+    h("div",{class:"amt"+(tr||dbt?" tr":inc?" inc":"")},sign+fmt(Number(e.amount)||0))];
   return readOnly?h("div",{class:"item"},...kids):h("button",{type:"button",class:"item","aria-label":"Изменить: "+(e.note||c.name)+", "+fmt(Number(e.amount)||0),onclick:()=>openEditor(e.id,where)},...kids)}
 function openEditor(id,where){editingId=id;editingWhere=where;edCache={id:null,el:null};renderList();renderHistory()}
 function closeEditor(){editingId=null;edCache={id:null,el:null};renderList();renderHistory()}
-function editor(e){if(isX(e))return xEditor(e);if(edCache.id===e.id&&edCache.el)return edCache.el;
+function editor(e){if(isX(e))return xEditor(e);if(isDebt(e))return debtOpEditor(e);if(edCache.id===e.id&&edCache.el)return edCache.el;
   const subs=subsOf(acc);
   const st={kind:isTr(e)?"tr":isInc(e)?"inc":"exp",cat:isTr(e)?"":catOf(e).id,confirm:false};
   const opt=()=>subs.map(x=>h("option",{value:x.id},x.name));
@@ -522,7 +526,8 @@ function editor(e){if(isX(e))return xEditor(e);if(edCache.id===e.id&&edCache.el)
   const drawDel=()=>delBox.replaceChildren(...(st.confirm
     ?[h("button",{type:"button",class:"del",onclick:doDel},"Да, удалить"),h("button",{type:"button",onclick:()=>{st.confirm=false;drawDel()}},"Не удалять")]
     :[h("button",{type:"button",class:"danger",onclick:()=>{st.confirm=true;drawDel()}},"Удалить операцию")]));
-  async function doDel(){try{await expCol(acc).doc(e.id).delete();patchLocal(e.id,null);closeEditor();toast("Операция удалена")}catch(err){writeErr(err,msg)}}
+  async function doDel(){const a=acc,data=stripId(e);try{await expCol(a).doc(e.id).delete();patchLocal(e.id,null);closeEditor();
+      offerUndo("Операция удалена",()=>restoreOps(a,[{id:e.id,data}]))}catch(err){writeErr(err,msg)}}
   async function save(){msg.classList.remove("bad");const a=Math.round(parseNum(amount.value)*100)/100;
     if(!(a>0)||a>1e9){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";amount.focus();return}
     const d=date.value||e.date||today();
@@ -562,7 +567,7 @@ function balancesFor(a,ops){const subs=subsOf(a),ids=subs.map(x=>x.id),b=Object.
   const end=id=>id==="ext"?"ext":ids.includes(id)?id:"main";
   for(const e of ops){const v=Number(e.amount)||0;
     if(isTr(e)){const f=end(e.from),t=end(e.to);if(f!=="ext")b[f]-=v;if(t!=="ext")b[t]+=v}
-    else b[ids.includes(e.sub)?e.sub:"main"]+=isInc(e)?v:-v}
+    else b[ids.includes(e.sub)?e.sub:"main"]+=isInc(e)||(isDebt(e)&&e.dir==="in")?v:-v}
   return b}
 function totalFor(a,b){const subs=subsOf(a);return subs.filter(x=>!(subs.length>1&&x.off)).reduce((t,x)=>t+(b[x.id]||0),0)}
 function balances(){return balancesFor(acc,histExp)}
@@ -673,6 +678,8 @@ async function createOp(o){
       try{await expCol(dest.a).add(other)}catch(e){toast("Списание записано, но в счёт «"+(dest.a.name||"")+"» перевод не попал. Проверьте доступ к нему.")}
       return ref}
     const doc={...base,kind:"transfer",from:o.from,to:o.to};const ref=await expCol(acc).add(doc);noteLocal(ref.id,doc);return ref}
+  if(o.kind==="debt"){const doc={...base,kind:"debt",dir:o.dir==="in"?"in":"out",sub:subIds().includes(o.sub)?o.sub:"main",debt:o.debt||""};
+    const ref=await expCol(acc).add(doc);noteLocal(ref.id,doc);return ref}
   const doc={...base,kind:o.kind==="inc"?"income":"expense",cat:o.cat,sub:o.sub||"main"};
   const ref=await expCol(acc).add(doc);noteLocal(ref.id,doc);return ref}
 async function counterpart(e){const t=e.xacc||{};const a=allAccounts().find(x=>x.type===t.type&&x.id===t.id);if(!a||!e.link)return null;
@@ -686,8 +693,10 @@ function xEditor(e){if(edCache.id===e.id&&edCache.el)return edCache.el;
   const drawDel=()=>delBox.replaceChildren(...(st.confirm
     ?[h("button",{type:"button",class:"del",onclick:doDel},"Да, удалить в обоих счетах"),h("button",{type:"button",onclick:()=>{st.confirm=false;drawDel()}},"Не удалять")]
     :[h("button",{type:"button",class:"danger",onclick:()=>{st.confirm=true;drawDel()}},"Удалить перевод")]));
-  async function doDel(){try{const cp=await counterpart(e);await expCol(acc).doc(e.id).delete();patchLocal(e.id,null);
-      if(cp)await expCol(cp.a).doc(cp.id).delete();closeEditor();toast(cp?"Перевод удалён в обоих счетах":"Перевод удалён в этом счёте. Во втором счёте удалите запись вручную.")}catch(err){writeErr(err,msg)}}
+  async function doDel(){const a=acc,data=stripId(e);try{const cp=await counterpart(e);let cpData=null;
+      if(cp){const s2=await expCol(cp.a).doc(cp.id).get();cpData=s2.exists?s2.data():null}
+      await expCol(a).doc(e.id).delete();patchLocal(e.id,null);if(cp)await expCol(cp.a).doc(cp.id).delete();closeEditor();
+      offerUndo(cp?"Перевод удалён в обоих счетах":"Перевод удалён в этом счёте. Во втором удалите вручную.",async()=>{await restoreOps(a,[{id:e.id,data}]);if(cp&&cpData)await expCol(cp.a).doc(cp.id).set(cpData)})}catch(err){writeErr(err,msg)}}
   async function save(){msg.classList.remove("bad");const a=Math.round(parseNum(amount.value)*100)/100;
     if(!(a>0)||a>1e9){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";amount.focus();return}
     const d=date.value||e.date||today(),patch={amount:a,date:d,month:d.slice(0,7),note:note.value.trim().slice(0,80)};
@@ -828,7 +837,8 @@ async function saveTpl(){const d=tplEdit,msg=$("teMsg");msg.classList.remove("ba
     member:d.member||"",note:String(d.note||"").trim().slice(0,80),repeat:d.repeat==="month"?"month":"none",day:Math.min(31,Math.max(1,parseInt(d.day,10)||1)),skips:Array.isArray(d.skips)?d.skips:[],paid:Array.isArray(d.paid)?d.paid:[]};
   const list=tplsOf(acc).map(x=>({...x}));const i=list.findIndex(x=>x.id===t.id);if(i<0)list.push(t);else list[i]=t;
   if(await writeTpls(list,msg)){tplEdit=null;renderTplSet();toast(i<0?"Шаблон «"+name+"» добавлен":"Шаблон сохранён")}}
-async function deleteTpl(){const id=tplEdit.id;if(await writeTpls(tplsOf(acc).filter(x=>x.id!==id))){tplEdit=null;tplArm=false;if(tplActive===id)tplActive=null;renderTplSet();toast("Шаблон удалён")}}
+async function deleteTpl(){const id=tplEdit.id,a=acc,prev=tplsOf(a);if(await writeTpls(prev.filter(x=>x.id!==id))){tplEdit=null;tplArm=false;if(tplActive===id)tplActive=null;renderTplSet();
+  offerUndo("Шаблон удалён",async()=>{await accDoc(a).update({tpls:prev});a.tpls=prev;renderTplBar();renderDue();renderTplSet()})}}
 $("addTplBtn").onclick=()=>{tplEdit={id:genId(),name:"",kind:"exp",amount:0,cat:CATS.find(c=>!c.hidden).id,sub:"main",from:"main",to:"",member:"",note:"",repeat:"month",day:new Date().getDate(),skips:[],isNew:true};tplArm=false;renderTplSet();
   setTimeout(()=>{const el=$("te-name");if(el)el.focus()},0)};
 
@@ -905,8 +915,209 @@ async function saveGoal(){const g=goalEdit,msg=$("geMsg");msg.classList.remove("
   const a=acc,goals=goalsOf(a).map(x=>x.id===g.id?{...x,name,target,deadline:g.deadline||"",mode,start:mode==="contrib"&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0}:x);
   try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;renderGoals();toast("Цель сохранена")}catch(e){writeErr(e,msg)}}
 async function deleteGoal(){const a=acc,id=goalEdit.id,goals=goalsOf(a).filter(x=>x.id!==id);
-  try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;goalArm=false;renderGoals();toast("Цель удалена")}catch(e){toast("Не получилось удалить цель")}}
+  const prev=goalsOf(a);
+  try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;goalArm=false;renderGoals();
+    offerUndo("Цель удалена",async()=>{await accDoc(a).update({goals:prev});a.goals=prev;renderGoals()})}catch(e){toast("Не получилось удалить цель")}}
 $("addGoalBtn").onclick=()=>{goalNew={name:"",target:"",deadline:"",mode:"new",start:"",inTotal:false,whole:false};goalEdit=null;renderGoals();setTimeout(()=>{const el=$("gnName");if(el)el.focus()},0)};
+
+
+/* ---------- undo after delete ---------- */
+let undoEl=null,undoT=null;
+function offerUndo(text,restore){if(undoEl){undoEl.remove();clearTimeout(undoT)}
+  const el=h("div",{class:"toast undo",role:"status"},h("span",null,text),
+    h("button",{type:"button",class:"undobtn",onclick:async()=>{el.remove();undoEl=null;clearTimeout(undoT);
+      try{await restore();toast("Восстановлено")}catch(e){toast("Не получилось вернуть. Проверьте интернет и попробуйте ещё раз.")}}},"Вернуть"));
+  document.body.append(el);undoEl=el;undoT=setTimeout(()=>{el.remove();if(undoEl===el)undoEl=null},8000)}
+const stripId=e=>{const {id,...d}=e;return d};
+async function restoreOps(a,list){for(const x of list){await expCol(a).doc(x.id).set(x.data);if(acc&&sameAcc(a,acc))patchLocal(x.id,x.data)}}
+
+/* ---------- debts ---------- */
+const debtCol=a=>db.collection(accDoc(a).path+"/debts");
+const dShort=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat("ru-RU",y===new Date().getFullYear()?{day:"numeric",month:"short"}:{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd)).replace(/\s?г\.$/,"")};
+let debts=[],debtUnsub=null,debtKey="",debtNew=null,debtOpen=null,debtMode="",debtArm=false,debtShowClosed=false;
+function resubDebts(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===debtKey)return;
+  debtKey=key;if(debtUnsub)debtUnsub();debts=[];debtNew=null;debtOpen=null;const a=acc;
+  debtUnsub=debtCol(a).onSnapshot(qs=>{if(debtKey!==key)return;debts=qs.docs.map(d=>({id:d.id,...d.data()}));renderDebts();if(calMode())renderList()},()=>{})}
+const debtPaid=d=>(Array.isArray(d.entries)?d.entries:[]).reduce((t,x)=>t+(Number(x.amount)||0),0);
+const debtLeft=d=>Math.max(0,Math.round(((Number(d.amount)||0)-debtPaid(d))*100)/100);
+const debtOpenNow=d=>!d.closed&&debtLeft(d)>0;
+const debtDirText=d=>d.dir==="lent"?"должен вам":"вы должны";
+function debtNames(){return [...new Set([...people(acc),...debts.map(d=>d.who)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ru"))}
+function walletPicker(id,val,onPick){const subs=subsOf(acc);if(subs.length<2)return null;
+  const sel=h("select",{class:"field",id,onchange:e=>onPick(e.target.value)},...subs.map(x=>h("option",{value:x.id},x.name)));sel.value=subIds().includes(val)?val:"main";return sel}
+function renderDebts(){const sec=$("debtSec");if(!acc){sec.hidden=true;return}
+  const open=debts.filter(debtOpenNow).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999")||(b.createdAt||0)-(a.createdAt||0));
+  const closed=debts.filter(d=>!debtOpenNow(d)).sort((a,b)=>(b.closedAt||b.createdAt||0)-(a.closedAt||a.createdAt||0));
+  sec.hidden=readOnly&&!debts.length;if(sec.hidden)return;
+  $("addDebtBtn").hidden=readOnly||!!debtNew;
+  const toMe=sum(open.filter(d=>d.dir==="lent").map(d=>({amount:debtLeft(d)}))),mine=sum(open.filter(d=>d.dir!=="lent").map(d=>({amount:debtLeft(d)})));
+  $("debtSum").replaceChildren(...(open.length?[toMe?h("span",null,"Вам должны ",h("b",{class:"pos"},fmt(toMe))):null,toMe&&mine?" · ":null,mine?h("span",null,"Вы должны ",h("b",{class:"neg"},fmt(mine))):null].filter(Boolean)
+    :[debts.length||debtNew?"":"Записывайте, кто кому одолжил, — приложение напомнит о сроке и учтёт возврат в кошельке."]));
+  renderDebtNew();
+  const cards=open.map(debtCard);
+  if(debtShowClosed)cards.push(...closed.map(debtCard));
+  $("debts").replaceChildren(...cards);
+  const cb=$("debtClosedBtn");cb.hidden=!closed.length;cb.textContent=debtShowClosed?"Скрыть закрытые":"Закрытые долги ("+closed.length+")"}
+$("debtClosedBtn").onclick=()=>{debtShowClosed=!debtShowClosed;renderDebts()};
+function debtCard(d){const left=debtLeft(d),paid=debtPaid(d),total=Number(d.amount)||0,isOpen=debtOpenNow(d),t=today();
+  const overdue=isOpen&&d.due&&d.due<t,soon=isOpen&&d.due&&!overdue&&d.due<=ymd(new Date(Date.now()+7*864e5));
+  const meta=[d.date?"с "+dShort(d.date):"",d.due?(overdue?"срок прошёл "+dShort(d.due):"вернуть до "+dShort(d.due)):"",d.note||""].filter(Boolean).join(" · ");
+  const sel=debtOpen===d.id;
+  const card=h("div",{class:"debt"+(overdue?" overdue":soon?" soon":"")+(isOpen?"":" done"),id:"debt-"+d.id},
+    h("div",{class:"dhead"},h("div",{class:"dwho"},h("b",null,d.who||"Без имени"),h("span",null," "+debtDirText(d))),
+      h("div",{class:"damt "+(d.dir==="lent"?"pos":"neg")},isOpen?fmt(left):d.forgiven?"прощён":"возвращён")),
+    paid>0&&isOpen?h("div",{class:"track"},h("div",{class:"fill",style:"width:"+Math.min(100,paid/total*100)+"%"})):null,
+    h("div",{class:"meta",style:"margin-top:0"},h("span",{class:overdue?"over":""},meta),paid>0&&isOpen?h("span",null,"возвращено "+fmt(paid)+" из "+fmt(total)):!isOpen?h("span",null,fmt(total)):null),
+    readOnly?null:h("div",{class:"inline",style:"align-items:center"},
+      isOpen?h("button",{type:"button",class:"ghost sm",onclick:()=>{debtOpen=sel&&debtMode==="pay"?null:d.id;debtMode="pay";debtArm=false;renderDebts()}},d.dir==="lent"?"Вернули":"Вернул"):null,
+      h("button",{type:"button",class:"linkbtn",onclick:()=>{debtOpen=sel&&debtMode==="edit"?null:d.id;debtMode="edit";debtArm=false;renderDebts()}},"Подробнее")));
+  if(sel&&debtMode==="pay"&&isOpen)card.append(debtPayForm(d));
+  if(sel&&debtMode==="edit")card.append(debtEditForm(d));
+  return card}
+function debtPayForm(d){const st={amount:String(debtLeft(d)).replace(".",","),date:today(),wallet:!!d.sub||subsOf(acc).length>0,sub:d.sub||"main"};
+  const box=h("div",{class:"stack",style:"gap:10px;border-top:1px solid var(--line);padding-top:10px"});
+  const draw=()=>{const wp=walletPicker("dp-sub",st.sub,v=>{st.sub=v});
+    box.replaceChildren(
+      h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dp-amt"},"Сумма возврата"),h("input",{class:"field",id:"dp-amt",inputmode:"decimal",value:st.amount,oninput:e=>{st.amount=e.target.value}})),
+        h("div",null,h("label",{class:"label",for:"dp-date"},"Дата"),h("input",{type:"date",id:"dp-date",value:st.date,oninput:e=>{st.date=e.target.value}}))),
+      switchBtn(d.dir==="lent"?"Зачислить в кошелёк":"Списать из кошелька",st.wallet,()=>{st.wallet=!st.wallet;draw()},"dp-w"),
+      st.wallet&&wp?h("div",null,h("label",{class:"label",for:"dp-sub"},"Кошелёк"),wp):null,
+      h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{debtOpen=null;renderDebts()}},"Отмена")),
+      h("div",{class:"formmsg",id:"dpMsg",role:"status"}))};
+  async function save(){const msg=$("dpMsg");msg.classList.remove("bad");const amt=Math.round(parseNum(st.amount)*100)/100;
+    if(!(amt>0)){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";return}
+    if(amt>debtLeft(d)+0.001){msg.classList.add("bad");msg.textContent="Это больше остатка долга ("+fmt(debtLeft(d))+").";return}
+    const a=acc,date=st.date||today();
+    try{let op="";if(st.wallet){const ref=await createOp({kind:"debt",dir:d.dir==="lent"?"in":"out",amount:amt,sub:st.sub,debt:d.id,date,note:(d.dir==="lent"?"Возврат долга: ":"Вернул долг: ")+(d.who||"")});op=ref.id}
+      const entries=[...(Array.isArray(d.entries)?d.entries:[]),{id:genId(),amount:amt,date,op}];
+      const done=entries.reduce((t,x)=>t+(Number(x.amount)||0),0)>=(Number(d.amount)||0)-0.001;
+      await debtCol(a).doc(d.id).update({entries,closed:done,...(done?{closedAt:Date.now()}:{})});
+      debtOpen=null;toast(done?"Долг закрыт полностью":"Записано: возвращено "+fmt(amt))}
+    catch(e){writeErr(e,msg)}}
+  draw();return box}
+function debtEditForm(d){const st={who:d.who||"",amount:String(d.amount||"").replace(".",","),date:d.date||today(),due:d.due||"",note:d.note||""};
+  const entries=Array.isArray(d.entries)?d.entries:[];
+  const box=h("div",{class:"stack",style:"gap:10px;border-top:1px solid var(--line);padding-top:10px"});
+  const f=(id,label,el)=>h("div",null,h("label",{class:"label",for:id},label),el);
+  box.replaceChildren(
+    f("de-who","Кто",h("input",{class:"field",id:"de-who",maxlength:"40",value:st.who,oninput:e=>{st.who=e.target.value}})),
+    h("div",{class:"row2 half"},f("de-amt","Сумма долга",h("input",{class:"field",id:"de-amt",inputmode:"decimal",value:st.amount,oninput:e=>{st.amount=e.target.value}})),
+      f("de-due","Вернуть до",h("input",{type:"date",id:"de-due",value:st.due,oninput:e=>{st.due=e.target.value}}))),
+    f("de-note","Комментарий",h("input",{class:"field",id:"de-note",maxlength:"80",value:st.note,oninput:e=>{st.note=e.target.value}})),
+    entries.length?h("div",{class:"stack",style:"gap:4px"},h("span",{class:"label",style:"margin:0"},"Возвраты"),...entries.map(x=>h("div",{class:"inline",style:"justify-content:space-between;align-items:center"},
+      h("span",null,dShort(x.date)+" · "+fmt(Number(x.amount)||0)+(x.op?"":" · без кошелька")),
+      readOnly?null:h("button",{type:"button",class:"x","aria-label":"Удалить этот возврат",onclick:()=>delEntry(d,x)},"×")))):null,
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:save},"Сохранить"),h("button",{type:"button",class:"ghost",onclick:()=>{debtOpen=null;renderDebts()}},"Закрыть")),
+    h("div",{class:"formmsg",id:"deMsg",role:"status"}),
+    h("div",{class:"confirm"},
+      debtOpenNow(d)?h("button",{type:"button",class:"danger",onclick:()=>forgive(d)},d.dir==="lent"?"Простить долг":"Отметить как закрытый"):h("button",{type:"button",class:"danger",onclick:()=>reopen(d)},"Вернуть в открытые"),
+      debtArm?h("button",{type:"button",class:"del",onclick:()=>deleteDebt(d)},"Да, удалить"):h("button",{type:"button",class:"danger",onclick:()=>{debtArm=true;renderDebts()}},"Удалить долг")),
+    h("div",{class:"hint",style:"margin:0"},"Удаление уберёт и связанные операции в кошельках."));
+  async function save(){const msg=$("deMsg");msg.classList.remove("bad");const amt=Math.round(parseNum(st.amount)*100)/100,who=st.who.trim().slice(0,40);
+    if(!who){msg.classList.add("bad");msg.textContent="Укажите, кто.";return}
+    if(!(amt>0)){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";return}
+    if(amt<debtPaid(d)-0.001){msg.classList.add("bad");msg.textContent="Сумма меньше уже возвращённого ("+fmt(debtPaid(d))+").";return}
+    const a=acc;
+    try{const done=debtPaid(d)>=amt-0.001;
+      await debtCol(a).doc(d.id).update({who,amount:amt,due:st.due||"",note:st.note.trim().slice(0,80),closed:done||(!!d.closed&&!!d.forgiven)});
+      if(d.op){try{await expCol(a).doc(d.op).update({amount:amt,note:(d.dir==="lent"?"Дал в долг: ":"Взял в долг: ")+who})}catch(e){}}
+      debtOpen=null;toast("Сохранено")}catch(e){writeErr(e,msg)}}
+  return box}
+async function delEntry(d,x){const a=acc,entries=(d.entries||[]).filter(y=>y.id!==x.id);let opData=null;
+  try{if(x.op){const s=await expCol(a).doc(x.op).get();if(s.exists){opData=s.data();await expCol(a).doc(x.op).delete();patchLocal(x.op,null)}}
+    await debtCol(a).doc(d.id).update({entries,closed:false,forgiven:false});
+    offerUndo("Возврат удалён",async()=>{if(opData)await restoreOps(a,[{id:x.op,data:opData}]);const cur2=(await debtCol(a).doc(d.id).get()).data()||{};
+      const en=[...(cur2.entries||[]),x],done=en.reduce((t,y)=>t+(Number(y.amount)||0),0)>=(Number(cur2.amount)||0)-0.001;await debtCol(a).doc(d.id).update({entries:en,closed:done})})}
+  catch(e){toast("Не получилось удалить возврат")}}
+async function forgive(d){try{await debtCol(acc).doc(d.id).update({closed:true,forgiven:true,closedAt:Date.now()});debtOpen=null;toast(d.dir==="lent"?"Долг прощён":"Долг закрыт")}catch(e){toast("Не получилось сохранить")}}
+async function reopen(d){try{await debtCol(acc).doc(d.id).update({closed:false,forgiven:false});toast("Долг снова открыт")}catch(e){toast("Не получилось сохранить")}}
+async function deleteDebt(d){const a=acc,ids=[d.op,...(d.entries||[]).map(x=>x.op)].filter(Boolean),saved=[];
+  try{for(const id of ids){const s=await expCol(a).doc(id).get();if(s.exists){saved.push({id,data:s.data()});await expCol(a).doc(id).delete();patchLocal(id,null)}}
+    const {id,...data}=d;await debtCol(a).doc(d.id).delete();debtOpen=null;debtArm=false;
+    offerUndo("Долг «"+(d.who||"")+"» удалён",async()=>{await debtCol(a).doc(id).set(data);await restoreOps(a,saved)})}
+  catch(e){toast("Не получилось удалить долг")}}
+function renderDebtNew(){const box=$("debtNew");if(!debtNew){box.hidden=true;box.replaceChildren();return}box.hidden=false;const g=debtNew;
+  const wp=walletPicker("dn-sub",g.sub,v=>{g.sub=v});
+  const list=h("datalist",{id:"dn-names"},...debtNames().map(n=>h("option",{value:n})));
+  box.replaceChildren(h("div",{class:"editor"},
+    mseg([["lent","Я дал в долг"],["borrowed","Я взял в долг"]],g.dir,v=>{g.dir=v;renderDebtNew()},"Направление"),
+    h("div",null,h("label",{class:"label",for:"dn-who"},g.dir==="lent"?"Кому":"У кого"),h("input",{class:"field",id:"dn-who",maxlength:"40",list:"dn-names",autocomplete:"off",placeholder:"Имя",value:g.who,oninput:e=>{g.who=e.target.value}}),list),
+    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dn-amt"},"Сумма, "+cur()),h("input",{class:"field",id:"dn-amt",inputmode:"decimal",autocomplete:"off",value:g.amount,oninput:e=>{g.amount=e.target.value}})),
+      h("div",null,h("label",{class:"label",for:"dn-due"},"Вернуть до"),h("input",{type:"date",id:"dn-due",value:g.due,oninput:e=>{g.due=e.target.value}}))),
+    h("div",{class:"row2 half"},h("div",null,h("label",{class:"label",for:"dn-date"},"Дата"),h("input",{type:"date",id:"dn-date",value:g.date,oninput:e=>{g.date=e.target.value}})),
+      h("div",null,h("label",{class:"label",for:"dn-note"},"Комментарий"),h("input",{class:"field",id:"dn-note",maxlength:"80",placeholder:"Необязательно",value:g.note,oninput:e=>{g.note=e.target.value}}))),
+    switchBtn(g.dir==="lent"?"Списать сумму из кошелька":"Зачислить сумму в кошелёк",g.wallet,()=>{g.wallet=!g.wallet;renderDebtNew()},"dn-w"),
+    g.wallet&&wp?h("div",null,h("label",{class:"label",for:"dn-sub"},"Кошелёк"),wp):null,
+    h("div",{class:"hint",style:"margin:0"},"Долги не считаются расходами и доходами — они меняют только баланс кошелька."),
+    h("div",{class:"inline"},h("button",{type:"button",class:"primary",onclick:createDebt},"Добавить долг"),h("button",{type:"button",class:"ghost",onclick:()=>{debtNew=null;renderDebts()}},"Отмена")),
+    h("div",{class:"formmsg",id:"dnMsg",role:"status"})))}
+async function createDebt(){const g=debtNew,msg=$("dnMsg");msg.classList.remove("bad");const who=g.who.trim().slice(0,40),amt=Math.round(parseNum(g.amount)*100)/100;
+  if(!who){msg.classList.add("bad");msg.textContent=g.dir==="lent"?"Укажите, кому вы дали в долг.":"Укажите, у кого вы взяли в долг.";$("dn-who").focus();return}
+  if(!(amt>0)){msg.classList.add("bad");msg.textContent="Введите сумму больше нуля.";$("dn-amt").focus();return}
+  if(g.due&&g.due<(g.date||today())){msg.classList.add("bad");msg.textContent="Срок возврата не может быть раньше даты долга.";$("dn-due").focus();return}
+  const a=acc,ref=debtCol(a).doc(),date=g.date||today();
+  try{let op="";if(g.wallet){const r=await createOp({kind:"debt",dir:g.dir==="lent"?"out":"in",amount:amt,sub:g.sub,debt:ref.id,date,note:(g.dir==="lent"?"Дал в долг: ":"Взял в долг: ")+who});op=r.id}
+    await ref.set({who,dir:g.dir,amount:amt,date,due:g.due||"",note:g.note.trim().slice(0,80),sub:g.wallet?g.sub:"",op,entries:[],closed:false,createdAt:Date.now(),by:uid||""});
+    debtNew=null;toast(g.dir==="lent"?"Записано: "+who+" должен вам "+fmt(amt):"Записано: вы должны "+who+" "+fmt(amt))}
+  catch(e){writeErr(e,msg)}}
+$("addDebtBtn").onclick=()=>{debtNew={dir:"lent",who:"",amount:"",date:today(),due:"",note:"",wallet:true,sub:subSel!=="all"?subSel:"main"};debtOpen=null;renderDebts();setTimeout(()=>{const el=$("dn-who");if(el)el.focus()},0)};
+function debtOpEditor(e){const d=debts.find(x=>x.id===e.debt);
+  return h("div",{class:"editor"},h("div",null,"Это операция по долгу"+(d?" «"+(d.who||"")+"»":"")+". Сумму, дату и возвраты меняйте в карточке долга."),
+    h("div",{class:"inline"},d?h("button",{type:"button",class:"primary",onclick:()=>{closeEditor();setView("spend",true);debtOpen=d.id;debtMode="edit";debtShowClosed=debtShowClosed||!debtOpenNow(d);renderDebts();
+      setTimeout(()=>{const el=$("debt-"+d.id);if(el)el.scrollIntoView({block:"center",behavior:"smooth"})},60)}},"Открыть долг"):null,
+      h("button",{type:"button",class:"ghost",onclick:closeEditor},"Закрыть")))}
+
+/* ---------- calendar ---------- */
+let calDay;
+const calMode=()=>lsGet("fk.listMode")==="cal";
+function plannedFor(m){const tm=today().slice(0,7);if(m<tm)return {};const dim=daysIn(m),out={},claimed=new Set();
+  for(const t of tplsOf(acc).filter(t=>t.repeat==="month")){if((t.skips||[]).includes(m)||(t.paid||[]).includes(m))continue;
+    if(m===tm){if(expenses.some(e=>e.tpl===t.id))continue;const auto=expenses.find(e=>!claimed.has(e.id)&&tplMatches(t,e));if(auto){claimed.add(auto.id);continue}}
+    const day=Math.min(dim,Math.max(1,+t.day||1));(out[day]=out[day]||[]).push({type:"tpl",t,day})}
+  for(const d of debts.filter(debtOpenNow))if(d.due&&d.due.slice(0,7)===m){const day=+d.due.slice(8,10);(out[day]=out[day]||[]).push({type:"debt",d})}
+  return out}
+function renderCalendar(box){const m=month,dim=daysIn(m),[y,mm]=m.split("-").map(Number),first=(new Date(y,mm-1,1).getDay()+6)%7,t=today();
+  const ops=expenses.filter(inSub),outBy={},inBy={};
+  for(const e of ops){const d=+String(e.date).slice(8,10);if(isExp(e))outBy[d]=(outBy[d]||0)+(Number(e.amount)||0);else if(isInc(e))inBy[d]=(inBy[d]||0)+(Number(e.amount)||0)}
+  const plan=plannedFor(m),max=Math.max(1,...Object.values(outBy));
+  if(calDay&&calDay.slice(0,7)!==m)calDay=undefined;
+  if(calDay===undefined)calDay=t.slice(0,7)===m?t:null;
+  const cells=[...WD.map(w=>h("div",{class:"cwd","aria-hidden":"true"},w))];
+  for(let i=0;i<first;i++)cells.push(h("div",{class:"cday empty","aria-hidden":"true"}));
+  for(let d=1;d<=dim;d++){const ds=m+"-"+pad(d),out=outBy[d]||0,inn=inBy[d]||0,p=plan[d]||[],lvl=out?Math.max(.12,out/max):0;
+    const label=dayMonth(ds)+(out?", расходы "+fmt(out):"")+(inn?", доходы "+fmt(inn):"")+(p.length?", запланировано: "+p.map(x=>x.type==="tpl"?x.t.name:"долг "+(x.d.who||"")).join(", "):"");
+    cells.push(h("button",{type:"button",class:"cday"+(ds===t?" today":"")+(ds===calDay?" sel":"")+(ds>t?" future":""),style:lvl?"--lvl:"+lvl.toFixed(2):null,"aria-label":label,"aria-pressed":String(ds===calDay),
+      onclick:()=>{calDay=calDay===ds?null:ds;renderList()}},
+      h("span",{class:"cnum"},String(d)),out?h("span",{class:"csum"},compact(out)):null,
+      h("span",{class:"cmarks"},inn?h("i",{class:"m-inc"}):null,p.some(x=>x.type==="tpl")?h("i",{class:"m-plan"}):null,p.some(x=>x.type==="debt")?h("i",{class:"m-debt"}):null)))}
+  const legend=h("div",{class:"legend calleg"},h("span",null,h("i",{class:"m-inc"}),"доход"),h("span",null,h("i",{class:"m-plan"}),"регулярный платёж"),h("span",null,h("i",{class:"m-debt"}),"срок долга"));
+  const parts=[h("div",{class:"cal"},...cells),legend];
+  if(calDay){const items=ops.filter(e=>e.date===calDay).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)),p=plan[+calDay.slice(8,10)]||[];
+    const out=sum(items.filter(isExp)),inn=sum(items.filter(isInc));
+    parts.push(h("div",{class:"day calsel"},h("div",{class:"dayh"},h("span",null,dayLabel(calDay)),h("span",null,out?fmt(out):null,inn?h("span",{class:"in"},"+"+fmt(inn)):null)),
+      ...items.map(e=>itemRow(e,false,"ops")),
+      ...p.map(x=>x.type==="tpl"?h("div",{class:"planrow"},catIcon(tplCat(x.t),30),h("div",{class:"what"},h("div",null,x.t.name),h("div",{class:"sub"},"по графику"+(x.t.kind==="inc"?" · доход":""))),
+          h("div",{class:"amt muted"},x.t.amount?(x.t.kind==="inc"?"+":"")+fmt(x.t.amount):"—"),
+          readOnly||calDay>t?null:h("button",{type:"button",class:"ghost sm",onclick:ev=>runTpl(x.t,x.day,ev.currentTarget)},x.t.kind==="inc"?"Получено":"Оплачено"))
+        :h("div",{class:"planrow"},catIcon({c:"--c7",icon:"coins"},30),h("div",{class:"what"},h("div",null,"Срок долга: "+(x.d.who||"")),h("div",{class:"sub"},debtDirText(x.d))),h("div",{class:"amt muted"},fmt(debtLeft(x.d))))),
+      !items.length&&!p.length?h("div",{class:"empty"},"В этот день операций нет."):null,
+      readOnly?null:h("button",{type:"button",class:"ghost",style:"margin-top:10px",onclick:()=>{const d=calDay;openEntry(false);$("date").value=d;renderDetails()}},"+ Добавить на "+dayMonth(calDay))))}
+  else parts.push(h("div",{class:"hint"},"Нажмите на день, чтобы увидеть его операции."));
+  box.replaceChildren(...parts)}
+function renderListMode(){$("listMode").replaceChildren(mseg([["list","Список"],["cal","Календарь"]],calMode()?"cal":"list",v=>{lsSet("fk.listMode",v);renderList()},"Вид"))}
+
+/* ---------- account deletion ---------- */
+let delArm=false;
+function renderDelAcc(){const box=$("delAcc");
+  if(!delArm){box.replaceChildren(h("button",{type:"button",class:"ghost danger",onclick:()=>{delArm=true;renderDelAcc();setTimeout(()=>$("delConfirm").focus(),0)}},"Удалить аккаунт"));return}
+  const inp=h("input",{class:"field",id:"delConfirm",autocomplete:"off",placeholder:"УДАЛИТЬ",style:"max-width:220px"});
+  const btn=h("button",{type:"button",class:"del",style:"padding:10px 14px;border-radius:12px",onclick:doDeleteAccount},"Удалить навсегда");
+  box.replaceChildren(h("div",{class:"stack",style:"gap:8px"},h("label",{for:"delConfirm"},"Чтобы подтвердить, введите слово ",h("b",null,"УДАЛИТЬ")),inp,
+    h("div",{class:"inline"},btn,h("button",{type:"button",class:"ghost",onclick:()=>{delArm=false;renderDelAcc()}},"Отмена")),h("div",{class:"formmsg",id:"delMsg",role:"status"})))}
+async function doDeleteAccount(ev){const msg=$("delMsg");msg.classList.remove("bad");
+  if($("delConfirm").value.trim().toUpperCase()!=="УДАЛИТЬ"){msg.classList.add("bad");msg.textContent="Введите слово УДАЛИТЬ.";return}
+  ev.currentTarget.disabled=true;msg.textContent="Удаляем аккаунт…";
+  try{await KASSA.deleteAccount()}catch(e){ev.currentTarget.disabled=false;msg.classList.add("bad");msg.textContent="Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз."}}
 
 /* ---------- history ---------- */
 let histExp=[],histLoaded=false,histUnsub=null,histKey="",histShown=60,dl=null;
@@ -939,7 +1150,7 @@ function filteredHist(){const t=today(),tm=t.slice(0,7);let from="",to="";
   else if(hf.period==="custom"){from=hf.from;to=hf.to;if(from&&to&&from>to)[from,to]=[to,from]}
   const q=hf.q.trim().toLowerCase().replace(/\s+/g," ");
   const rows=histExp.filter(e=>{const inc=isInc(e),d=String(e.date||"");
-    const k=isTr(e)?"tr":inc?"inc":"exp";if(hf.kind!=="all"&&hf.kind!==k)return false;
+    const k=isTr(e)?"tr":isDebt(e)?"debt":inc?"inc":"exp";if(hf.kind!=="all"&&hf.kind!==k)return false;
     if(!inSub(e))return false;
     if(from&&d<from||to&&d>to)return false;
     if(hf.cat&&catOf(e).id!==hf.cat)return false;
@@ -951,13 +1162,13 @@ function filteredHist(){const t=today(),tm=t.slice(0,7);let from="",to="";
   rows.sort(hf.sort==="date_asc"?byDate:hf.sort==="amt_desc"?(a,b)=>A(b)-A(a):hf.sort==="amt_asc"?(a,b)=>A(a)-A(b):(a,b)=>-byDate(a,b));
   return rows}
 function histControls(){
-  $("hKind").replaceChildren(mseg([["all","Все"],["exp","Расходы"],["inc","Доходы"],["tr","Переводы"]],hf.kind,v=>{hf.kind=v;if(v==="exp"&&ICAT[hf.cat]||v==="inc"&&CAT[hf.cat]||v==="tr")hf.cat="";histShown=60;renderHistory()},"Тип"));
+  $("hKind").replaceChildren(mseg([["all","Все"],["exp","Расходы"],["inc","Доходы"],["tr","Переводы"],["debt","Долги"]],hf.kind,v=>{hf.kind=v;if(v==="exp"&&ICAT[hf.cat]||v==="inc"&&CAT[hf.cat]||v==="tr"||v==="debt")hf.cat="";histShown=60;renderHistory()},"Тип"));
   $("hPeriod").replaceChildren(mseg([["m1","Месяц"],["m3","3 мес"],["y","Год"],["all","Всё"],["custom","Даты"]],hf.period,v=>{hf.period=v;histShown=60;renderHistory()},"Период"));
   $("hRange").hidden=hf.period!=="custom";
   const groups=[];
   if(hf.kind!=="inc")groups.push(h("optgroup",{label:"Расходы"},...CATS.map(c=>h("option",{value:c.id},c.name))));
   if(hf.kind!=="exp")groups.push(h("optgroup",{label:"Доходы"},...INC_CATS.map(c=>h("option",{value:c.id},c.name))));
-  $("hCat").replaceChildren(h("option",{value:""},"Все категории"),...groups);$("hCat").value=hf.cat;$("hCat").disabled=hf.kind==="tr";
+  $("hCat").replaceChildren(h("option",{value:""},"Все категории"),...groups);$("hCat").value=hf.cat;$("hCat").disabled=hf.kind==="tr"||hf.kind==="debt";
   const isS=!!acc&&acc.type==="shared";$("hWhoWrap").hidden=!isS;
   if(isS){const ns=[...new Set([...people(acc),...histExp.map(who)])].filter(x=>x&&x!=="—").sort();
     $("hWho").replaceChildren(h("option",{value:""},"Все"),...ns.map(n=>h("option",{value:n},n)));if(!ns.includes(hf.who))hf.who="";$("hWho").value=hf.who}
@@ -974,7 +1185,7 @@ function renderHistory(){if(view!=="history")return;histControls();
   if(!rows.length){list.replaceChildren(h("div",{class:"empty"},histExp.length?"Ничего не найдено. Измените поиск или сбросьте фильтры.":"Операций пока нет. Нажмите «+» внизу, чтобы добавить первую."));return}
   const shown=rows.slice(0,histShown);
   if(hf.sort.startsWith("date")){
-    const mT={},dT={};for(const e of rows){if(isTr(e))continue;const m=e.month||String(e.date).slice(0,7),k=isInc(e)?1:0,a=Number(e.amount)||0;
+    const mT={},dT={};for(const e of rows){if(isTr(e)||isDebt(e))continue;const m=e.month||String(e.date).slice(0,7),k=isInc(e)?1:0,a=Number(e.amount)||0;
       (mT[m]=mT[m]||[0,0])[k]+=a;(dT[e.date]=dT[e.date]||[0,0])[k]+=a}
     const blocks=[];let cm=null,cd=null,box=null;
     const tot=x=>{if(!x)return [];const [o,i]=x;return [o?fmt(o):null,i?h("span",{class:"in"},"+"+fmt(i)):null]};
@@ -996,7 +1207,7 @@ $("hReset").onclick=()=>{hf={...HF0};$("hq").value="";$("hFrom").value="";$("hTo
 $("hCsv").onclick=async()=>{if(!dl||!acc)return;const rows=filteredHist();
   const esc=v=>{v=String(v??"");return /[";\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   const lines=[["Дата","Тип","Категория","Кошелёк","Сумма","Валюта","Кто","Комментарий"],
-    ...rows.map(e=>[e.date,isTr(e)?"Перевод":isInc(e)?"Доход":"Расход",catOf(e).name,isTr(e)?endName(e,"from")+" → "+endName(e,"to"):subName(subOf(e)),String(Number(e.amount)||0).replace(".",","),cur(),acc.type==="shared"?who(e):"",e.note||""])].map(r=>r.map(esc).join(";"));
+    ...rows.map(e=>[e.date,isTr(e)?"Перевод":isDebt(e)?(e.dir==="in"?"Долг: поступление":"Долг: списание"):isInc(e)?"Доход":"Расход",catOf(e).name,isTr(e)?endName(e,"from")+" → "+endName(e,"to"):subName(subOf(e)),String(Number(e.amount)||0).replace(".",","),cur(),acc.type==="shared"?who(e):"",e.note||""])].map(r=>r.map(esc).join(";"));
   try{await dl.save({filename:"Семейная касса - "+(acc.name||"счёт").replace(/[\\/:*?"<>|]/g," ")+".csv",data:"\ufeff"+lines.join("\r\n")});toast("Файл сохранён")}
   catch(err){const code=err&&err.code;if(code==="declined")return;
     if(["unavailable","not_granted","capability_disabled","capability_removed"].includes(code)){dl=null;$("hCsv").hidden=true;toast("Скачивание недоступно в этом окне");return}
@@ -1381,20 +1592,22 @@ $("joinBtn").onclick=async()=>{const msg=$("joinMsg");msg.classList.remove("bad"
   catch(e){writeErr(e,msg)}};
 
 async function leaveAcc(){const a=acc;try{await accDoc(a).update({members:(a.members||[]).filter(x=>x!==uid)});
-  acc=null;subKey="";histKey="";iconKey="";toast("Вы вышли из счёта")}catch(e){writeErr(e,$("setMsg"))}}
+  acc=null;subKey="";histKey="";iconKey="";debtKey="";toast("Вы вышли из счёта")}catch(e){writeErr(e,$("setMsg"))}}
 async function deleteAcc(){const a=acc,msg=$("setMsg");msg.classList.remove("bad");msg.textContent="Удаляем…";
-  try{if(unsub){unsub();unsub=null}if(histUnsub){histUnsub();histUnsub=null}if(iconUnsub){iconUnsub();iconUnsub=null}subKey="";histKey="";iconKey="";
+  try{if(unsub){unsub();unsub=null}if(histUnsub){histUnsub();histUnsub=null}if(iconUnsub){iconUnsub();iconUnsub=null}if(debtUnsub){debtUnsub();debtUnsub=null}subKey="";histKey="";iconKey="";debtKey="";
     for(;;){const qs=await expCol(a).limit(200).get();if(qs.empty)break;for(const d of qs.docs)await expCol(a).doc(d.id).delete()}
+    for(const col of [debtCol(a),iconCol(a)]){const qs=await col.get();for(const d of qs.docs)await col.doc(d.id).delete()}
     await accDoc(a).delete();acc=null;msg.textContent="";toast("Счёт удалён");onAccounts()}
   catch(e){writeErr(e,msg)}}
 
-function changeMonth(d){month=shiftMonth(month,d);render();resubscribe();if(view==="stats")renderStats()}
+function changeMonth(d){month=shiftMonth(month,d);calDay=undefined;render();resubscribe();if(view==="stats")renderStats()}
 $("prev").onclick=()=>changeMonth(-1);
 $("next").onclick=()=>changeMonth(1);
 $("date").value=today();
 applyTheme();renderCats();renderPrefs();setView(view);
 $("tabs").replaceChildren(h("div",{class:"empty"},"Загружаем счета…"));
 
+if(deepDel){setView("prefs",true);openPrefSec("me")}
 (async()=>{
   const c=window.claude;
   db=c&&c.use?await c.use("db"):null;
@@ -1414,11 +1627,12 @@ $("tabs").replaceChildren(h("div",{class:"empty"},"Загружаем счета
   const sq=uid&&!readOnly?db.collection("accounts").where("members","array-contains",uid):db.collection("accounts");
   sq.onSnapshot(qs=>{shared=qs.docs.map(d=>({id:d.id,...d.data()}));gotS=true;refreshAcc();onAccounts()},
     ()=>{gotS=true;onAccounts();notice("Не удалось загрузить общие счета. Обновите страницу.",true)});
+  if(prefSec==="me"){fillMe();if(deepDel)setTimeout(()=>{const el=$("delAcc");if(el)el.scrollIntoView({block:"center"})},300)}
 })();
 function refreshAcc(){if(!acc)return;const f=allAccounts().find(a=>a.id===acc.id&&a.type===acc.type);if(f)acc=f}
 
 /* ---------- account, backup and restore (standalone version) ---------- */
-function fillMe(){$("meEmail").textContent=(window.KASSA&&KASSA.email())||"—";$("meName").value=(window.KASSA&&KASSA.myName())||"";$("bkMsg").textContent="";
+function fillMe(){delArm=deepDel;renderDelAcc();$("meEmail").textContent=(window.KASSA&&KASSA.email())||"—";$("meName").value=(window.KASSA&&KASSA.myName())||"";$("bkMsg").textContent="";
   $("usage").textContent="";if(db&&db.usage)db.usage().then(u=>{const mb=(u.bytes||0)/1048576;
     $("usage").textContent="Сейчас в базе "+u.docs+" "+plural(u.docs,["запись","записи","записей"])+" (≈ "+(mb<0.1?"меньше 0,1":mb.toFixed(1).replace(".",","))+" МБ). Бесплатного тарифа хватает на 500 МБ."}).catch(()=>{})}
 $("meNameSave").onclick=async()=>{const n=$("meName").value.trim().slice(0,60);if(!n){toast("Введите имя");return}
@@ -1429,7 +1643,8 @@ async function collectBackup(){const docs=[],seen=new Set(),add=(path,data)=>{if
   for(const a of allAccounts()){add(accDoc(a).path,Object.fromEntries(Object.entries(a).filter(([k])=>k!=="id")));
     opsCache.delete(a.type+":"+a.id);const ops=acc&&a.type===acc.type&&a.id===acc.id&&histLoaded&&archDone?histExp:await loadOpsOf(a);
     for(const e of ops){const {id,...v}=e;add(expCol(a).path+"/"+id,v)}
-    const ic=await iconCol(a).get();for(const d of ic.docs)add(iconCol(a).path+"/"+d.id,d.data())}
+    const ic=await iconCol(a).get();for(const d of ic.docs)add(iconCol(a).path+"/"+d.id,d.data());
+    const dc=await debtCol(a).get();for(const d of dc.docs)add(debtCol(a).path+"/"+d.id,d.data())}
   return {app:"semeynaya-kassa",version:1,user:uid,exportedAt:new Date().toISOString(),docs}}
 $("bkExport").onclick=async ev=>{const btn=ev.currentTarget,msg=$("bkMsg");msg.classList.remove("bad");btn.disabled=true;msg.textContent="Собираем данные…";
   try{const b=await collectBackup();await dl.save({filename:"semeynaya-kassa-"+today()+".json",data:JSON.stringify(b)});

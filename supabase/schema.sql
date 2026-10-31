@@ -75,6 +75,7 @@ declare
   nm jsonb := coalesce(new.data->'members', '[]'::jsonb);
   joining boolean := coalesce(current_setting('kassa.joining', true), '') = 'on';
 begin
+  if coalesce(current_setting('kassa.system', true), '') = 'on' then return new; end if;
   if new.path <> old.path or new.parent <> old.parent then
     raise exception 'path_immutable' using errcode = '42501';
   end if;
@@ -190,3 +191,34 @@ grant execute on function public.is_member(text) to authenticated;
 grant execute on function public.shares_account(uuid) to authenticated;
 grant execute on function public.doc_update(text, jsonb) to authenticated;
 grant execute on function public.my_usage() to authenticated;
+
+-- 10. Удаление своего аккаунта (требование магазинов приложений).
+-- Удаляет личные данные, выходит из общих счетов (счёт без других участников удаляется,
+-- созданный вами счёт с другими участниками переходит следующему из них) и сам аккаунт.
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+declare me uuid := auth.uid(); r record; others jsonb;
+begin
+  if me is null then raise exception 'not_signed_in'; end if;
+  perform set_config('kassa.system', 'on', true);
+  for r in select path, data from public.docs where parent = 'accounts' and (data->'members') ? (me::text) loop
+    select coalesce(jsonb_agg(x), '[]'::jsonb) into others
+      from jsonb_array_elements_text(r.data->'members') x where x <> me::text;
+    if jsonb_array_length(others) = 0 then
+      delete from public.docs where path = r.path or path like r.path || '/%';
+    else
+      update public.docs
+         set data = data || jsonb_build_object('members', others,
+                     'owner', case when data->>'owner' = me::text then others->>0 else data->>'owner' end),
+             updated_at = now()
+       where path = r.path;
+    end if;
+  end loop;
+  delete from public.docs where uspace = me::text;
+  delete from public.join_attempts where uid = me;
+  delete from public.profiles where id = me;
+  delete from auth.users where id = me;
+  perform set_config('kassa.system', '', true);
+end $$;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;

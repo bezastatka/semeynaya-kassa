@@ -423,3 +423,50 @@ body.auth .bar,body.auth main,body.auth .bnav{visibility:hidden}
 .mono{font-variant-numeric:tabular-nums;word-break:break-all}
 .codein{font-family:var(--display);font-size:26px;letter-spacing:.3em;text-align:center;font-variant-numeric:tabular-nums}
 .linkbtn:disabled{color:var(--muted);cursor:default}
+
+/* undo */
+.toast.undo{display:flex;align-items:center;gap:14px;z-index:21}
+.undobtn{border:0;background:transparent;color:var(--bg);font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:2px 0;font-size:14px;flex:none}
+/* debts */
+.debts{display:flex;flex-direction:column;gap:10px}
+.debt{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.debt.overdue{border-color:var(--bad);box-shadow:inset 3px 0 0 var(--bad)}
+.debt.soon{border-color:var(--warn)}
+.debt.done{opacity:.75}
+.dhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.dwho{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dwho span{color:var(--muted);font-size:14px}
+.damt{font-family:var(--display);font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.damt.pos,.hintline b.pos{color:var(--good)}
+.damt.neg,.hintline b.neg{color:var(--bad)}
+.meta .over{color:var(--bad);font-weight:600}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cwd{font-size:12px;color:var(--muted);text-align:center;padding:2px 0}
+.cday{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:10px;min-height:58px;padding:5px 5px 6px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;overflow:hidden;min-width:0;color:var(--fg)}
+.cday::before{content:"";position:absolute;inset:0;background:var(--exp);opacity:calc(var(--lvl,0) * .32);pointer-events:none}
+.cday.empty{border:0;background:transparent}
+.cday.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cday.sel{border-color:var(--fg);box-shadow:inset 0 0 0 2px var(--fg)}
+.cday.future .cnum{color:var(--muted)}
+.cnum{font-size:13px;font-weight:600;position:relative}
+.csum{font-size:10.5px;font-variant-numeric:tabular-nums;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cmarks{position:absolute;right:5px;top:7px;display:flex;gap:2px}
+.cmarks i,.calleg i{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none}
+.m-inc{background:var(--good)}
+.m-plan{background:var(--warn)}
+.m-debt{background:var(--c7)}
+.calleg{margin-top:8px}
+.calsel{margin-top:14px}
+.planrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px dashed var(--line)}
+.planrow .what div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.planrow .sub{font-size:13px;color:var(--muted)}
+.amt.muted{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+#listMode .mseg button{padding:4px 10px}
+@media (min-width:960px){.cday{min-height:72px}.csum{font-size:12px}}
+/* links */
+a{color:var(--accent)}
+.authlinks{text-align:center}
+.authlinks a{color:var(--muted)}
+#delAcc .del{background:var(--bad);border:1px solid var(--bad);color:#fff;font-weight:600}
+#delAcc .del:disabled{opacity:.6}

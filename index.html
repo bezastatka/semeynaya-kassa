@@ -47,6 +47,7 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
       <div class="inline" style="justify-content:space-between"><button type="button" class="linkbtn" id="auResend">Отправить код ещё раз</button><button type="button" class="linkbtn muted" id="auBack">Изменить почту</button></div>
       <div class="formmsg" id="auCodeMsg" role="status"></div>
     </div>
+    <p class="hint authlinks" style="margin:0"><a href="privacy.html">Политика конфиденциальности</a> · <a href="delete-account.html">Удаление аккаунта</a></p>
   </div>
 </div>
 <header class="bar"><div class="bar-in">
@@ -124,11 +125,19 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
         <div id="goalNew" hidden></div>
         <div id="goals" class="goals"></div>
       </section>
+
+      <section id="debtSec" class="stack" style="gap:10px" hidden>
+        <div class="sechead"><h2>Долги</h2><button type="button" class="linkbtn" id="addDebtBtn">+ Новый долг</button></div>
+        <div class="hintline" id="debtSum"></div>
+        <div id="debtNew" hidden></div>
+        <div id="debts" class="debts"></div>
+        <button type="button" class="linkbtn muted" id="debtClosedBtn" style="align-self:flex-start" hidden></button>
+      </section>
     </div>
 
     <div class="col-b">
       <section>
-        <div class="sechead"><h2 id="listTitle">Операции</h2></div>
+        <div class="sechead"><h2 id="listTitle">Операции</h2><div id="listMode"></div></div>
         <div id="list"><div class="empty">Загружаем операции…</div></div>
       </section>
     </div>
@@ -206,7 +215,12 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
         <div class="formmsg" id="bkMsg" role="status"></div></div>
       <div class="hint" id="usage" style="margin:0"></div>
       <hr class="divider">
-      <div class="inline"><button type="button" class="ghost danger" id="signOut">Выйти из аккаунта</button></div>
+      <div class="inline"><button type="button" class="ghost" id="signOut">Выйти из аккаунта</button></div>
+      <hr class="divider">
+      <div class="stack" style="gap:8px"><span class="label" style="margin:0">Удаление аккаунта</span>
+        <div class="hint" style="margin:0">Удалятся ваш аккаунт, личные счета со всеми операциями, долгами и иконками. Общие счета, где есть другие участники, останутся у них; если вы их создатель, счёт перейдёт следующему участнику. Отменить удаление нельзя — сначала скачайте резервную копию.</div>
+        <div id="delAcc"></div></div>
+      <p class="hint" style="margin:0"><a href="privacy.html">Политика конфиденциальности</a> · <a href="delete-account.html">Как удалить аккаунт</a></p>
     </section>
 
     <section class="card sec" id="accSet" hidden>
