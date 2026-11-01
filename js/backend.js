@@ -111,6 +111,9 @@
     return api}
   function colRef(path){check(path,false);const q=query(path,[],null,null);return {...q,path,
     doc(id){return docRef(path+"/"+(id||rid()))},
+    async deleteAll(){const {error}=await sb.from("docs").delete().eq("parent",path);if(error)throw err(error)},
+    /* every change in this collection, as {id,data} (data undefined = deleted); null when the change itself is unknown */
+    watch(cb){return listen(x=>parentOf(x)===path,()=>cb(null),ch=>{cb({id:ch.path.split("/").pop(),data:ch.data});return true})},
     async add(d){const r=docRef(path+"/"+rid());await r.set(d);return r}}}
   const db={doc:docRef,collection:colRef,
     async joinByCode(code){const {data,error}=await sb.rpc("join_account",{p_code:code});if(error)throw err(error);return data||null},
