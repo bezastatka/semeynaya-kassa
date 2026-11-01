@@ -147,7 +147,7 @@
       if(!p){const n=data.session.user.user_metadata&&data.session.user.user_metadata.name;await saveName(n||String(data.session.user.email||"").split("@")[0])}else nameCache[uid]=p.name}
     else showAuth()}
   window.KASSA.deleteAccount=async()=>{const {error}=await sb.rpc("delete_my_account");if(error)throw err(error);
-    try{for(const k of Object.keys(localStorage))if(k.startsWith("fk.")||k.startsWith("sb-"))localStorage.removeItem(k)}catch(e){}
+    try{for(const k of Object.keys(localStorage))if(k!=="fk.lang"&&(k.startsWith("fk.")||k.startsWith("sb-")))localStorage.removeItem(k)}catch(e){}
     location.replace(location.pathname+"?deleted=1")};
   window.KASSA.signOut=async()=>{await sb.auth.signOut();location.reload()};
   window.KASSA.email=()=>session&&session.user?session.user.email:"";

@@ -92,7 +92,7 @@ function fmt(n){n=Math.round(n*100)/100;const round=prefs.cents==="round";if(rou
   return nf(round||Number.isInteger(n)?0:2).format(n)+" "+cur()}
 const compactF=new Intl.NumberFormat(LOC,{notation:"compact",maximumFractionDigits:1});
 const compact=n=>compactF.format(n);
-function parseNum(v){v=String(v||"").replace(/[\s ]/g,"").replace(",",".");const n=parseFloat(v);return Number.isFinite(n)?n:NaN}
+function parseNum(v){v=String(v||"").replace(/[\s\u00a0\u202f']/g,"");v=v.includes(".")&&v.includes(",")||LANG==="en"&&/^-?\d{1,3}(,\d{3})+$/.test(v)?v.replace(/,/g,""):v.replace(",",".");const n=parseFloat(v);return Number.isFinite(n)?n:NaN}
 function monthLabel(m){const [y,mm]=m.split("-").map(Number);return MONTHS[mm-1]+" "+y}
 function shiftMonth(m,d){let [y,mm]=m.split("-").map(Number);mm+=d;while(mm<1){mm+=12;y--}while(mm>12){mm-=12;y++}return y+"-"+pad(mm)}
 function daysIn(m){const [y,mm]=m.split("-").map(Number);return new Date(y,mm,0).getDate()}
@@ -619,7 +619,7 @@ async function toggleOff(id,btn){if(!acc||readOnly)return;const a=acc;
   const next=subsOf(a).map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:x.id===id?!x.off:!!x.off}));
   if(btn)btn.disabled=true;
   try{await accDoc(a).update({subs:next});a.subs=next;filledFor="";fillSettings(false);
-    const now=next.find(x=>x.id===id);toast(now.off?T("«")+now.name+T("» больше не входит во «Всего»"):T("«")+now.name+T("» снова входит во «Всего»"));
+    const now=next.find(x=>x.id===id),nm=subName(id);toast(now.off?T("«")+nm+T("» больше не входит во «Всего»"):T("«")+nm+T("» снова входит во «Всего»"));
     renderSubs();render();renderStats();renderHistory()}
   catch(e){toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));if(btn)btn.disabled=false}}
 function renderFormSubs(){if(!acc)return;const subs=subsOf(acc),tr=curKind==="tr";
