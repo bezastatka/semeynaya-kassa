@@ -31,6 +31,7 @@ let acc=null;
 let expenses=[],loaded=false,unsub=null,subKey="";
 let dangerConfirm=false,newType="personal",filledFor="",navTouched=false;
 const names={},pendingNames=new Set();
+let catVer=0;
 const pad=n=>String(n).padStart(2,"0");
 const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const today=()=>ymd(new Date());
@@ -79,12 +80,16 @@ function s(tag,attrs,...kids){const el=document.createElementNS(NS,tag);
   for(const k in attrs||{}){const v=attrs[k];if(v==null||v===false)continue;el.setAttribute(k,v)}
   for(const c of kids.flat()){if(c==null||c===false)continue;el.append(c.nodeType?c:document.createTextNode(String(c)))}return el}
 let curOverride=null,statAll=false;
+/* Intl formatters are slow to create: build each one once and reuse it */
+const NF={},DF={};
+const nf=d=>NF[d]||(NF[d]=new Intl.NumberFormat(LOC,{maximumFractionDigits:d}));
+const df=o=>{const k=JSON.stringify(o);return DF[k]||(DF[k]=new Intl.DateTimeFormat(LOC,o))};
 const cur=()=>curOverride||(acc&&acc.currency)||"₽";
 function fmtC(n,c){n=Math.round(n*100)/100;const round=prefs.cents==="round";if(round)n=Math.round(n);
-  return new Intl.NumberFormat(LOC,{maximumFractionDigits:round||Number.isInteger(n)?0:2}).format(n)+"\u00a0"+c}
+  return nf(round||Number.isInteger(n)?0:2).format(n)+"\u00a0"+c}
 function conv(n,c){c=c||"₽";if(c===prefs.base)return n;const r=prefs.rates[c];return r>0?n*r:null}
 function fmt(n){n=Math.round(n*100)/100;const round=prefs.cents==="round";if(round)n=Math.round(n);
-  return new Intl.NumberFormat(LOC,{maximumFractionDigits:round||Number.isInteger(n)?0:2}).format(n)+" "+cur()}
+  return nf(round||Number.isInteger(n)?0:2).format(n)+" "+cur()}
 const compactF=new Intl.NumberFormat(LOC,{notation:"compact",maximumFractionDigits:1});
 const compact=n=>compactF.format(n);
 function parseNum(v){v=String(v||"").replace(/[\s ]/g,"").replace(",",".");const n=parseFloat(v);return Number.isFinite(n)?n:NaN}
@@ -92,9 +97,9 @@ function monthLabel(m){const [y,mm]=m.split("-").map(Number);return MONTHS[mm-1]
 function shiftMonth(m,d){let [y,mm]=m.split("-").map(Number);mm+=d;while(mm<1){mm+=12;y--}while(mm>12){mm-=12;y++}return y+"-"+pad(mm)}
 function daysIn(m){const [y,mm]=m.split("-").map(Number);return new Date(y,mm,0).getDate()}
 function dayLabel(s){const [y,m,d]=s.split("-").map(Number);
-  const t=new Intl.DateTimeFormat(LOC,{weekday:"short",day:"numeric",month:"long"}).format(new Date(y,m-1,d));
+  const t=df({weekday:"short",day:"numeric",month:"long"}).format(new Date(y,m-1,d));
   return s===today()?T("Сегодня, ")+t:t.charAt(0).toUpperCase()+t.slice(1)}
-const dayMonth=s=>{const [y,m,d]=s.split("-").map(Number);return new Intl.DateTimeFormat(LOC,{day:"numeric",month:"long"}).format(new Date(y,m-1,d))};
+const dayMonth=s=>{const [y,m,d]=s.split("-").map(Number);return df({day:"numeric",month:"long"}).format(new Date(y,m-1,d))};
 function plural(n,f){if(LANG!=="ru")return n===1?f[0]:f[2];const a=n%10,b=n%100;return a===1&&b!==11?f[0]:a>=2&&a<=4&&(b<10||b>=20)?f[1]:f[2]}
 function toast(t){const el=h("div",{class:"toast",role:"status"},t);document.body.append(el);setTimeout(()=>el.remove(),2400)}
 function notice(t,bad){const n=$("notice");n.textContent=t||"";n.hidden=!t;n.classList.toggle("bad",!!bad)}
@@ -160,7 +165,7 @@ const DEF_INC=[{id:"i_salary",name:"Зарплата",c:"--c1",icon:"wallet"},{i
   {id:"i_refund",name:"Возвраты и кешбэк",c:"--c4",icon:"refund"},{id:"i_invest",name:"Проценты и инвестиции",c:"--c5",icon:"percent"},{id:"i_other",name:"Другое",c:"--c10",icon:"dots"}];
 const defCat=x=>({...x,name:T(x.name),_def:x.name,hidden:false});
 let CATS=DEF_EXP.map(defCat),INC_CATS=DEF_INC.map(defCat),CAT={},ICAT={};
-function indexCats(){CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));ICAT=Object.fromEntries(INC_CATS.map(c=>[c.id,c]))}
+function indexCats(){catVer++;CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));ICAT=Object.fromEntries(INC_CATS.map(c=>[c.id,c]))}
 indexCats();
 const isOtherCat=id=>id==="other"||id==="i_other";
 function normCatList(raw,defs,otherId){const out=[],seen=new Set();
@@ -381,7 +386,7 @@ const people=a=>(a&&a.type==="shared"?(a.people||[]):[]).map(s=>String(s).trim()
 function nameOf(id){if(!id)return "";if(id===uid)return T("Вы");return names[id]||T("Участник")}
 async function ensureNames(ids){if(!user)return;const need=[...new Set(ids)].filter(i=>i&&!(i in names)&&!pendingNames.has(i));
   if(!need.length)return;need.forEach(i=>pendingNames.add(i));
-  try{const ps=await user.profiles(need);for(const i of need){names[i]=(ps[i]&&ps[i].name)||"";pendingNames.delete(i)}render();renderPeople();renderStats()}
+  try{const ps=await user.profiles(need);for(const i of need){names[i]=(ps[i]&&ps[i].name)||"";pendingNames.delete(i)}catVer++;render();renderHistory();renderPeople();renderStats()}
   catch(e){need.forEach(i=>{names[i]="";pendingNames.delete(i)})}}
 
 const kindText=a=>a.type==="personal"?T("личный"):T("общий · ")+(a.members||[]).length+" "+plural((a.members||[]).length,[T("участник"),T("участника"),T("участников")]);
@@ -494,7 +499,7 @@ function renderList(){const box=$("list");renderListMode();
 
 /* ---------- rows and editor ---------- */
 let editingId=null,editingWhere="",edCache={id:null,el:null};
-const shortDate=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat(LOC,{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd))};
+const shortDate=d=>{const [y,m,dd]=String(d).split("-").map(Number);return df({day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd))};
 function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)return editor(e);
   const c=catOf(e),inc=isInc(e),tr=isTr(e),multi=subsOf(acc).length>1;
   const sub=[showDate&&e.date?shortDate(e.date):"",tr?endName(e,"from")+" → "+endName(e,"to"):"",!tr&&e.note?c.name:"",
@@ -545,7 +550,7 @@ function editor(e){if(isX(e))return xEditor(e);if(isDebt(e))return debtOpEditor(
     try{await expCol(acc).doc(e.id).update(patch);patchLocal(e.id,{...e,...patch});const moved=view==="spend"&&d.slice(0,7)!==month;closeEditor();
       toast(moved?T("Сохранено. Операция перенесена в ")+lc(monthLabel(d.slice(0,7))):T("Изменения сохранены"))}catch(err){writeErr(err,msg)}}
   drawKind();fillCats();drawDel();
-  const meta=acc.type==="shared"&&e.by?h("div",{class:"hint",style:"margin:0"},T("Добавил(а): ")+nameOf(e.by)+(e.createdAt>1e12?" · "+new Intl.DateTimeFormat(LOC,{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(new Date(e.createdAt)):"")):null;
+  const meta=acc.type==="shared"&&e.by?h("div",{class:"hint",style:"margin:0"},T("Добавил(а): ")+nameOf(e.by)+(e.createdAt>1e12?" · "+df({day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(new Date(e.createdAt)):"")):null;
   const el=h("div",{class:"editor"},kindBox,
     h("div",null,h("label",{class:"label",for:"ed-amount"},T("Сумма, ")+cur()),amount),
     h("div",{class:"row2"},h("div",null,h("label",{class:"label",for:"ed-date"},T("Дата")),date),catBox),
@@ -941,7 +946,7 @@ async function restoreOps(a,list){for(const x of list){await expCol(a).doc(x.id)
 
 /* ---------- debts ---------- */
 const debtCol=a=>db.collection(accDoc(a).path+"/debts");
-const dShort=d=>{const [y,m,dd]=String(d).split("-").map(Number);return new Intl.DateTimeFormat(LOC,y===new Date().getFullYear()?{day:"numeric",month:"short"}:{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd)).replace(/\s?г\.$/,"")};
+const dShort=d=>{const [y,m,dd]=String(d).split("-").map(Number);return df(y===new Date().getFullYear()?{day:"numeric",month:"short"}:{day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd)).replace(/\s?г\.$/,"")};
 let debts=[],debtUnsub=null,debtKey="",debtNew=null,debtOpen=null,debtMode="",debtArm=false,debtShowClosed=false;
 function resubDebts(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===debtKey)return;
   debtKey=key;if(debtUnsub)debtUnsub();debts=[];debtNew=null;debtOpen=null;const a=acc;
@@ -1138,8 +1143,9 @@ function resubHist(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===
   histKey=key;if(histUnsub)histUnsub();histLoaded=false;archDone=false;histExp=[];liveExp=[];archExp=new Map();histShown=60;renderHistory();const a=acc;
   archFrom=shiftMonth(today().slice(0,7),-2)+"-01";
   histUnsub=expCol(a).where("date",">=",archFrom).orderBy("date","desc").limit(1000).onSnapshot(qs=>{if(histKey!==key)return;
-    liveExp=qs.docs.map(d=>({id:d.id,...d.data()}));histLoaded=true;mergeHist();afterHist()},
-    ()=>{if(histKey!==key)return;histLoaded=true;afterHist();notice(T("Не удалось загрузить историю. Обновите страницу."),true)});
+    liveExp=qs.docs.map(d=>({id:d.id,...d.data()}));histLoaded=true;mergeHist();
+    if(monthLive){if(liveExp.length>=1000){subKey="";resubscribe()}else{syncMonth();render()}}afterHist()},
+    ()=>{if(histKey!==key)return;histLoaded=true;if(monthLive){loaded=true;render()}afterHist();notice(T("Не удалось загрузить историю. Обновите страницу."),true)});
   loadArchive(a,key)}
 /* older operations are read page by page, so there is no limit on how many an account can hold */
 async function loadArchive(a,key){let upper=archFrom,strict=true,guard=0;
@@ -1153,18 +1159,22 @@ async function loadArchive(a,key){let upper=archFrom,strict=true,guard=0;
       upper=oldest;strict=false;mergeHist();afterHist()}}
   catch(e){if(histKey===key)notice(T("Не удалось загрузить старые операции. Обновите страницу."),true)}
   if(histKey!==key)return;archDone=true;mergeHist();afterHist()}
+/* search text of an operation, built once per operation object */
+let hayCache=new WeakMap(),hayKey="";
+function hayOf(e){const c=hayCache.get(e);if(c&&c.k===hayKey)return c.v;const amt=Number(e.amount)||0;
+  const v=[e.note,catOf(e).name,acc.type==="shared"?who(e):"",String(amt),String(amt).replace(".",","),fmt(amt),isTr(e)?endName(e,"from")+" "+endName(e,"to"):subName(subOf(e))].join(" ").toLowerCase().replace(/[\s\u00a0]+/g," ");
+  hayCache.set(e,{k:hayKey,v});return v}
 function filteredHist(){const t=today(),tm=t.slice(0,7);let from="",to="";
   if(hf.period==="m1")from=tm+"-01";else if(hf.period==="m3")from=shiftMonth(tm,-2)+"-01";else if(hf.period==="y")from=shiftMonth(tm,-11)+"-01";
   else if(hf.period==="custom"){from=hf.from;to=hf.to;if(from&&to&&from>to)[from,to]=[to,from]}
-  const q=hf.q.trim().toLowerCase().replace(/\s+/g," ");
+  const q=hf.q.trim().toLowerCase().replace(/\s+/g," "),words=q.split(" ");hayKey=acc.type+acc.id+prefs.cents+cur()+catVer;
   const rows=histExp.filter(e=>{const inc=isInc(e),d=String(e.date||"");
     const k=isTr(e)?"tr":isDebt(e)?"debt":inc?"inc":"exp";if(hf.kind!=="all"&&hf.kind!==k)return false;
     if(!inSub(e))return false;
     if(from&&d<from||to&&d>to)return false;
     if(hf.cat&&catOf(e).id!==hf.cat)return false;
     if(hf.who&&who(e)!==hf.who)return false;
-    if(q){const amt=Number(e.amount)||0;const hay=[e.note,catOf(e).name,acc.type==="shared"?who(e):"",String(amt),String(amt).replace(".",","),fmt(amt),isTr(e)?endName(e,"from")+" "+endName(e,"to"):subName(subOf(e))].join(" ").toLowerCase().replace(/[\s\u00a0]+/g," ");
-      if(!q.split(" ").every(w=>hay.includes(w)))return false}
+    if(q){const hay=hayOf(e);if(!words.every(w=>hay.includes(w)))return false}
     return true});
   const A=e=>Number(e.amount)||0,byDate=(a,b)=>String(a.date).localeCompare(String(b.date))||(a.createdAt||0)-(b.createdAt||0);
   rows.sort(hf.sort==="date_asc"?byDate:hf.sort==="amt_desc"?(a,b)=>A(b)-A(a):hf.sort==="amt_asc"?(a,b)=>A(a)-A(b):(a,b)=>-byDate(a,b));
@@ -1204,7 +1214,8 @@ function renderHistory(){if(view!=="history")return;histControls();
     list.replaceChildren(...blocks)}
   else list.replaceChildren(h("div",{class:"day"},...shown.map(e=>itemRow(e,true,"hist"))));
   if(rows.length>histShown){more.hidden=false;more.textContent=T("Показать ещё ")+Math.min(60,rows.length-histShown)+T(" из ")+(rows.length-histShown)}}
-$("hq").addEventListener("input",e=>{hf.q=e.target.value;histShown=60;renderHistory()});
+let hqTimer=null;
+$("hq").addEventListener("input",e=>{hf.q=e.target.value;histShown=60;clearTimeout(hqTimer);hqTimer=setTimeout(renderHistory,120)});
 $("hCat").addEventListener("change",e=>{hf.cat=e.target.value;histShown=60;renderHistory()});
 $("hWho").addEventListener("change",e=>{hf.who=e.target.value;histShown=60;renderHistory()});
 $("hSort").addEventListener("change",e=>{hf.sort=e.target.value;histShown=60;renderHistory()});
@@ -1531,8 +1542,14 @@ $("copyCode").onclick=()=>{const code=$("codeOut").textContent;
 function selectCode(){const r=document.createRange();r.selectNodeContents($("codeOut"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast(T("Код выделен — скопируйте его"))}
 
 /* ---------- data ---------- */
-function resubscribe(){if(!db||!acc)return;const key=acc.type+":"+acc.id+":"+month;if(key===subKey)return;
-  subKey=key;if(unsub)unsub();loaded=false;expenses=[];render();const a=acc;
+/* the last three months are already watched by the history query, so the month list reuses it */
+let monthLive=false;
+function syncMonth(){expenses=liveExp.filter(e=>e.month===month);loaded=histLoaded}
+function resubscribe(){if(!db||!acc)return;resubHist();const key=acc.type+":"+acc.id+":"+month;if(key===subKey)return;
+  subKey=key;if(unsub){unsub();unsub=null}
+  monthLive=histKey===acc.type+":"+acc.id&&month>=archFrom.slice(0,7)&&liveExp.length<1000;
+  if(monthLive){syncMonth();render();return}
+  loaded=false;expenses=[];render();const a=acc;
   unsub=expCol(a).where("month","==",month).onSnapshot(qs=>{if(!acc||acc.id!==a.id)return;
     expenses=qs.docs.map(d=>({id:d.id,...d.data()}));loaded=true;render()},
     err=>{loaded=true;render();notice(err.code==="revoked"?T("Доступ к счетам закрыт."):T("Не удалось загрузить траты. Обновите страницу."),true)})}

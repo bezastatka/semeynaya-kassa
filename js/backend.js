@@ -26,15 +26,19 @@
   const rid=()=>{const a="abcdefghijklmnopqrstuvwxyz0123456789",r=new Uint32Array(20);crypto.getRandomValues(r);let s="";for(const x of r)s+=a[x%a.length];return s};
 
   /* ---------- live updates: one channel, many listeners ---------- */
-  const listeners=new Set();let channel=null;
+  /* while the live channel works, data is re-read only on changes; polling is a fallback for when it is down */
+  const listeners=new Set();let channel=null,live=false,wasLive=false,hiddenAt=0;
+  const hitAll=()=>{for(const l of listeners)l.hit("")};
   function ensureChannel(){if(channel||!sb)return;
     channel=sb.channel("docs-live").on("postgres_changes",{event:"*",schema:"public",table:"docs"},payload=>{
       const path=(payload.new&&payload.new.path)||(payload.old&&payload.old.path)||"";
-      for(const l of listeners)l.hit(path)}).subscribe()}
-  function listen(match,refetch){let t=null;const l={hit:path=>{if(path&&!match(path))return;clearTimeout(t);t=setTimeout(refetch,150)}};listeners.add(l);ensureChannel();
-    const onVis=()=>{if(document.visibilityState==="visible")l.hit("")};document.addEventListener("visibilitychange",onVis);
-    const iv=setInterval(()=>{if(document.visibilityState==="visible")refetch()},60000);
-    return ()=>{listeners.delete(l);clearTimeout(t);clearInterval(iv);document.removeEventListener("visibilitychange",onVis)}}
+      for(const l of listeners)l.hit(path)}).subscribe(st=>{const now=st==="SUBSCRIBED";if(now&&wasLive&&!live)hitAll();live=now;if(now)wasLive=true})}
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){hiddenAt=Date.now();return}
+    if(hiddenAt&&Date.now()-hiddenAt>30000)hitAll();hiddenAt=0});
+  function listen(match,refetch){let t=null,at=Date.now();const run=()=>{at=Date.now();refetch()};
+    const l={hit:path=>{if(path&&!match(path))return;clearTimeout(t);t=setTimeout(run,150)}};listeners.add(l);ensureChannel();
+    const iv=setInterval(()=>{if(document.visibilityState==="visible"&&Date.now()-at>(live?300000:55000))run()},60000);
+    return ()=>{listeners.delete(l);clearTimeout(t);clearInterval(iv)}}
 
   /* ---------- documents ---------- */
   const snap=(id,data)=>({id,exists:data!==undefined,data:()=>data,metadata:{fromCache:false,hasPendingWrites:false}});
