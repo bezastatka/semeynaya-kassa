@@ -26,19 +26,37 @@
   const rid=()=>{const a="abcdefghijklmnopqrstuvwxyz0123456789",r=new Uint32Array(20);crypto.getRandomValues(r);let s="";for(const x of r)s+=a[x%a.length];return s};
 
   /* ---------- live updates: one channel, many listeners ---------- */
-  /* while the live channel works, data is re-read only on changes; polling is a fallback for when it is down */
+  /* while the live channel works, data is re-read only on changes; polling is a fallback for when it is down.
+     A change event carries the changed record itself, so open lists apply it in place instead of re-reading. */
   const listeners=new Set();let channel=null,live=false,wasLive=false,hiddenAt=0;
-  const hitAll=()=>{for(const l of listeners)l.hit("")};
+  const hitAll=()=>{for(const l of listeners)l.hit("",null)};
+  function changeOf(payload){const ev=payload.eventType,nw=payload.new&&payload.new.path?payload.new:null,old=payload.old&&payload.old.path?payload.old:null;
+    const path=(nw||old||{}).path||"";if(!path)return {path:"",ch:null};
+    if(payload.errors&&payload.errors.length)return {path,ch:null};
+    if(ev==="DELETE")return {path,ch:{path,data:undefined}};
+    if((ev==="INSERT"||ev==="UPDATE")&&nw&&nw.data&&typeof nw.data==="object")return {path,ch:{path,data:nw.data}};
+    return {path,ch:null}}
   function ensureChannel(){if(channel||!sb)return;
     channel=sb.channel("docs-live").on("postgres_changes",{event:"*",schema:"public",table:"docs"},payload=>{
-      const path=(payload.new&&payload.new.path)||(payload.old&&payload.old.path)||"";
-      for(const l of listeners)l.hit(path)}).subscribe(st=>{const now=st==="SUBSCRIBED";if(now&&wasLive&&!live)hitAll();live=now;if(now)wasLive=true})}
+      const {path,ch}=changeOf(payload);for(const l of listeners)l.hit(path,ch)}).subscribe(st=>{const now=st==="SUBSCRIBED";if(now&&wasLive&&!live)hitAll();live=now;if(now)wasLive=true})}
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){hiddenAt=Date.now();return}
     if(hiddenAt&&Date.now()-hiddenAt>30000)hitAll();hiddenAt=0});
-  function listen(match,refetch){let t=null,at=Date.now();const run=()=>{at=Date.now();refetch()};
-    const l={hit:path=>{if(path&&!match(path))return;clearTimeout(t);t=setTimeout(run,150)}};listeners.add(l);ensureChannel();
+  /* apply(change) returns true when the change was handled in place; otherwise the list is re-read */
+  function listen(match,refetch,apply){let t=null,at=Date.now();const run=()=>{at=Date.now();refetch()};
+    const l={hit:(path,ch)=>{if(path&&!match(path))return;if(path&&ch&&apply&&apply(ch))return;clearTimeout(t);t=setTimeout(run,150)}};listeners.add(l);ensureChannel();
     const iv=setInterval(()=>{if(document.visibilityState==="visible"&&Date.now()-at>(live?300000:55000))run()},60000);
     return ()=>{listeners.delete(l);clearTimeout(t);clearInterval(iv)}}
+  /* the same text comparison the database does on data->>field */
+  const txt=v=>v==null?null:typeof v==="object"?null:String(v);
+  function rowMatches(row,filters){const d=row.data||{};
+    for(const [f,op,v] of filters){const raw=d[f],t=txt(raw);
+      if(op==="array-contains"){if(!Array.isArray(raw)||!raw.some(x=>x===v))return false;continue}
+      if(t===null)return false;
+      if(op==="=="&&!(t===String(v)))return false;if(op==="!="&&!(t!==String(v)))return false;
+      if(op==="in"&&!(v||[]).map(String).includes(t))return false;if(op==="not-in"&&(v||[]).map(String).includes(t))return false;
+      if(op==="<"&&!(t<String(v)))return false;if(op==="<="&&!(t<=String(v)))return false;if(op===">"&&!(t>String(v)))return false;if(op===">="&&!(t>=String(v)))return false}
+    return true}
+  const plain=v=>v==null||/^[\x20-\x7e]*$/.test(v);
 
   /* ---------- documents ---------- */
   const snap=(id,data)=>({id,exists:data!==undefined,data:()=>data,metadata:{fromCache:false,hasPendingWrites:false}});
@@ -47,9 +65,13 @@
     async set(d){const {error}=await sb.from("docs").upsert({path,parent:parentOf(path),data:d,updated_at:new Date().toISOString()},{onConflict:"path"});if(error)throw err(error)},
     async update(d){const {error}=await sb.rpc("doc_update",{p_path:path,p_patch:d});if(error){const e=err(error);if(e.code==="not_found")e.code="invalid_argument";throw e}},
     async delete(){const {error}=await sb.from("docs").delete().eq("path",path);if(error)throw err(error)},
-    onSnapshot(next,onErr){let dead=false;const run=()=>this.get().then(s=>{if(!dead)next(s)},e=>{if(!dead&&onErr&&e.code!=="unavailable")onErr(e)});
-      run();const off=listen(x=>x===path,run);return ()=>{dead=true;off()}},
+    onSnapshot(next,onErr){let dead=false,busy=false,again=false,ready=false;
+      const run=()=>{if(busy){again=true;return}busy=true;again=false;
+        this.get().then(s=>{busy=false;if(dead)return;ready=true;if(again)return run();next(s)},e=>{busy=false;if(again)return run();if(!dead&&onErr&&e.code!=="unavailable")onErr(e)})};
+      const apply=ch=>{if(busy){again=true;return true}if(!ready)return false;if(!dead)next(snap(p[p.length-1],ch.data));return true};
+      run();const off=listen(x=>x===path,run,apply);return ()=>{dead=true;off()}},
     collection(sub){return colRef(path+"/"+sub)}}}
+  const result=data=>{const docs=data.map(r=>snap(r.path.split("/").pop(),r.data));return {docs,size:docs.length,empty:!docs.length,docChanges:()=>[],metadata:{fromCache:false,hasPendingWrites:false}}};
   function query(col,filters,order,lim){
     const build=()=>{let q=sb.from("docs").select("path,data").eq("parent",col);
       for(const [f,op,v] of filters){const k="data->>"+f;
@@ -63,10 +85,29 @@
       where(f,op,v){return query(col,[...filters,[f,op,v]],order,lim)},
       orderBy(f,dir){return query(col,filters,[f,dir||"asc"],lim)},
       limit(n){return query(col,filters,order,n)},
-      async get(){const {data,error}=await build();if(error)throw err(error);
-        const docs=data.map(r=>snap(r.path.split("/").pop(),r.data));return {docs,size:docs.length,empty:!docs.length,docChanges:()=>[],metadata:{fromCache:false,hasPendingWrites:false}}},
-      onSnapshot(next,onErr){let dead=false;const run=()=>api.get().then(s=>{if(!dead)next(s)},e=>{if(!dead&&onErr&&e.code!=="unavailable")onErr(e)});
-        run();const off=listen(x=>parentOf(x)===col,run);return ()=>{dead=true;off()}}};
+      async rows(){const {data,error}=await build();if(error)throw err(error);return data},
+      async get(){return result(await api.rows())},
+      /* keeps the last result and applies change events to it; falls back to a re-read when the outcome is uncertain */
+      onSnapshot(next,onErr){let dead=false,busy=false,again=false,rows=null,emitT=null;const max=Math.min(lim||1000,1000);
+        const emit=()=>{clearTimeout(emitT);emitT=setTimeout(()=>{if(!dead&&rows)next(result(rows))},20)};
+        const run=()=>{if(busy){again=true;return}busy=true;again=false;
+          api.rows().then(r=>{busy=false;if(dead)return;rows=r;if(again)return run();clearTimeout(emitT);next(result(rows))},
+            e=>{busy=false;if(again)return run();if(!dead&&onErr&&e.code!=="unavailable")onErr(e)})};
+        const apply=ch=>{if(busy){again=true;return true}if(!rows)return false;if(!order&&rows.length>=max)return false;
+          const i=rows.findIndex(r=>r.path===ch.path),hit=ch.data!==undefined&&rowMatches({data:ch.data},filters);
+          if(i<0&&!hit)return true;
+          if(i>=0&&!hit&&rows.length>=max)return false;
+          const next2=rows.filter(r=>r.path!==ch.path);
+          if(hit){const v=order?txt(ch.data[order[0]]):ch.path;if(!plain(v))return false;next2.push({path:ch.path,data:ch.data})}
+          sortRows(next2);if(next2.length>max){if(next2[max].path===ch.path)return true;next2.length=max}
+          else if(i>=0&&hit&&next2.length>=max&&next2[max-1].path===ch.path)return false; /* moved to the end of a full list: a row beyond it may now rank higher */
+          rows=next2;emit();return true};
+        run();const off=listen(x=>parentOf(x)===col,run,apply);return ()=>{dead=true;clearTimeout(emitT);off()}}};
+    /* database order: by data->>field (nulls last ascending, first descending) or by path */
+    function sortRows(list){if(!order){list.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);return}
+      const f=order[0],desc=order[1]==="desc";
+      list.sort((a,b)=>{const x=txt(a.data&&a.data[f]),y=txt(b.data&&b.data[f]);
+        if(x===y)return 0;if(x===null)return desc?-1:1;if(y===null)return desc?1:-1;return (x<y?-1:1)*(desc?-1:1)})}
     return api}
   function colRef(path){check(path,false);const q=query(path,[],null,null);return {...q,path,
     doc(id){return docRef(path+"/"+(id||rid()))},
