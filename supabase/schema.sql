@@ -114,6 +114,27 @@ begin
   return true;
 end $$;
 
+-- 4a. Обновление «если не изменилось»: применяется, только если указанные поля всё ещё такие,
+-- какими их видел пользователь. Так одновременные правки кошельков, категорий, шаблонов и целей
+-- двумя участниками не затирают друг друга: приложение при отказе сливает изменения и пробует снова.
+create or replace function public.doc_update_if(p_path text, p_patch jsonb, p_expect jsonb) returns boolean
+language plpgsql security invoker set search_path = public as $$
+declare n int;
+begin
+  update public.docs set data = data || p_patch, updated_at = now()
+   where path = p_path
+     and not exists (select 1 from jsonb_each(coalesce(p_expect, '{}'::jsonb)) e
+                      where coalesce(data -> e.key, 'null'::jsonb) is distinct from e.value);
+  get diagnostics n = row_count;
+  if n = 0 then
+    if not exists (select 1 from public.docs where path = p_path) then
+      raise exception 'not_found' using errcode = 'P0002';
+    end if;
+    return false;
+  end if;
+  return true;
+end $$;
+
 -- 5. Вход в общий счёт по коду приглашения.
 create table if not exists public.join_attempts (uid uuid not null, at timestamptz not null default now());
 create index if not exists join_attempts_idx on public.join_attempts (uid, at);
@@ -185,11 +206,13 @@ $$;
 revoke all on function public.is_member(text) from public, anon;
 revoke all on function public.shares_account(uuid) from public, anon;
 revoke all on function public.doc_update(text, jsonb) from public, anon;
+revoke all on function public.doc_update_if(text, jsonb, jsonb) from public, anon;
 revoke all on function public.my_usage() from public, anon;
 revoke all on function public.docs_guard() from public, anon, authenticated;
 grant execute on function public.is_member(text) to authenticated;
 grant execute on function public.shares_account(uuid) to authenticated;
 grant execute on function public.doc_update(text, jsonb) to authenticated;
+grant execute on function public.doc_update_if(text, jsonb, jsonb) to authenticated;
 grant execute on function public.my_usage() to authenticated;
 
 -- 10. Удаление своего аккаунта (требование магазинов приложений).

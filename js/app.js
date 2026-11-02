@@ -228,10 +228,10 @@ async function importCats(a,btn){if(!a||!acc)return;if(btn)btn.disabled=true;
   const exp=merge(CATS,normCatList(a.cats&&a.cats.exp,DEF_EXP,"other")),inc=merge(INC_CATS,normCatList(a.cats&&a.cats.inc,DEF_INC,"i_other"));
   const added=exp.length-CATS.length+inc.length-INC_CATS.length;
   if(!added){toast(T("Все категории из «")+(a.name||"")+T("» здесь уже есть"));if(btn)btn.disabled=false;return}
-  const ac=acc;
+  const ac=acc,old=catsNow();
   try{for(const id of [...exp,...inc].map(c=>String(c.icon)).filter(i=>i.startsWith("img:")).map(i=>i.slice(4)).filter(id=>!iconData[id])){
       const d=await iconCol(a).doc(id).get();if(d.exists&&okIcon(d.data().data))await iconCol(ac).doc(id).set({data:d.data().data,createdAt:Date.now(),by:uid||""})}
-    const next={exp:exp.map(stripCat),inc:inc.map(stripCat)};await accDoc(ac).update({cats:next});ac.cats=next;applyCats();renderCats();renderCatSet();render();
+    await saveAcc(ac,{cats:[old,{exp:exp.map(stripCat),inc:inc.map(stripCat)}]});applyCats();renderCats();renderCatSet();render();
     toast(T("Добавлено ")+added+" "+plural(added,[T("категория"),T("категории"),T("категорий")]))}
   catch(e){toast(T("Не получилось добавить категории"));if(btn)btn.disabled=false}}
 function catEditor(){const d=catEdit;
@@ -257,9 +257,35 @@ function catEditor(){const d=catEdit;
     h("div",{class:"formmsg",id:"ceMsg",role:"status"}),
     acts.length?h("div",{class:"confirm"},...acts):null,
     note?h("div",{class:"hint",style:"margin:0"},note):null)}
+/* ---------- shared settings: merge simultaneous changes ----------
+   Wallets, categories, templates and goals are lists inside the account record. A change is sent as
+   "if the list is still what I saw, replace it"; if someone else changed it meanwhile, my change
+   (what I added, edited, removed or reordered) is re-applied on top of theirs and sent again. */
+function mergeById(oldL,newL,freshL){const J=x=>JSON.stringify(x),oldM=new Map(oldL.map(x=>[x.id,x])),newM=new Map(newL.map(x=>[x.id,x]));
+  const removed=new Set(oldL.filter(x=>!newM.has(x.id)).map(x=>x.id));
+  let out=freshL.filter(x=>!removed.has(x.id)).map(x=>{const n=newM.get(x.id);return n&&(!oldM.has(x.id)||J(oldM.get(x.id))!==J(n))?n:x});
+  newL.forEach((n,i)=>{if(oldM.has(n.id)||out.some(x=>x.id===n.id))return;
+    const prev=newL.slice(0,i).reverse().find(p=>out.some(x=>x.id===p.id));out.splice(prev?out.findIndex(x=>x.id===prev.id)+1:0,0,n)});
+  const a1=oldL.filter(x=>newM.has(x.id)).map(x=>x.id).join(),a2=newL.filter(x=>oldM.has(x.id)).map(x=>x.id).join();
+  if(a1!==a2){const idx=new Map(newL.map((x,i)=>[x.id,i]));let last=-1;const w=out.map(x=>{if(idx.has(x.id))last=idx.get(x.id);return [x,idx.has(x.id)?idx.get(x.id):last+.5]});
+    out=w.sort((p,q)=>p[1]-q[1]).map(p=>p[0])}
+  return out}
+const LISTN={subs:r=>subsOf({subs:r}).map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:!!x.off})),
+  tpls:r=>tplsOf({tpls:r}),goals:r=>goalsOf({goals:r}),
+  cats:r=>({exp:normCatList(r&&r.exp,DEF_EXP,"other").map(stripCat),inc:normCatList(r&&r.inc,DEF_INC,"i_other").map(stripCat)})};
+const mergeField=(f,o,n,fr)=>f==="cats"?{exp:mergeById(o.exp,n.exp,fr.exp),inc:mergeById(o.inc,n.inc,fr.inc)}:mergeById(o,n,fr);
+/* changes: {field:[as I saw it, as I want it]} in normalised form; returns what was saved */
+async function saveAcc(a,changes){const fields=Object.keys(changes);let cur=a;
+  for(let i=0;i<5;i++){const patch={},expect={};
+    for(const f of fields){patch[f]=mergeField(f,changes[f][0],changes[f][1],LISTN[f](cur[f]));expect[f]=cur[f]===undefined?null:cur[f]}
+    if(await accDoc(a).updateIf(patch,expect)){Object.assign(a,patch);return patch}
+    const s=await accDoc(a).get();if(!s.exists){const e=new Error("not_found");e.code="not_found";throw e}
+    cur=s.data();for(const f of fields)a[f]=cur[f]}
+  const e=new Error("busy");e.code="unavailable";throw e}
+const catsNow=()=>({exp:CATS.map(stripCat),inc:INC_CATS.map(stripCat)});
 async function writeCats(kind,list,msgEl){if(!acc)return false;const a=acc;
-  const next={exp:(kind==="exp"?list:CATS).map(stripCat),inc:(kind==="inc"?list:INC_CATS).map(stripCat)};
-  try{await accDoc(a).update({cats:next});a.cats=next;applyCats();renderCats();render();renderHistory();renderCatSet();renderStats();renderTplSet();renderTplBar();return true}
+  const old=catsNow(),next={exp:(kind==="exp"?list:CATS).map(stripCat),inc:(kind==="inc"?list:INC_CATS).map(stripCat)};
+  try{await saveAcc(a,{cats:[old,next]});applyCats();renderCats();render();renderHistory();renderCatSet();renderStats();renderTplSet();renderTplBar();return true}
   catch(e){if(msgEl)writeErr(e,msgEl);else toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));return false}}
 async function saveCat(){const d=catEdit,msg=$("ceMsg");msg.classList.remove("bad");const name=String(d.name||"").trim().slice(0,30);
   if(!name){msg.classList.add("bad");msg.textContent=T("Введите название категории.");$("ce-name").focus();return}
@@ -279,7 +305,7 @@ async function delIcon(id){if(iconArm!==id){iconArm=id;renderCatSet();return}
   try{await iconCol(acc).doc(id).delete();delete iconData[id];
     const key="img:"+id;if(catEdit&&catEdit.icon===key)catEdit.icon="dots";
     if(CATS.some(c=>c.icon===key)||INC_CATS.some(c=>c.icon===key)){const fix=l=>l.map(c=>c.icon===key?{...c,icon:"dots"}:{...c});
-      const a=acc,next={exp:fix(CATS).map(stripCat),inc:fix(INC_CATS).map(stripCat)};await accDoc(a).update({cats:next});a.cats=next;applyCats()}
+      await saveAcc(acc,{cats:[catsNow(),{exp:fix(CATS).map(stripCat),inc:fix(INC_CATS).map(stripCat)}]});applyCats()}
     renderCatSet();renderCats();render();toast(T("Иконка удалена"))}catch(e){toast(T("Не получилось удалить иконку"))}}
 $("addCatBtn").onclick=()=>{const list=catListOf(catTab);catEdit={id:(catTab==="inc"?"i_":"")+genId(),name:"",c:"--c"+(1+list.length%9),icon:"star",hidden:false,isNew:true};catArm=false;renderCatSet();
   setTimeout(()=>{const el=$("ce-name");if(el)el.focus()},0)};
@@ -617,10 +643,10 @@ function renderSubToggle(){const box=$("subToggle"),subs=subsOf(acc);
   if(readOnly)btn.disabled=true;
   box.replaceChildren(btn,h("div",{class:"hint",style:"margin:0"},x.off?T("Сейчас этот кошелёк не входит во «Всего»: его баланс, операции, бюджет и статистика считаются отдельно."):T("Баланс и операции этого кошелька входят во «Всего», бюджет и общую статистику.")))}
 async function toggleOff(id,btn){if(!acc||readOnly)return;const a=acc;
-  const next=subsOf(a).map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:x.id===id?!x.off:!!x.off}));
+  const old=LISTN.subs(a.subs),next=old.map(x=>x.id===id?{...x,off:!x.off}:x);
   if(btn)btn.disabled=true;
-  try{await accDoc(a).update({subs:next});a.subs=next;filledFor="";fillSettings(false);
-    const now=next.find(x=>x.id===id),nm=subName(id);toast(now.off?T("«")+nm+T("» больше не входит во «Всего»"):T("«")+nm+T("» снова входит во «Всего»"));
+  try{const saved=await saveAcc(a,{subs:[old,next]});filledFor="";fillSettings(false);
+    const now=saved.subs.find(x=>x.id===id)||{},nm=subName(id);toast(now.off?T("«")+nm+T("» больше не входит во «Всего»"):T("«")+nm+T("» снова входит во «Всего»"));
     renderSubs();render();renderStats();renderHistory()}
   catch(e){toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));if(btn)btn.disabled=false}}
 function renderFormSubs(){if(!acc)return;const subs=subsOf(acc),tr=curKind==="tr";
@@ -642,11 +668,12 @@ $("nsCreate").onclick=async()=>{const msg=$("nsMsg");msg.classList.remove("bad")
   if(!name){msg.classList.add("bad");msg.textContent=T("Придумайте название кошелька.");$("nsName").focus();return}
   const subs=subsOf(acc);
   if(subs.some(x=>x.name.toLowerCase()===name.toLowerCase())){msg.classList.add("bad");msg.textContent=T("Кошелёк с таким названием уже есть.");return}
-  const st=parseNum($("nsStart").value),id=genId(),next=[...subs.map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:!!x.off})),{id,name,start:Number.isFinite(st)?Math.round(st*100)/100:0,off:false}];
+  const st=parseNum($("nsStart").value),id=genId(),old=LISTN.subs(acc.subs),next=[...old,{id,name,start:Number.isFinite(st)?Math.round(st*100)/100:0,off:false}];
   const btn=$("nsCreate");btn.disabled=true;
-  try{await accDoc(acc).update({subs:next});acc.subs=next;$("nsName").value="";$("nsStart").value="";$("newSub").hidden=true;
+  try{await saveAcc(acc,{subs:[old,next]});$("nsName").value="";$("nsStart").value="";$("newSub").hidden=true;
     filledFor="";fillSettings(false);toast(T("Кошелёк «")+name+T("» добавлен"));pickSub(id)}catch(e){writeErr(e,msg)}finally{btn.disabled=false}};
-function fillSubs(){subDraft=subsOf(acc).map(x=>({id:x.id,name:x.name,start:Number(x.start)||0,off:!!x.off}));renderSubRows()}
+let subBase=[];
+function fillSubs(){subBase=LISTN.subs(acc.subs);subDraft=subsOf(acc).map(x=>({id:x.id,name:x.name,start:Number(x.start)||0,off:!!x.off}));renderSubRows()}
 function renderSubRows(){$("subRows").replaceChildren(...subDraft.map((x,i)=>h("div",{class:"subrow"+(x.del?" del":"")},
   h("div",null,h("label",{class:"label",for:"sbn-"+i},T("Название")),h("input",{class:"field",id:"sbn-"+i,maxlength:"30",value:x.name,disabled:x.del?true:null,oninput:e=>{x.name=e.target.value}})),
   h("div",null,h("label",{class:"label",for:"sbs-"+i},T("На старте")),h("input",{class:"field",id:"sbs-"+i,inputmode:"decimal",value:String(x.start),disabled:x.del?true:null,oninput:e=>{x.start=e.target.value}})),
@@ -735,7 +762,7 @@ function tplDesc(t){const parts=[t.kind==="inc"?T("Доход"):t.kind==="tr"?T(
   if(t.kind==="tr"){const d=destOf(t.to);parts.push(subName(trEnd(t.from))+" → "+(d?T("«")+d.a.name+T("»"):subName(trEnd(t.to))))}else parts.push(tplCat(t).name);
   parts.push(t.repeat==="month"?T("каждый месяц ")+(+t.day||1)+T("-го"):T("без повтора"));return parts.join(" · ")}
 async function writeTpls(list,msgEl){if(!acc)return false;const a=acc;
-  try{await accDoc(a).update({tpls:list});a.tpls=list;renderTplBar();renderDue();renderTplSet();return true}
+  try{await saveAcc(a,{tpls:[tplsOf(a),list]});renderTplBar();renderDue();renderTplSet();return true}
   catch(e){if(msgEl)writeErr(e,msgEl);else toast(T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз."));return false}}
 function renderTplBar(){const bar=$("tplBar");if(!acc||readOnly){bar.hidden=true;return}bar.hidden=false;
   const ts=tplsOf(acc);
@@ -852,7 +879,7 @@ async function saveTpl(){const d=tplEdit,msg=$("teMsg");msg.classList.remove("ba
   const list=tplsOf(acc).map(x=>({...x}));const i=list.findIndex(x=>x.id===t.id);if(i<0)list.push(t);else list[i]=t;
   if(await writeTpls(list,msg)){tplEdit=null;renderTplSet();toast(i<0?T("Шаблон «")+name+T("» добавлен"):T("Шаблон сохранён"))}}
 async function deleteTpl(){const id=tplEdit.id,a=acc,prev=tplsOf(a);if(await writeTpls(prev.filter(x=>x.id!==id))){tplEdit=null;tplArm=false;if(tplActive===id)tplActive=null;renderTplSet();
-  offerUndo(T("Шаблон удалён"),async()=>{await accDoc(a).update({tpls:prev});a.tpls=prev;renderTplBar();renderDue();renderTplSet()})}}
+  offerUndo(T("Шаблон удалён"),async()=>{await saveAcc(a,{tpls:[tplsOf(a),[...tplsOf(a),...prev.filter(x=>x.id===id)]]});renderTplBar();renderDue();renderTplSet()})}}
 $("addTplBtn").onclick=()=>{tplEdit={id:genId(),name:"",kind:"exp",amount:0,cat:CATS.find(c=>!c.hidden).id,sub:"main",from:"main",to:"",member:"",note:"",repeat:"month",day:new Date().getDate(),skips:[],isNew:true};tplArm=false;renderTplSet();
   setTimeout(()=>{const el=$("te-name");if(el)el.focus()},0)};
 
@@ -904,12 +931,12 @@ function renderGoalNew(){const box=$("goalNew");if(!goalNew){box.hidden=true;box
 async function createGoal(){const g=goalNew,msg=$("gnMsg");msg.classList.remove("bad");const name=String(g.name).trim().slice(0,40),target=Math.round(parseNum(g.target)*100)/100;
   if(!name){msg.classList.add("bad");msg.textContent=T("Назовите цель.");$("gnName").focus();return}
   if(!(target>0)){msg.classList.add("bad");msg.textContent=T("Укажите, сколько нужно накопить.");$("gnTarget").focus();return}
-  const a=acc,subs=subsOf(a).map(x=>({id:x.id,name:subW(x.id,x.name),start:Number(x.start)||0,off:!!x.off}));let sub=g.mode;
+  const a=acc,oldSubs=LISTN.subs(a.subs),oldGoals=goalsOf(a),subs=oldSubs.map(x=>({...x}));let sub=g.mode;
   if(g.mode==="new"){let sname=name.slice(0,30);if(subs.some(x=>x.name.toLowerCase()===sname.toLowerCase()))sname=(name.slice(0,22)+T(" (цель)"));
     const st=parseNum(g.start);sub=genId();subs.push({id:sub,name:sname,start:Number.isFinite(st)&&st>0?Math.round(st*100)/100:0,off:!g.inTotal})}
   const st0=parseNum(g.start),contrib=g.mode!=="new"&&!g.whole;
-  const goals=[...goalsOf(a),{id:genId(),name,target,deadline:g.deadline||"",sub,mode:contrib?"contrib":"wallet",start:contrib&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0,createdAt:Date.now()}];
-  try{await accDoc(a).update({subs,goals});a.subs=subs;a.goals=goals;goalNew=null;filledFor="";fillSettings(false);renderSubs();renderGoals();renderCats();toast(T("Цель «")+name+T("» создана"))}
+  const goals=[...oldGoals,{id:genId(),name,target,deadline:g.deadline||"",sub,mode:contrib?"contrib":"wallet",start:contrib&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0,createdAt:Date.now()}];
+  try{await saveAcc(a,{subs:[oldSubs,subs],goals:[oldGoals,goals]});goalNew=null;filledFor="";fillSettings(false);renderSubs();renderGoals();renderCats();toast(T("Цель «")+name+T("» создана"))}
   catch(e){writeErr(e,msg)}}
 function goalEditor(){const g=goalEdit;
   return h("div",{class:"goal"},h("div",{class:"stack",style:"gap:12px"},
@@ -926,12 +953,11 @@ function goalEditor(){const g=goalEdit;
 async function saveGoal(){const g=goalEdit,msg=$("geMsg");msg.classList.remove("bad");const name=String(g.name).trim().slice(0,40),target=Math.round(parseNum(g.target)*100)/100;
   if(!name||!(target>0)){msg.classList.add("bad");msg.textContent=!name?T("Назовите цель."):T("Укажите сумму больше нуля.");return}
   const st0=parseNum(g.start),mode=g.mode==="contrib"?"contrib":"wallet";
-  const a=acc,goals=goalsOf(a).map(x=>x.id===g.id?{...x,name,target,deadline:g.deadline||"",mode,start:mode==="contrib"&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0}:x);
-  try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;renderGoals();toast(T("Цель сохранена"))}catch(e){writeErr(e,msg)}}
-async function deleteGoal(){const a=acc,id=goalEdit.id,goals=goalsOf(a).filter(x=>x.id!==id);
-  const prev=goalsOf(a);
-  try{await accDoc(a).update({goals});a.goals=goals;goalEdit=null;goalArm=false;renderGoals();
-    offerUndo(T("Цель удалена"),async()=>{await accDoc(a).update({goals:prev});a.goals=prev;renderGoals()})}catch(e){toast(T("Не получилось удалить цель"))}}
+  const a=acc,oldGoals=goalsOf(a),goals=oldGoals.map(x=>x.id===g.id?{...x,name,target,deadline:g.deadline||"",mode,start:mode==="contrib"&&Number.isFinite(st0)&&st0>0?Math.round(st0*100)/100:0}:x);
+  try{await saveAcc(a,{goals:[oldGoals,goals]});goalEdit=null;renderGoals();toast(T("Цель сохранена"))}catch(e){writeErr(e,msg)}}
+async function deleteGoal(){const a=acc,id=goalEdit.id,prev=goalsOf(a),goals=prev.filter(x=>x.id!==id);
+  try{await saveAcc(a,{goals:[prev,goals]});goalEdit=null;goalArm=false;renderGoals();
+    offerUndo(T("Цель удалена"),async()=>{const now=goalsOf(a);await saveAcc(a,{goals:[now,[...now,...prev.filter(x=>x.id===id)]]});renderGoals()})}catch(e){toast(T("Не получилось удалить цель"))}}
 $("addGoalBtn").onclick=()=>{goalNew={name:"",target:"",deadline:"",mode:"new",start:"",inTotal:false,whole:false};goalEdit=null;renderGoals();setTimeout(()=>{const el=$("gnName");if(el)el.focus()},0)};
 
 
@@ -1595,10 +1621,10 @@ $("saveSubs").onclick=async()=>{const msg=$("subMsg");msg.classList.remove("bad"
   if(new Set(names).size!==names.length){msg.classList.add("bad");msg.textContent=T("У кошельков должны быть разные названия.");return}
   const subs=keep.map(x=>{const st=parseNum(x.start);return {id:x.id,name:subW(x.id,String(x.name).trim().slice(0,30)||T("Основной")),start:Number.isFinite(st)?Math.round(st*100)/100:0,off:!!x.off}});
   const removed=subDraft.filter(x=>x.del&&!x.isNew).map(x=>x.id);
-  const a=acc,carry=removed.reduce((t,id)=>t+(Number((subsOf(a).find(x=>x.id===id)||{}).start)||0),0);
+  const a=acc,carry=removed.reduce((t,id)=>t+(Number((subBase.find(x=>x.id===id)||{}).start)||0),0);
   if(carry){const m=subs.find(x=>x.id==="main");if(m)m.start=Math.round((m.start+carry)*100)/100}
   try{if(removed.length){msg.textContent=T("Переносим операции…");for(const id of removed)await reassignSub(a,id)}
-    await accDoc(a).update({subs});a.subs=subs;fillSubs();loadSubSel();renderSubs();render();msg.textContent=T("Сохранено")}catch(e){writeErr(e,msg)}};
+    await saveAcc(a,{subs:[subBase,subs]});fillSubs();loadSubSel();renderSubs();render();msg.textContent=T("Сохранено")}catch(e){writeErr(e,msg)}};
 
 $("createBtn").onclick=async()=>{const msg=$("newMsg");msg.classList.remove("bad");
   const name=$("newName").value.trim().slice(0,40);
@@ -1626,7 +1652,8 @@ $("joinBtn").onclick=async()=>{const msg=$("joinMsg");msg.classList.remove("bad"
     $("joinCode").value="";$("newPanel").hidden=true;toast(T("Вы в счёте «")+(data.name||"")+T("»"));syncView();resubscribe()}
   catch(e){writeErr(e,msg)}};
 
-async function leaveAcc(){const a=acc;try{await accDoc(a).update({members:(a.members||[]).filter(x=>x!==uid)});
+async function leaveAcc(){const a=acc;try{for(let i=0;;i++){const s=await accDoc(a).get();const m=s.exists?(s.data().members||[]):[];
+    try{if(m.includes(uid))await accDoc(a).update({members:m.filter(x=>x!==uid)});break}catch(e){if(i>=2||e.code!=="denied")throw e}}
   shared=shared.filter(x=>x.id!==a.id);acc=null;subKey="";histKey="";iconKey="";debtKey="";dangerConfirm=false;toast(T("Вы вышли из счёта"));onAccounts()}catch(e){writeErr(e,$("setMsg"))}}
 async function deleteAcc(){const a=acc,msg=$("setMsg");msg.classList.remove("bad");msg.textContent=T("Удаляем…");
   try{if(unsub){unsub();unsub=null}if(histUnsub){histUnsub();histUnsub=null}if(archUnsub){archUnsub();archUnsub=null}if(iconUnsub){iconUnsub();iconUnsub=null}if(debtUnsub){debtUnsub();debtUnsub=null}subKey="";histKey="";iconKey="";debtKey="";

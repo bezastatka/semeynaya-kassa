@@ -59,11 +59,18 @@
   const plain=v=>v==null||/^[\x20-\x7e]*$/.test(v);
 
   /* ---------- documents ---------- */
+  let noCAS=false; /* the database has no doc_update_if yet (schema not updated): plain updates */
   const snap=(id,data)=>({id,exists:data!==undefined,data:()=>data,metadata:{fromCache:false,hasPendingWrites:false}});
   function docRef(path){const p=check(path,true);return {id:p[p.length-1],path,
     async get(){const {data,error}=await sb.from("docs").select("data").eq("path",path).maybeSingle();if(error)throw err(error);return snap(p[p.length-1],data?data.data:undefined)},
     async set(d){const {error}=await sb.from("docs").upsert({path,parent:parentOf(path),data:d,updated_at:new Date().toISOString()},{onConflict:"path"});if(error)throw err(error)},
     async update(d){const {error}=await sb.rpc("doc_update",{p_path:path,p_patch:d});if(error){const e=err(error);if(e.code==="not_found")e.code="invalid_argument";throw e}},
+    /* applies the patch only if the listed fields still hold the expected values; false = someone changed them */
+    async updateIf(d,expect){if(noCAS){await this.update(d);return true}
+      const {data,error}=await sb.rpc("doc_update_if",{p_path:path,p_patch:d,p_expect:expect});
+      if(error){if(/PGRST202|42883|doc_update_if/.test(String(error.code)+" "+String(error.message))){noCAS=true;await this.update(d);return true}
+        const e=err(error);if(e.code==="not_found")e.code="invalid_argument";throw e}
+      return data===true},
     async delete(){const {error}=await sb.from("docs").delete().eq("path",path);if(error)throw err(error)},
     onSnapshot(next,onErr){let dead=false,busy=false,again=false,ready=false;
       const run=()=>{if(busy){again=true;return}busy=true;again=false;
