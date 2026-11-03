@@ -92,6 +92,8 @@ function fmt(n){n=Math.round(n*100)/100;const round=prefs.cents==="round";if(rou
   return nf(round||Number.isInteger(n)?0:2).format(n)+" "+cur()}
 const compactF=new Intl.NumberFormat(LOC,{notation:"compact",maximumFractionDigits:1});
 const compact=n=>compactF.format(n);
+/* calendar cells are narrow: "12,5 тыс." becomes "12,5к" */
+const calNum=n=>LANG==="ru"?compact(n).replace(/\s?тыс\.?$/,"к").replace(/\s?млн\.?$/,"м"):compact(n);
 const numIn=n=>LANG==="ru"?String(n).replace(".",","):String(n);
 function parseNum(v){v=String(v||"").replace(/[\s\u00a0\u202f']/g,"");v=v.includes(".")&&v.includes(",")||LANG==="en"&&/^-?\d{1,3}(,\d{3})+$/.test(v)?v.replace(/,/g,""):v.replace(",",".");const n=parseFloat(v);return Number.isFinite(n)?n:NaN}
 function monthLabel(m){const [y,mm]=m.split("-").map(Number);return MONTHS[mm-1]+" "+y}
@@ -370,7 +372,7 @@ const MENU_ICONS={me:ICONS.bank,theme:ICONS.sun,app:ICONS.phone,acc:ICONS.wallet
 function renderPrefMenu(){const row=(k,title,sub)=>{const ic=h("span",{class:"micon"});ic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+MENU_ICONS[k]+'</svg>';
     return h("button",{type:"button",class:"mrow",onclick:()=>openPrefSec(k)},ic,h("span",{class:"n"},h("b",null,title),h("small",null,sub)),h("span",{class:"chev","aria-hidden":"true"},"›"))};
   const thName={system:T("Как в системе"),light:T("Светлая"),dark:T("Тёмная")}[prefs.theme],acName=(ACCENTS.find(a=>a[0]===prefs.accent)||ACCENTS[0])[1];
-  const items=[h("div",{class:"mgroup"},T("Приложение")),row("me",T("Аккаунт и резервная копия"),(window.KASSA&&KASSA.email())||T("Почта, имя, выход")),row("theme",T("Оформление"),thName+T(" тема · ")+acName.toLowerCase()+T(" акцент")+" · "+(LANG==="en"?"English":T("Русский"))),
+  const items=[h("div",{class:"mgroup"},T("Приложение")),row("me",T("Аккаунт и резервная копия"),(window.KASSA&&KASSA.email())||T("Почта, имя, выход")),row("theme",T("Оформление"),T("Тема")+": "+lc(thName)+" · "+lc(acName)+" · "+(LANG==="en"?"English":"Русский")),
     row("app",T("Общие"),(prefs.start==="stats"?T("Открывать статистику"):T("Открывать главную"))+" · "+(prefs.cents==="round"?T("без копеек"):T("с копейками")))];
   if(acc){const subsN=subsOf(acc).length,ts=tplsOf(acc).length;
     items.push(h("div",{class:"mgroup"},T("Счёт «")+(acc.name||"")+T("»")),
@@ -526,7 +528,7 @@ function renderList(){const box=$("list");renderListMode();
 
 /* ---------- rows and editor ---------- */
 let editingId=null,editingWhere="",edCache={id:null,el:null};
-const shortDate=d=>{const [y,m,dd]=String(d).split("-").map(Number);return df({day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd))};
+const shortDate=d=>{const [y,m,dd]=String(d).split("-").map(Number);return df({day:"numeric",month:"short",year:"numeric"}).format(new Date(y,m-1,dd)).replace(/\s?г\.$/,"")};
 function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)return editor(e);
   const c=catOf(e),inc=isInc(e),tr=isTr(e),multi=subsOf(acc).length>1;
   const sub=[showDate&&e.date?shortDate(e.date):"",tr?endName(e,"from")+" → "+endName(e,"to"):"",!tr&&e.note?c.name:"",
@@ -814,7 +816,7 @@ function renderDue(){const box=$("dueCard"),tm=today().slice(0,7);
       readOnly?null:h("div",{class:"due-act"},
         h("button",{type:"button",class:"ghost sm",title:T("Записать операцию по шаблону"),onclick:ev=>runTpl(t,r.day,ev.currentTarget)},t.amount?(t.kind==="inc"?T("Получено"):T("Оплачено")):T("Указать сумму")),
         h("button",{type:"button",class:"linkbtn muted",title:T("Операция уже записана вручную или в другом счёте"),onclick:()=>markTpl(t,"paid")},T("Уже записано")),
-        h("button",{type:"button",class:"linkbtn muted",onclick:()=>markTpl(t,"skips")},T("Не в этом месяце"))))}),
+        h("button",{type:"button",class:"linkbtn muted",title:T("Не в этом месяце"),onclick:()=>markTpl(t,"skips")},T("Пропустить"))))}),
     h("div",{class:"hint",style:"margin:2px 0 0"},T("Платёж отмечается сам, если в этом месяце есть операция с той же категорией и суммой.")))}
 function tplMatches(t,e){if(e.tpl)return false;
   if(t.kind==="tr"){if(!isTr(e)||trEnd(e.from)!==trEnd(t.from||"main"))return false;const d=destOf(t.to);
@@ -1128,7 +1130,7 @@ function renderCalendar(box){const m=month,dim=daysIn(m),[y,mm]=m.split("-").map
     const label=dayMonth(ds)+(out?T(", расходы ")+fmt(out):"")+(inn?T(", доходы ")+fmt(inn):"")+(p.length?T(", запланировано: ")+p.map(x=>x.type==="tpl"?x.t.name:T("долг ")+(x.d.who||"")).join(", "):"");
     cells.push(h("button",{type:"button",class:"cday"+(ds===t?" today":"")+(ds===calDay?" sel":"")+(ds>t?" future":""),style:lvl?"--lvl:"+lvl.toFixed(2):null,"aria-label":label,"aria-pressed":String(ds===calDay),
       onclick:()=>{calDay=calDay===ds?null:ds;renderList()}},
-      h("span",{class:"cnum"},String(d)),out?h("span",{class:"csum"},compact(out)):null,
+      h("span",{class:"cnum"},String(d)),out?h("span",{class:"csum"},calNum(out)):null,
       h("span",{class:"cmarks"},inn?h("i",{class:"m-inc"}):null,p.some(x=>x.type==="tpl")?h("i",{class:"m-plan"}):null,p.some(x=>x.type==="debt")?h("i",{class:"m-debt"}):null)))}
   const legend=h("div",{class:"legend calleg"},h("span",null,h("i",{class:"m-inc"}),T("доход")),h("span",null,h("i",{class:"m-plan"}),T("регулярный платёж")),h("span",null,h("i",{class:"m-debt"}),T("срок долга")));
   const parts=[h("div",{class:"cal"},...cells),legend];
@@ -1212,7 +1214,10 @@ function filteredHist(){const t=today(),tm=t.slice(0,7);let from="",to="";
   const A=e=>Number(e.amount)||0,byDate=(a,b)=>String(a.date).localeCompare(String(b.date))||(a.createdAt||0)-(b.createdAt||0);
   rows.sort(hf.sort==="date_asc"?byDate:hf.sort==="amt_desc"?(a,b)=>A(b)-A(a):hf.sort==="amt_asc"?(a,b)=>A(a)-A(b):(a,b)=>-byDate(a,b));
   return rows}
-function histControls(){
+let hfOpen=false;
+const hfCount=()=>(hf.period!=="all"?1:0)+(hf.cat?1:0)+(hf.who?1:0)+(hf.sort!=="date_desc"?1:0);
+function histControls(){const n=hfCount(),fb=$("hFiltBtn");$("hFilters").hidden=!hfOpen;fb.setAttribute("aria-expanded",String(hfOpen));
+  fb.classList.toggle("on",n>0);fb.replaceChildren(T("Фильтры"),...(n?[h("span",{class:"badge"},String(n))]:[]));
   $("hKind").replaceChildren(mseg([["all",T("Все")],["exp",T("Расходы")],["inc",T("Доходы")],["tr",T("Переводы")],["debt",T("Долги")]],hf.kind,v=>{hf.kind=v;if(v==="exp"&&ICAT[hf.cat]||v==="inc"&&CAT[hf.cat]||v==="tr"||v==="debt")hf.cat="";histShown=60;renderHistory()},T("Тип")));
   $("hPeriod").replaceChildren(mseg([["m1",T("Месяц")],["m3",T("3 мес")],["y",T("Год")],["all",T("Всё")],["custom",T("Даты")]],hf.period,v=>{hf.period=v;histShown=60;renderHistory()},T("Период")));
   $("hRange").hidden=hf.period!=="custom";
@@ -1255,6 +1260,7 @@ $("hSort").addEventListener("change",e=>{hf.sort=e.target.value;histShown=60;ren
 $("hFrom").addEventListener("change",e=>{hf.from=e.target.value;histShown=60;renderHistory()});
 $("hTo").addEventListener("change",e=>{hf.to=e.target.value;histShown=60;renderHistory()});
 $("hMore").onclick=()=>{histShown+=60;renderHistory()};
+$("hFiltBtn").onclick=()=>{hfOpen=!hfOpen;histControls()};
 $("hReset").onclick=()=>{hf={...HF0};$("hq").value="";$("hFrom").value="";$("hTo").value="";histShown=60;renderHistory()};
 $("hCsv").onclick=async()=>{if(!dl||!acc)return;const rows=filteredHist();
   const sep=LANG==="ru"?";":",",txt=v=>{v=String(v??"");return /^[=+\-@\t\r]/.test(v)?"'"+v:v};
@@ -1559,7 +1565,7 @@ async function renderPeople(){if(!acc||acc.type!=="shared")return;const ids=acc.
   let ps={};if(user&&ids.length){try{ps=await user.profiles(ids)}catch(e){}}
   if(!acc||acc.type!=="shared")return;
   $("people").replaceChildren(...ids.map(id=>{const p=ps[id]||{};
-    return h("div",{class:"person"},p.avatarUrl?h("img",{src:p.avatarUrl,alt:""}):h("span",{class:"dot",style:"width:28px;height:28px;background:var(--soft)"}),
+    return h("div",{class:"person"},p.avatarUrl?h("img",{src:p.avatarUrl,alt:""}):h("span",{class:"pav","aria-hidden":"true"},(String(id===uid?(window.KASSA&&KASSA.myName())||T("Вы"):(p.name||"?")).trim().charAt(0)||"?").toUpperCase()),
       h("div",null,h("div",null,id===uid?T("Вы"):(p.name||T("Участник"))),h("div",{class:"tag"},id===acc.owner?T("создал счёт"):T("участник"))))}));
   if(!ids.length)$("people").replaceChildren(h("div",{class:"hint"},T("Пока никого")))}
 function renderDanger(){const z=$("dangerZone");if(!acc||readOnly){z.replaceChildren();return}

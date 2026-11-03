@@ -146,20 +146,23 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
 
   <!-- ===== История ===== -->
   <div id="vHist" class="view narrow" hidden>
-    <section class="card stack" style="gap:14px">
-      <div><label for="hq" class="label">Поиск</label><input id="hq" class="field" type="search" autocomplete="off" placeholder="Комментарий, категория, человек или сумма"></div>
-      <div class="hrow"><div><span class="label">Тип</span><div id="hKind"></div></div><div><span class="label">Период</span><div id="hPeriod"></div></div></div>
-      <div id="hRange" class="row2" hidden><div><label for="hFrom" class="label">С даты</label><input type="date" id="hFrom"></div><div><label for="hTo" class="label">По дату</label><input type="date" id="hTo"></div></div>
-      <div class="hsel">
-        <div><label for="hCat" class="label">Категория</label><select id="hCat" class="field"></select></div>
-        <div id="hWhoWrap"><label for="hWho" class="label">Кто</label><select id="hWho" class="field"></select></div>
-        <div><label for="hSort" class="label">Сортировка</label><select id="hSort" class="field">
-          <option value="date_desc">Сначала новые</option><option value="date_asc">Сначала старые</option>
-          <option value="amt_desc">Сначала крупные</option><option value="amt_asc">Сначала мелкие</option></select></div>
+    <section class="card stack hfilters" style="gap:12px">
+      <div class="hsearch"><input id="hq" class="field" type="search" autocomplete="off" aria-label="Поиск" placeholder="Комментарий, категория, человек или сумма"><button type="button" class="ghost fbtn" id="hFiltBtn" aria-expanded="false" aria-controls="hFilters">Фильтры</button></div>
+      <div id="hKind"></div>
+      <div id="hFilters" class="stack" style="gap:14px" hidden>
+        <div><span class="label">Период</span><div id="hPeriod"></div></div>
+        <div id="hRange" class="row2" hidden><div><label for="hFrom" class="label">С даты</label><input type="date" id="hFrom"></div><div><label for="hTo" class="label">По дату</label><input type="date" id="hTo"></div></div>
+        <div class="hsel">
+          <div><label for="hCat" class="label">Категория</label><select id="hCat" class="field"></select></div>
+          <div id="hWhoWrap"><label for="hWho" class="label">Кто</label><select id="hWho" class="field"></select></div>
+          <div><label for="hSort" class="label">Сортировка</label><select id="hSort" class="field">
+            <option value="date_desc">Сначала новые</option><option value="date_asc">Сначала старые</option>
+            <option value="amt_desc">Сначала крупные</option><option value="amt_asc">Сначала мелкие</option></select></div>
+        </div>
+        <div class="inline"><button type="button" class="ghost sm" id="hReset">Сбросить фильтры</button></div>
       </div>
-      <div class="inline"><button type="button" class="ghost" id="hReset">Сбросить фильтры</button><button type="button" class="ghost" id="hCsv" hidden>Скачать CSV</button></div>
     </section>
-    <div class="flow hsum" id="hSum"></div>
+    <div class="hsumrow"><div class="flow hsum" id="hSum"></div><button type="button" class="linkbtn" id="hCsv" hidden>Скачать CSV</button></div>
     <div id="hList"></div>
     <button type="button" class="ghost" id="hMore" hidden>Показать ещё</button>
     <div class="hint" id="hCap" hidden>Загружаем более старые операции…</div>

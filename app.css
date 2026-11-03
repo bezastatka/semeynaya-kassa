@@ -474,3 +474,66 @@ a{color:var(--accent)}
 .authlinks a{color:var(--muted)}
 #delAcc .del{background:var(--bad);border:1px solid var(--bad);color:#fff;font-weight:600}
 #delAcc .del:disabled{opacity:.6}
+
+/* ===== interface v3: softer surfaces, clear touch feedback, compact blocks ===== */
+:root{--r:16px;--shadow:0 1px 2px rgba(16,32,30,.05),0 3px 10px rgba(16,32,30,.035)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]):not([data-app-theme="light"]){--shadow:none}}
+:root[data-theme="dark"],:root[data-app-theme="dark"]{--shadow:none}
+.card,.goal,.debt,.kpi{box-shadow:var(--shadow)}
+.kpi{border-radius:14px}
+/* header: see-through while the page scrolls under it */
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .bar{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:saturate(1.5) blur(14px);backdrop-filter:saturate(1.5) blur(14px)}}
+/* bottom bar: the current section gets a soft pill behind its icon */
+.bnav .nb{padding:7px 2px 9px}
+.bnav .nb svg{box-sizing:content-box;padding:3px 14px;border-radius:999px;transition:background-color .2s,color .2s}
+.bnav .nb[aria-current="page"] svg{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+/* fields */
+.field,input[type=date]{transition:border-color .15s,box-shadow .15s}
+.field:focus,input[type=date]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+/* buttons respond to a tap */
+@media (prefers-reduced-motion: no-preference){
+  .primary,.ghost,.chip,.subchip,.tchip,.dchip,.ctile,.mrow,.accrow,button.item,.fab,.nav,.linkbtn,.mseg button,.seg button,.icon-btn,.sw,.colors button{transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s,transform .1s}
+  .primary:active,.ghost:active,.chip:active,.subchip:active,.tchip:active,.dchip:active,.ctile:active,.fab:active,.nav:active,.icon-btn:active,.seg button:active{transform:scale(.97)}}
+button.item:active,.accrow:active,.mrow:active{background:var(--soft)}
+@media (hover: hover){.primary:hover:not(:disabled){filter:brightness(1.07)}.mrow:hover{background:color-mix(in srgb,var(--soft) 60%,transparent)}}
+/* phones keep the hover look stuck after a tap: drop it there */
+@media (hover: none){
+  button.item:hover,.accrow:hover,.accbtn:hover{background:transparent}
+  .ctile:hover:not([aria-checked="true"]){background:transparent}
+  .ghost:hover,.nav:hover{border-color:var(--line)}
+  .x:hover{background:transparent;color:var(--muted)}}
+/* sheets slide up on phones, toasts rise */
+@media (max-width:699px) and (prefers-reduced-motion: no-preference){.sheet{animation:sheetUp .26s cubic-bezier(.2,.8,.2,1)}}
+@keyframes sheetUp{from{transform:translateY(28px);opacity:.4}}
+.toast{border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.22)}
+@media (prefers-reduced-motion: no-preference){.toast{animation:toastIn .22s ease-out}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}}
+/* recurring payments: actions on one line */
+.due{padding:12px 0 8px}
+.due-act{grid-column:1/-1;padding-left:0;gap:2px 14px;margin-top:4px}
+@media (min-width:440px){.due-act{padding-left:42px}}
+.due-act .linkbtn{font-size:13.5px}
+.due-act .ghost.sm{padding:5px 12px;font-size:13.5px}
+/* a single goal uses the full width */
+.goals .goal:only-child{flex-basis:100%}
+/* categories editor: lighter arrows */
+.catrow .icon-btn{width:30px;height:30px;border-radius:9px;border-color:transparent;background:var(--soft);display:grid;place-items:center}
+.catrow .icon-btn:disabled{opacity:.25}
+/* members: initial instead of an empty circle */
+.pav{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:700;font-size:13.5px;flex:none}
+.person{gap:12px}
+/* statistics: no empty gap when there is only one account */
+#scopeSeg:empty{display:none}
+/* history: search first, the rest of the filters behind a button */
+.hsearch{display:flex;gap:8px;align-items:stretch}
+.hsearch .field{flex:1;min-width:0}
+.fbtn{flex:none;display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:10px}
+.fbtn[aria-expanded="true"],.fbtn.on{border-color:var(--accent);color:var(--accent)}
+.badge{min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11.5px;font-weight:700;display:inline-grid;place-items:center;padding:0 5px;line-height:1}
+.hsumrow{display:flex;justify-content:space-between;align-items:baseline;gap:6px 14px;flex-wrap:wrap}
+.hsumrow .hsum{margin:0}
+.code{justify-content:space-between}
+/* calmer empty states */
+.empty:not(.cday){text-align:center;padding:22px 12px;border:1px dashed var(--line);border-radius:14px;line-height:1.5}
+.goals>.hint,.debts>.hint{line-height:1.5}
