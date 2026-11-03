@@ -17,14 +17,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
-<script>
-try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.documentElement;
-  if(p.theme==="light"||p.theme==="dark")r.setAttribute("data-app-theme",p.theme);
-  if(p.accent&&p.accent!=="emerald")r.setAttribute("data-accent",p.accent)}catch(e){}
-</script>
+<script src="js/theme.js"></script>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
+<div id="bgLayer" aria-hidden="true"></div>
 <div id="authScreen" class="authscreen" hidden>
   <div class="authbox card">
     <div class="langsw" role="radiogroup" aria-label="Язык · Language"><button type="button" role="radio" data-lang="ru">RU</button><button type="button" role="radio" data-lang="en">EN</button></div>
@@ -193,7 +190,12 @@ try{const p=JSON.parse(localStorage.getItem("fk.prefs")||"{}");const r=document.
     <section class="card sec" id="prefTheme" hidden>
       <h3>Оформление</h3>
       <div><span class="label">Тема</span><div class="seg three" id="themeSeg" role="radiogroup" aria-label="Тема"></div></div>
-      <div><span class="label">Цвет акцента</span><div class="swatches" id="accentSw" role="radiogroup" aria-label="Цвет акцента"></div></div>
+      <div><span class="label">Цвет акцента</span><div class="swatches" id="accentSw" role="radiogroup" aria-label="Цвет акцента"></div>
+        <input type="color" id="accColor" class="pick" tabindex="-1" aria-label="Свой цвет акцента"></div>
+      <div><span class="label">Фон</span><div class="bgtiles" id="bgTiles" role="radiogroup" aria-label="Фон"></div>
+        <input type="color" id="bgColorIn" class="pick" tabindex="-1" aria-label="Свой цвет"><input type="file" id="bgFile" accept="image/*" hidden></div>
+      <div id="bgOpts" class="stack" style="gap:12px"></div>
+      <div><button type="button" class="linkbtn muted" id="themeReset">Сбросить оформление</button></div>
       <div><span class="label">Язык · Language</span><div class="seg" id="langSeg" role="radiogroup" aria-label="Язык · Language"></div></div>
     </section>
 

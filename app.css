@@ -537,3 +537,37 @@ button.item:active,.accrow:active,.mrow:active{background:var(--soft)}
 /* calmer empty states */
 .empty:not(.cday){text-align:center;padding:22px 12px;border:1px dashed var(--line);border-radius:14px;line-height:1.5}
 .goals>.hint,.debts>.hint{line-height:1.5}
+
+/* ===== custom backgrounds and accent ===== */
+#bgLayer{position:fixed;inset:0;z-index:-1;pointer-events:none;display:none}
+:root[data-bg] #bgLayer{display:block}
+:root[data-bgblur] #bgLayer{inset:-40px;filter:blur(16px)}
+:root[data-bg] .authscreen{background:transparent}
+/* presets are tints over the theme's own background, so they work in light and dark */
+[data-bg="mint"] #bgLayer,.bgt[data-v="mint"]{background:radial-gradient(120% 75% at 0% 0%,color-mix(in srgb,#2fbf8f calc(var(--bgk)*1%),transparent),transparent 72%),radial-gradient(110% 70% at 100% 100%,color-mix(in srgb,#39a0d6 calc(var(--bgk)*.75%),transparent),transparent 72%),var(--bg)}
+[data-bg="sky"] #bgLayer,.bgt[data-v="sky"]{background:radial-gradient(130% 80% at 20% 0%,color-mix(in srgb,#4c8dff calc(var(--bgk)*1%),transparent),transparent 72%),radial-gradient(100% 70% at 100% 90%,color-mix(in srgb,#7fd0ff calc(var(--bgk)*.8%),transparent),transparent 70%),var(--bg)}
+[data-bg="sunset"] #bgLayer,.bgt[data-v="sunset"]{background:radial-gradient(120% 80% at 0% 100%,color-mix(in srgb,#ff8a4c calc(var(--bgk)*1%),transparent),transparent 72%),radial-gradient(110% 70% at 100% 0%,color-mix(in srgb,#ff5f9e calc(var(--bgk)*.75%),transparent),transparent 70%),var(--bg)}
+[data-bg="lavender"] #bgLayer,.bgt[data-v="lavender"]{background:radial-gradient(120% 80% at 100% 0%,color-mix(in srgb,#9479ff calc(var(--bgk)*1%),transparent),transparent 72%),radial-gradient(110% 70% at 0% 100%,color-mix(in srgb,#e28cff calc(var(--bgk)*.65%),transparent),transparent 70%),var(--bg)}
+[data-bg="sand"] #bgLayer,.bgt[data-v="sand"]{background:linear-gradient(165deg,color-mix(in srgb,#f0b860 calc(var(--bgk)*.9%),var(--bg)) 0%,color-mix(in srgb,#e9d3a6 calc(var(--bgk)*.5%),var(--bg)) 55%,var(--bg) 100%)}
+[data-bg="dots"] #bgLayer,.bgt[data-v="dots"]{background:radial-gradient(color-mix(in srgb,var(--fg) calc(var(--bgk)*.45%),transparent) 1.3px,transparent 1.8px) 0 0/18px 18px,var(--bg)}
+[data-bg="grid"] #bgLayer,.bgt[data-v="grid"]{background:linear-gradient(color-mix(in srgb,var(--fg) calc(var(--bgk)*.28%),transparent) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,color-mix(in srgb,var(--fg) calc(var(--bgk)*.28%),transparent) 1px,transparent 1px) 0 0/22px 22px,var(--bg)}
+[data-bg="color"] #bgLayer{background:linear-gradient(180deg,color-mix(in srgb,var(--bgc) calc(var(--bgk)*.7%),var(--bg)),color-mix(in srgb,var(--bgc) calc(var(--bgk)*.4%),var(--bg)))}
+[data-bg="image"] #bgLayer{background:linear-gradient(color-mix(in srgb,var(--bg) calc(var(--bgdim)*1%),transparent),color-mix(in srgb,var(--bg) calc(var(--bgdim)*1%),transparent)),var(--bgimg) center/cover no-repeat,var(--bg)}
+/* the header shows the background through it */
+:root[data-bg] .bar{background:color-mix(in srgb,var(--bg) 70%,transparent)}
+/* settings: background tiles */
+.bgtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.bgt{position:relative;aspect-ratio:3/4;border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;background:var(--bg);color:var(--fg);display:flex;align-items:flex-end}
+.bgt>span{display:block;width:100%;font-size:11.5px;line-height:1.2;padding:4px 5px 5px;background:color-mix(in srgb,var(--surface) 82%,transparent);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bgt[aria-checked="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.bgt[data-v="color"]{background:conic-gradient(from 200deg,#ff7a7a,#ffd36b,#7be3a2,#6bc4ff,#b28bff,#ff7a7a)}
+.bgt[data-v="image"]{background-size:cover;background-position:center}
+.bgt .bgi{position:absolute;inset:0 0 22px;display:grid;place-items:center;color:var(--muted)}
+.bgt .bgi svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sw.custom{background:conic-gradient(from 200deg,#ff6b6b,#ffd166,#06d6a0,#4cc9f0,#9b5de5,#ff6b6b);display:grid;place-items:center;color:#fff;font-size:18px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.pick{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.range{display:flex;align-items:center;gap:12px}
+.range input{flex:1;accent-color:var(--accent);min-width:0}
+.range output{min-width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.colorrow{display:flex;align-items:center;gap:12px}
+.colorrow .cdot{width:34px;height:34px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line);flex:none}

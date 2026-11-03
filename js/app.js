@@ -12,6 +12,8 @@ const MONTHS=[T("Январь"),T("Февраль"),T("Март"),T("Апрел�
 const MSHORT=[T("янв"),T("фев"),T("мар"),T("апр"),T("май"),T("июн"),T("июл"),T("авг"),T("сен"),T("окт"),T("ноя"),T("дек")];
 const WD=[T("Пн"),T("Вт"),T("Ср"),T("Чт"),T("Пт"),T("Сб"),T("Вс")];
 const ACCENTS=[["emerald",T("Изумрудный"),"#0F6E5A"],["ocean",T("Синий"),"#1F5FBF"],["violet",T("Фиолетовый"),"#6A48C2"],["coral",T("Терракотовый"),"#B8452B"],["graphite",T("Графитовый"),"#2E3A38"]];
+/* backgrounds: [id, name]; the look itself is in app.css, applied by js/theme.js */
+const BG_LIST=[["plain","Обычный"],["mint","Мята"],["sky","Небо"],["sunset","Закат"],["lavender","Лаванда"],["sand","Песок"],["dots","Точки"],["grid","Клетка"],["color","Свой цвет"],["image","Картинка"]];
 const CHARTS=[
   {id:"structure",name:T("На что уходят деньги"),types:[["donut",T("Кольцо")],["bars",T("Полосы")]],def:"donut"},
   {id:"flow",name:T("Доходы и расходы"),types:[["bars",T("Столбцы")],["net",T("Разница")]],def:"bars"},
@@ -45,7 +47,11 @@ function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function defaultCharts(){return CHARTS.map(c=>({id:c.id,on:DEF_ON[c.id],type:c.def,group:"cat"}))}
 function normPrefs(p){p=p&&typeof p==="object"?p:{};
   const out={theme:["system","light","dark"].includes(p.theme)?p.theme:"system",
-    accent:ACCENTS.some(a=>a[0]===p.accent)?p.accent:"emerald",
+    accent:ACCENTS.some(a=>a[0]===p.accent)||p.accent==="custom"&&/^#[0-9a-f]{6}$/i.test(p.accentColor||"")?p.accent:"emerald",
+    accentColor:/^#[0-9a-f]{6}$/i.test(p.accentColor||"")?String(p.accentColor).toLowerCase():"",
+    bg:BG_LIST.some(b=>b[0]===p.bg)?p.bg:"plain",bgColor:/^#[0-9a-f]{6}$/i.test(p.bgColor||"")?String(p.bgColor).toLowerCase():"",
+    bgK:Number.isFinite(+p.bgK)&&p.bgK!==null&&p.bgK!==""?Math.max(5,Math.min(90,Math.round(+p.bgK))):40,
+    bgDim:Number.isFinite(+p.bgDim)&&p.bgDim!==null&&p.bgDim!==""?Math.max(0,Math.min(90,Math.round(+p.bgDim))):55,bgBlur:!!p.bgBlur,
     start:p.start==="stats"?"stats":"spend",cents:p.cents==="round"?"round":"show",
     period:["m","q","h","y"].includes(p.period)?p.period:"m",
     base:CURS.some(c=>c[0]===p.base)?p.base:"₽",lang:["ru","en"].includes(p.lang)?p.lang:null,scope:p.scope==="all"?"all":"acc",rates:{}};
@@ -64,9 +70,9 @@ let prefTimer=null,prefChain=Promise.resolve();
 function savePrefs(){lsSet("fk.prefs",JSON.stringify(prefs));clearTimeout(prefTimer);
   prefTimer=setTimeout(()=>{if(!db||!uid||readOnly)return;const snap=JSON.parse(JSON.stringify(prefs));
     prefChain=prefChain.then(()=>db.doc("data/users/"+uid+"/prefs").set(snap)).catch(()=>{})},700)}
-function applyTheme(){const r=document.documentElement;
+function applyTheme(){if(window.kassaTheme){kassaTheme.apply(prefs);return}const r=document.documentElement;
   if(prefs.theme==="system")r.removeAttribute("data-app-theme");else r.setAttribute("data-app-theme",prefs.theme);
-  if(prefs.accent==="emerald")r.removeAttribute("data-accent");else r.setAttribute("data-accent",prefs.accent)}
+  if(prefs.accent==="emerald"||prefs.accent==="custom")r.removeAttribute("data-accent");else r.setAttribute("data-accent",prefs.accent)}
 
 /* ---------- helpers ---------- */
 function h(tag,attrs,...kids){const el=document.createElement(tag);
@@ -371,7 +377,7 @@ const PREF_SECS={me:"prefMe",theme:"prefTheme",app:"prefApp",acc:"accSet",subs:"
 const MENU_ICONS={me:ICONS.bank,theme:ICONS.sun,app:ICONS.phone,acc:ICONS.wallet,subs:ICONS.piggy,cats:ICONS.star,tpls:ICONS.refund};
 function renderPrefMenu(){const row=(k,title,sub)=>{const ic=h("span",{class:"micon"});ic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+MENU_ICONS[k]+'</svg>';
     return h("button",{type:"button",class:"mrow",onclick:()=>openPrefSec(k)},ic,h("span",{class:"n"},h("b",null,title),h("small",null,sub)),h("span",{class:"chev","aria-hidden":"true"},"›"))};
-  const thName={system:T("Как в системе"),light:T("Светлая"),dark:T("Тёмная")}[prefs.theme],acName=(ACCENTS.find(a=>a[0]===prefs.accent)||ACCENTS[0])[1];
+  const thName={system:T("Как в системе"),light:T("Светлая"),dark:T("Тёмная")}[prefs.theme],acName=prefs.accent==="custom"?T("свой цвет"):(ACCENTS.find(a=>a[0]===prefs.accent)||ACCENTS[0])[1];
   const items=[h("div",{class:"mgroup"},T("Приложение")),row("me",T("Аккаунт и резервная копия"),(window.KASSA&&KASSA.email())||T("Почта, имя, выход")),row("theme",T("Оформление"),T("Тема")+": "+lc(thName)+" · "+lc(acName)+" · "+(LANG==="en"?"English":"Русский")),
     row("app",T("Общие"),(prefs.start==="stats"?T("Открывать статистику"):T("Открывать главную"))+" · "+(prefs.cents==="round"?T("без копеек"):T("с копейками")))];
   if(acc){const subsN=subsOf(acc).length,ts=tplsOf(acc).length;
@@ -1553,9 +1559,55 @@ function renderPrefs(){if(!prefSec)renderPrefMenu();renderRates();
   bigSeg($("langSeg"),[["ru",T("Русский"),""],["en","English",""]],LANG,changeLang);
   bigSeg($("themeSeg"),[["system",T("Как в системе"),T("Светлая или тёмная")],["light",T("Светлая"),""],["dark",T("Тёмная"),""]],prefs.theme,v=>{prefs.theme=v;applyTheme();savePrefs();renderPrefs();renderStats()});
   $("accentSw").replaceChildren(...ACCENTS.map(([id,n,c])=>h("button",{type:"button",class:"sw",role:"radio","aria-checked":String(prefs.accent===id),"aria-label":n,title:n,style:"background:"+c,
-    onclick:()=>{prefs.accent=id;applyTheme();savePrefs();renderPrefs()}})));
+    onclick:()=>{prefs.accent=id;applyTheme();savePrefs();renderPrefs()}})),
+    h("button",{type:"button",class:"sw custom",role:"radio","aria-checked":String(prefs.accent==="custom"),"aria-label":T("Свой цвет акцента"),title:T("Свой цвет акцента"),
+      style:prefs.accent==="custom"?"background:"+prefs.accentColor:null,onclick:()=>openPicker($("accColor"),prefs.accentColor||"#0f6e5a")},prefs.accent==="custom"?"":"+"));
+  renderBg();
   bigSeg($("startSeg"),[["spend",T("Главная"),T("Сводка, цели и операции")],["stats",T("Статистика"),T("Графики за период")]],prefs.start,v=>{prefs.start=v;savePrefs();renderPrefs()});
   bigSeg($("centsSeg"),[["show",T("С копейками"),T("1 234,50 ₽")],["round",T("Округлять"),T("1 235 ₽")]],prefs.cents,v=>{prefs.cents=v;savePrefs();renderPrefs();render()})}
+/* ---------- background ---------- */
+const BG_ICON={image:'<path d="M4 5h16v14H4z"/><path d="M4 16l5-5 4 4 3-3 4 4"/><circle cx="15.5" cy="9" r="1.5"/>',color:""};
+function openPicker(inp,val){inp.value=val;try{if(inp.showPicker){inp.showPicker();return}}catch(e){}inp.click()}
+function bgSet(v){prefs.bg=v;applyTheme();savePrefs();renderBg();renderPrefMenu()}
+function renderBg(){const img=window.kassaTheme?kassaTheme.localImg():null,hasImg=!!(img&&kassaTheme.okImg(img)),cur=prefs.bg;
+  $("bgTiles").replaceChildren(...BG_LIST.map(([v,n])=>{const b=h("button",{type:"button",class:"bgt",role:"radio","data-v":v,"aria-checked":String(cur===v),title:T(n),
+      onclick:()=>{if(v==="color"){openPicker($("bgColorIn"),prefs.bgColor||"#4c8dff");return}if(v==="image"&&!hasImg){$("bgFile").click();return}bgSet(v)}});
+    if(v==="color"&&prefs.bgColor)b.style.background="linear-gradient(180deg,"+prefs.bgColor+","+"color-mix(in srgb,"+prefs.bgColor+" 45%,var(--bg)))";
+    if(v==="image"){if(hasImg)b.style.backgroundImage='url("'+img+'")';else{const i=h("span",{class:"bgi"});i.innerHTML='<svg viewBox="0 0 24 24">'+BG_ICON.image+'</svg>';b.append(i)}}
+    b.append(h("span",null,T(n)));return b}));
+  const o=$("bgOpts"),rows=[];
+  const range=(id,label,val,min,max,fn)=>{const out=h("output",{for:id},val+"%");
+    const inp=h("input",{type:"range",id,min:String(min),max:String(max),step:"1",value:String(val),
+      oninput:e=>{const v=+e.target.value;out.textContent=v+"%";fn(v);applyTheme()},onchange:()=>savePrefs()});
+    return h("div",null,h("label",{class:"label",for:id},label),h("div",{class:"range"},inp,out))};
+  if(cur==="image"&&!hasImg)rows.push(h("div",{class:"hint",style:"margin:0"},T("На другом устройстве выбрана картинка — она хранится только там. Выберите картинку здесь.")));
+  if(cur==="color")rows.push(h("div",{class:"colorrow"},h("span",{class:"cdot",style:"background:"+(prefs.bgColor||"#4c8dff")}),
+    h("button",{type:"button",class:"ghost sm",onclick:()=>openPicker($("bgColorIn"),prefs.bgColor||"#4c8dff")},T("Другой цвет"))));
+  if(cur!=="plain"&&cur!=="image")rows.push(range("bgK",T("Насыщенность"),prefs.bgK,5,90,v=>{prefs.bgK=v}));
+  if(cur==="image"&&hasImg){rows.push(h("div",{class:"inline"},h("button",{type:"button",class:"ghost sm",onclick:()=>$("bgFile").click()},T("Заменить картинку")),
+      h("button",{type:"button",class:"ghost sm danger",onclick:()=>{try{localStorage.removeItem("fk.bgimg")}catch(e){}bgSet("plain")}},T("Убрать картинку"))));
+    rows.push(range("bgDim",T("Затемнение"),prefs.bgDim,0,90,v=>{prefs.bgDim=v}));
+    rows.push(switchBtn(T("Размыть картинку"),prefs.bgBlur,()=>{prefs.bgBlur=!prefs.bgBlur;applyTheme();savePrefs();renderBg()},"bgBlur"));
+    rows.push(h("div",{class:"hint",style:"margin:0"},T("Картинка хранится только на этом устройстве.")))}
+  o.replaceChildren(...rows);o.hidden=!rows.length}
+$("accColor").addEventListener("input",e=>{prefs.accent="custom";prefs.accentColor=e.target.value.toLowerCase();applyTheme()});
+$("accColor").addEventListener("change",()=>{savePrefs();renderPrefs()});
+$("bgColorIn").addEventListener("input",e=>{prefs.bg="color";prefs.bgColor=e.target.value.toLowerCase();applyTheme()});
+$("bgColorIn").addEventListener("change",()=>{savePrefs();renderBg();renderPrefMenu()});
+/* a picture is shrunk to at most 1600 px and kept in this browser only */
+async function shrinkImage(file){const url=URL.createObjectURL(file);
+  try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    const k=Math.min(1,1600/Math.max(img.naturalWidth||1,img.naturalHeight||1)),c=document.createElement("canvas");
+    c.width=Math.max(1,Math.round(img.naturalWidth*k));c.height=Math.max(1,Math.round(img.naturalHeight*k));c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    let q=.82,d=c.toDataURL("image/jpeg",q);while(d.length>1500000&&q>.35){q-=.12;d=c.toDataURL("image/jpeg",q)}return d}
+  finally{URL.revokeObjectURL(url)}}
+$("bgFile").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  if(!/^image\//.test(f.type||"image/")){toast(T("Не получилось открыть картинку"));return}
+  let d;try{d=await shrinkImage(f)}catch(x){toast(T("Не получилось открыть картинку"));return}
+  try{localStorage.setItem("fk.bgimg",d)}catch(x){toast(T("Картинка слишком большая для памяти браузера — выберите другую"));return}
+  bgSet("image")});
+$("themeReset").onclick=()=>{Object.assign(prefs,{theme:"system",accent:"emerald",accentColor:"",bg:"plain",bgColor:"",bgK:40,bgDim:55,bgBlur:false});
+  try{localStorage.removeItem("fk.bgimg")}catch(e){}applyTheme();savePrefs();renderPrefs();renderStats();toast(T("Оформление сброшено"))};
 $("resetCharts").onclick=()=>{prefs.charts=defaultCharts();savePrefs();toast(T("Графики вернулись к стандартному набору"))};
 
 function fillSettings(force){if(!acc)return;const key=acc.type+":"+acc.id;if(!force&&filledFor===key)return;filledFor=key;
