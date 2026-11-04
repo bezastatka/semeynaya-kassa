@@ -573,7 +573,7 @@ function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)ret
     !tr&&multi&&subSel==="all"?subName(subOf(e)):"",e.goal?goalName(e.goal):"",acc.type==="shared"?who(e):""].filter(Boolean).join(" · ");
   const dbt=isDebt(e),sign=tr?trSign(e):dbt?(e.dir==="in"?"+":"−"):inc?"+":"";
   const kids=[catIcon(c,34),
-    h("div",{class:"what"},h("div",null,e.note||c.name),sub?h("div",{class:"sub"},sub):null),
+    h("div",{class:"what"},h("div",null,e.note||c.name),sub||isPending(e.id)?h("div",{class:"sub"},isPending(e.id)?h("span",{class:"pend",title:T("Ещё не отправлено")}):null,sub):null),
     h("div",{class:"amt"+(tr||dbt?" tr":inc?" inc":"")},sign+fmt(Number(e.amount)||0))];
   if(readOnly)return h("div",{class:"item"},...kids);
   const btn=h("button",{type:"button",class:"item","aria-label":T("Изменить: ")+(e.note||c.name)+", "+fmt(Number(e.amount)||0),onclick:ev=>{if(ev.currentTarget._swiped){ev.currentTarget._swiped=false;return}openEditor(e.id,where)}},...kids);
@@ -1264,7 +1264,7 @@ function resubHist(){if(!db||!acc)return;const key=acc.type+":"+acc.id;if(key===
   histUnsub=expCol(a).where("date",">=",archFrom).orderBy("date","desc").limit(1000).onSnapshot(qs=>{if(histKey!==key)return;
     liveExp=qs.docs.map(d=>({id:d.id,...d.data()}));histLoaded=true;mergeHist();
     if(monthLive){if(liveExp.length>=1000){subKey="";resubscribe()}else{syncMonth();render()}}afterHist()},
-    ()=>{if(histKey!==key)return;histLoaded=true;if(monthLive){loaded=true;render()}afterHist();notice(T("Не удалось загрузить историю. Обновите страницу."),true)});
+    e=>{if(histKey!==key)return;histLoaded=true;if(monthLive){loaded=true;render()}afterHist();loadNote(e,T("Не удалось загрузить историю. Обновите страницу."))});
   /* older operations are not in the live query: keep them current from change events (someone edits, deletes or back-dates one) */
   let archT=null;const archRender=()=>{clearTimeout(archT);archT=setTimeout(()=>{if(histKey===key){mergeHist();afterHist();if(!monthLive&&loaded)render()}},40)};
   if(expCol(a).watch)archUnsub=expCol(a).watch(ch=>{if(!ch||histKey!==key)return;
@@ -1281,7 +1281,7 @@ async function loadArchive(a,key){let upper=archFrom,strict=true,guard=0;
       if(qs.size<1000||++guard>500)break;
       if(fresh===0){if(strict)break;strict=true;continue}
       upper=oldest;strict=false;mergeHist();afterHist()}}
-  catch(e){if(histKey===key)notice(T("Не удалось загрузить старые операции. Обновите страницу."),true)}
+  catch(e){if(histKey===key)loadNote(e,T("Не удалось загрузить старые операции. Обновите страницу."))}
   if(histKey!==key)return;archDone=true;mergeHist();afterHist()}
 /* search text of an operation, built once per operation object */
 let hayCache=new WeakMap(),hayKey="";
@@ -1729,11 +1729,27 @@ function resubscribe(){if(!db||!acc)return;resubHist();const key=acc.type+":"+ac
   loaded=false;expenses=[];render();const a=acc;
   unsub=expCol(a).where("month","==",month).onSnapshot(qs=>{if(!acc||acc.id!==a.id)return;
     expenses=qs.docs.map(d=>({id:d.id,...d.data()}));loaded=true;render()},
-    err=>{loaded=true;render();notice(err.code==="revoked"?T("Доступ к счетам закрыт."):T("Не удалось загрузить траты. Обновите страницу."),true)})}
+    err=>{loaded=true;render();loadNote(err,err.code==="revoked"?T("Доступ к счетам закрыт."):T("Не удалось загрузить траты. Обновите страницу."))})}
 function setReadOnly(){readOnly=true;$("fab").disabled=true;closeSheet();$("saveSet").hidden=true;$("saveSubs").hidden=true;$("newPanel").hidden=true;
   notice(T("Доступ только на просмотр."));renderTabs();renderDanger();if(acc)renderList()}
+/* ---------- working without a network ---------- */
+const offlineNote=()=>T("Нет интернета, а на этом устройстве ещё нет сохранённых данных. Подключитесь, чтобы загрузить их.");
+function loadNote(e,msg){notice(e&&e.code==="offline"?offlineNote():msg,true)}
+const isPending=id=>!!(window.KASSA&&KASSA.sync&&KASSA.sync.has(id));
+let syncSeen=0;
+function renderSync(d){const bar=$("syncBar"),s=window.KASSA&&KASSA.sync;if(!s){bar.hidden=true;return}
+  d=d||{pending:s.pending(),online:s.online()};const n=d.pending,rec=n+" "+plural(n,[T("запись"),T("записи"),T("записей")]);
+  if(!d.online){bar.className="syncbar off";bar.replaceChildren(h("i"),h("span",null,n?T("Нет интернета · ждут отправки: ")+rec:T("Нет интернета · новые операции сохранятся на телефоне и отправятся сами")));bar.hidden=false}
+  else if(n){bar.className="syncbar";bar.replaceChildren(h("i"),h("span",null,T("Отправляем: ")+rec+"…"));bar.hidden=false}
+  else bar.hidden=true}
+addEventListener("kassa:sync",e=>{const d=e.detail||{};renderSync(d);
+  if(d.last&&d.last.at>syncSeen){syncSeen=d.last.at;
+    if(d.last.sent)toast(T("Отправлено: ")+d.last.sent+" "+plural(d.last.sent,[T("запись"),T("записи"),T("записей")]));
+    if(d.last.dropped)notice(T("Не удалось отправить: ")+d.last.dropped+" "+plural(d.last.dropped,[T("запись"),T("записи"),T("записей")])+T(" — нет доступа к счёту."),true)}
+  if(d.online&&$("notice").textContent===offlineNote())notice("");
+  if(acc){render();renderHistory()}});
 function writeErr(e,el){const c=e&&e.code;el.classList.add("bad");
-  el.textContent=c==="rate_limited"?T("Слишком много попыток ввести код. Попробуйте через час."):c==="quota_exceeded"?T("База заполнена: удалите старые операции, чтобы добавить новые."):c==="denied"?T("Нет доступа: вы не участник этого счёта или вышли из аккаунта."):c==="invalid_argument"?T("Запись не найдена — возможно, её уже удалили. Обновите страницу."):c==="invalid_argument_data"?T("Данные не прошли проверку. Проверьте поля и попробуйте ещё раз."):T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.")}
+  el.textContent=c==="offline"?T("Нет интернета. Это изменение можно сохранить, когда связь появится."):c==="rate_limited"?T("Слишком много попыток ввести код. Попробуйте через час."):c==="quota_exceeded"?T("База заполнена: удалите старые операции, чтобы добавить новые."):c==="denied"?T("Нет доступа: вы не участник этого счёта или вышли из аккаунта."):c==="invalid_argument"?T("Запись не найдена — возможно, её уже удалили. Обновите страницу."):c==="invalid_argument_data"?T("Данные не прошли проверку. Проверьте поля и попробуйте ещё раз."):T("Не получилось сохранить. Проверьте интернет и попробуйте ещё раз.")}
 
 $("form").addEventListener("submit",async ev=>{ev.preventDefault();const msg=$("formMsg");msg.classList.remove("bad");
   const amount=Math.round(parseNum($("amount").value)*100)/100;
@@ -1836,7 +1852,7 @@ if(deepDel){setView("prefs",true);openPrefSec("me")}
   uid=user?await user.id():null;
   const can=user?await user.can("data.write"):null;
   if(can===false)setReadOnly();
-  if(uid){
+  if(uid){setTimeout(()=>renderSync(),0);
     db.doc("data/users/"+uid+"/prefs").get().then(snap=>{if(!snap.exists)return;
       const startBefore=prefs.start;prefs=normPrefs(snap.data());
       if(prefs.lang!==LANG){if(!LANG_SET&&prefs.lang){lsSet("fk.prefs",JSON.stringify(prefs));setLang(prefs.lang);return}prefs.lang=LANG;savePrefs()}
@@ -1847,7 +1863,7 @@ if(deepDel){setView("prefs",true);openPrefSec("me")}
   else gotP=true;
   const sq=uid&&!readOnly?db.collection("accounts").where("members","array-contains",uid):db.collection("accounts");
   sq.onSnapshot(qs=>{shared=qs.docs.map(d=>({id:d.id,...d.data()}));gotS=true;refreshAcc();onAccounts()},
-    ()=>{gotS=true;onAccounts();notice(T("Не удалось загрузить общие счета. Обновите страницу."),true)});
+    e=>{gotS=true;onAccounts();loadNote(e,T("Не удалось загрузить общие счета. Обновите страницу."))});
   if(prefSec==="me"){fillMe();if(deepDel)setTimeout(()=>{const el=$("delAcc");if(el)el.scrollIntoView({block:"center"})},300)}
 })();
 function refreshAcc(){if(!acc)return;const f=allAccounts().find(a=>a.id===acc.id&&a.type===acc.type);if(f)acc=f}
@@ -1858,7 +1874,11 @@ function fillMe(){delArm=deepDel;renderDelAcc();$("meEmail").textContent=(window
     $("usage").textContent=T("Сейчас в базе ")+u.docs+" "+plural(u.docs,[T("запись"),T("записи"),T("записей")])+" (≈ "+(mb<0.1?T("меньше 0,1"):numIn(mb.toFixed(1)))+T(" МБ). Бесплатного тарифа хватает на 500 МБ.")}).catch(()=>{})}
 $("meNameSave").onclick=async()=>{const n=$("meName").value.trim().slice(0,60);if(!n){toast(T("Введите имя"));return}
   try{await KASSA.setName(n);names[uid]=n;toast(T("Имя сохранено"));renderPeople()}catch(e){toast(T("Не получилось сохранить имя"))}};
-$("signOut").onclick=()=>KASSA.signOut();
+let soArm=false;
+$("signOut").onclick=()=>{const n=window.KASSA&&KASSA.sync?KASSA.sync.pending():0;
+  if(n&&!soArm){soArm=true;setTimeout(()=>{soArm=false},8000);
+    toast(T("Не отправлено: ")+n+" "+plural(n,[T("запись"),T("записи"),T("записей")])+T(". Подключитесь к интернету или нажмите «Выйти» ещё раз — тогда они пропадут."));return}
+  KASSA.signOut()};
 async function collectBackup(){const docs=[],seen=new Set(),add=(path,data)=>{if(!seen.has(path)){seen.add(path);docs.push({path,data})}};
   const mine=await db.collection("data/users/"+uid).get();for(const d of mine.docs)add("data/users/"+uid+"/"+d.id,d.data());
   for(const a of allAccounts()){add(accDoc(a).path,Object.fromEntries(Object.entries(a).filter(([k])=>k!=="id")));
