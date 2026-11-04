@@ -119,23 +119,25 @@
       <section id="dueCard" class="card stack" style="gap:6px" hidden></section>
 
       <section id="goalsSec" class="stack" style="gap:10px" hidden>
-        <div class="sechead"><h2>Цели</h2><button type="button" class="linkbtn" id="addGoalBtn">+ Новая цель</button></div>
-        <div id="goalNew" hidden></div>
-        <div id="goals" class="goals"></div>
+        <div class="sechead"><h2><button type="button" class="foldbtn" id="goalsFold" aria-expanded="true" aria-controls="goalsBody">Цели<svg class="fchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></h2><button type="button" class="linkbtn" id="addGoalBtn">+ Новая цель</button></div>
+        <div class="hintline" id="goalsMini" hidden></div>
+        <div id="goalsBody" class="stack" style="gap:10px"><div id="goalNew" hidden></div>
+        <div id="goals" class="goals"></div></div>
       </section>
 
       <section id="debtSec" class="stack" style="gap:10px" hidden>
-        <div class="sechead"><h2>Долги</h2><button type="button" class="linkbtn" id="addDebtBtn">+ Новый долг</button></div>
+        <div class="sechead"><h2><button type="button" class="foldbtn" id="debtsFold" aria-expanded="true" aria-controls="debtsBody">Долги<svg class="fchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></h2><button type="button" class="linkbtn" id="addDebtBtn">+ Новый долг</button></div>
         <div class="hintline" id="debtSum"></div>
-        <div id="debtNew" hidden></div>
+        <div id="debtsBody" class="stack" style="gap:10px"><div id="debtNew" hidden></div>
         <div id="debts" class="debts"></div>
-        <button type="button" class="linkbtn muted" id="debtClosedBtn" style="align-self:flex-start" hidden></button>
+        <button type="button" class="linkbtn muted" id="debtClosedBtn" style="align-self:flex-start" hidden></button></div>
       </section>
     </div>
 
     <div class="col-b">
       <section>
         <div class="sechead"><h2 id="listTitle">Операции</h2><div id="listMode"></div></div>
+        <div class="hint swipehint" id="swipeHint" hidden></div>
         <div id="list"><div class="empty">Загружаем операции…</div></div>
       </section>
     </div>
@@ -203,6 +205,7 @@
       <h3>Общие</h3>
       <div><span class="label">Открывать при запуске</span><div class="seg" id="startSeg" role="radiogroup" aria-label="Открывать при запуске"></div></div>
       <div><span class="label">Суммы</span><div class="seg" id="centsSeg" role="radiogroup" aria-label="Формат сумм"></div></div>
+      <div><span class="label">Порядок категорий при вводе</span><div class="seg" id="catOrderSeg" role="radiogroup" aria-label="Порядок категорий при вводе"></div></div>
       <div><label class="label" for="baseCur">Валюта для сводки по всем счетам</label><select id="baseCur" class="field" style="max-width:260px"></select></div>
       <div id="rateRows" class="stack" style="gap:8px"></div>
       <div class="inline"><button type="button" class="ghost" id="resetCharts">Вернуть графики по умолчанию</button></div>
@@ -322,7 +325,7 @@
     <div id="dateRow" hidden><label for="date" class="label">Дата</label><input type="date" id="date"></div>
     <div id="subWrap" hidden><span class="label">Кошелёк</span><div class="chips" id="subPick" role="radiogroup" aria-label="Кошелёк"></div></div>
     <div id="whoWrap" hidden><span class="label" id="whoLabel">Кто потратил</span><div class="chips" id="members" role="radiogroup" aria-label="Кто потратил"></div></div>
-    <div id="noteRow" hidden><label for="note" class="label">Комментарий</label><input id="note" class="field" maxlength="80" placeholder="Например, «Пятёрочка» или «подарок маме»"></div>
+    <div id="noteRow" hidden><label for="note" class="label">Комментарий</label><input id="note" class="field" maxlength="80" autocomplete="off" placeholder="Например, «Пятёрочка» или «подарок маме»"><div class="sugg" id="noteSugg" role="listbox" aria-label="Подсказки"></div></div>
     <div class="submit"><button type="submit" class="primary" id="addBtn">Добавить расход</button><div class="formmsg" id="formMsg" role="status"></div></div>
   </form>
 </section>

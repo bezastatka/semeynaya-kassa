@@ -571,3 +571,47 @@ button.item:active,.accrow:active,.mrow:active{background:var(--soft)}
 .range output{min-width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
 .colorrow{display:flex;align-items:center;gap:12px}
 .colorrow .cdot{width:34px;height:34px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line);flex:none}
+
+/* ===== collapsible home blocks ===== */
+.foldbtn{border:0;background:transparent;padding:2px 0;margin:0;font:inherit;color:inherit;display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-align:left}
+.foldbtn.nofold{cursor:default}
+.foldbtn.nofold .fchev{display:none}
+.fchev{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--soft);color:var(--muted);flex:none}
+.fchev svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.foldbtn[aria-expanded="false"] .fchev svg{transform:rotate(-90deg)}
+.duemini{display:flex;justify-content:space-between;align-items:baseline;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:transparent;padding:10px 0 2px;text-align:left;color:var(--muted);font-size:14px;cursor:pointer}
+.duemini span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.duemini b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.duemini.now span{color:var(--warn);font-weight:500}
+#goalsMini b{font-variant-numeric:tabular-nums}
+/* ===== swipe on a row ===== */
+.swipe{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.swipe>button.item{position:relative;z-index:1;border-bottom:0;touch-action:pan-y;transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+.swipe.dragging>button.item,.swipe.gone>button.item{background:var(--bg)}
+.card .swipe.dragging>button.item,.card .swipe.gone>button.item{background:var(--surface)}
+.swipe.dragging>button.item{transition:none}
+.sw-act{position:absolute;inset:0;display:none;align-items:center;gap:8px;padding:0 18px;font-weight:600;font-size:14px;color:#fff}
+.sw-act svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;transition:transform .15s}
+.sw-del{background:var(--bad);justify-content:flex-end}
+.sw-rep{background:var(--good);justify-content:flex-start}
+.swipe.to-del .sw-del,.swipe.to-rep .sw-rep,.swipe.gone .sw-del{display:flex}
+.swipe.armed .sw-act svg{transform:scale(1.2)}
+.swipe.gone{animation:rowGone .3s ease-in .12s forwards}
+@keyframes rowGone{to{max-height:0;opacity:0;border-bottom-width:0}}
+.swipe.gone{max-height:90px}
+.swipehint{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-6px 0 0;background:var(--soft);border-radius:10px;padding:6px 6px 6px 12px}
+.swipehint .x{flex:none}
+/* ===== month change by swipe ===== */
+@media (prefers-reduced-motion: no-preference){
+  #vSpend.slide-l{animation:slideL .24s ease-out}
+  #vSpend.slide-r{animation:slideR .24s ease-out}}
+@keyframes slideL{from{transform:translateX(26px);opacity:.5}}
+@keyframes slideR{from{transform:translateX(-26px);opacity:.5}}
+/* ===== comment suggestions ===== */
+.sugg{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;scroll-margin-bottom:96px}
+#noteRow{scroll-margin-bottom:96px}
+.sugg:empty{display:none}
+.schip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 12px 5px 6px;display:inline-flex;align-items:center;gap:6px;font-size:14px;max-width:100%}
+.schip>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.schip small{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.schip:not(:has(.cico)){padding-left:12px}

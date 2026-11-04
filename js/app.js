@@ -52,7 +52,7 @@ function normPrefs(p){p=p&&typeof p==="object"?p:{};
     bg:BG_LIST.some(b=>b[0]===p.bg)?p.bg:"plain",bgColor:/^#[0-9a-f]{6}$/i.test(p.bgColor||"")?String(p.bgColor).toLowerCase():"",
     bgK:Number.isFinite(+p.bgK)&&p.bgK!==null&&p.bgK!==""?Math.max(5,Math.min(90,Math.round(+p.bgK))):40,
     bgDim:Number.isFinite(+p.bgDim)&&p.bgDim!==null&&p.bgDim!==""?Math.max(0,Math.min(90,Math.round(+p.bgDim))):55,bgBlur:!!p.bgBlur,
-    start:p.start==="stats"?"stats":"spend",cents:p.cents==="round"?"round":"show",
+    start:p.start==="stats"?"stats":"spend",catOrder:p.catOrder==="manual"?"manual":"freq",cents:p.cents==="round"?"round":"show",
     period:["m","q","h","y"].includes(p.period)?p.period:"m",
     base:CURS.some(c=>c[0]===p.base)?p.base:"₽",lang:["ru","en"].includes(p.lang)?p.lang:null,scope:p.scope==="all"?"all":"acc",rates:{}};
   if(p.rates&&typeof p.rates==="object")for(const [k,v] of Object.entries(p.rates))if(CURS.some(c=>c[0]===k)&&Number(v)>0)out.rates[k]=Number(v);
@@ -368,8 +368,30 @@ function renderDetails(){if(!acc)return;const tr=curKind==="tr",subs=subsOf(acc)
   const g=goalActive&&goalsOf(acc).find(x=>x.id===goalActive);
   if(g){const gb=h("button",{type:"button",class:"dchip on set","aria-label":T("Не относить к цели «")+g.name+T("»"),onclick:()=>{goalActive=null;renderDetails()}},h("span",null,T("Цель «")+g.name+T("» ×")));items.unshift(gb)}
   $("details").replaceChildren(...items);
+  if(detailOpen==="note")renderNoteSugg();
   $("dateRow").hidden=detailOpen!=="date";$("subWrap").hidden=detailOpen!=="sub"||tr||subs.length<2;$("whoWrap").hidden=detailOpen!=="who"||!pp.length;$("noteRow").hidden=detailOpen!=="note"}
 $("date").addEventListener("change",renderDetails);$("note").addEventListener("change",renderDetails);
+/* comment suggestions: earlier comments of the same type; picking one also sets its usual category */
+let noteIdxRef=null,noteIdx=[];
+function noteIndex(){if(noteIdxRef===histExp)return noteIdx;const m=new Map();
+  for(const e of histExp){const n=String(e.note||"").trim();if(!n||n.length>60||isDebt(e))continue;const kind=isTr(e)?"tr":isInc(e)?"inc":"exp";
+    const k=kind+"|"+n.toLowerCase();let r=m.get(k);if(!r){r={kind,note:n,low:n.toLowerCase(),count:0,last:"",cat:null};m.set(k,r)}
+    r.count++;const d=String(e.date||"");if(d>=r.last){r.last=d;r.note=n;if(kind!=="tr")r.cat=e.cat||null}}
+  noteIdxRef=histExp;noteIdx=[...m.values()];return noteIdx}
+function renderNoteSugg(){const box=$("noteSugg"),q=$("note").value.trim().toLowerCase(),kind=curKind,cat=kind==="inc"?curInc:curCat;
+  let list=noteIndex().filter(r=>r.kind===kind&&r.low!==q);
+  if(q)list=list.filter(r=>r.low.includes(q)).sort((a,b)=>b.low.startsWith(q)-a.low.startsWith(q)||b.count-a.count||b.last.localeCompare(a.last));
+  else list=list.filter(r=>kind==="tr"||r.cat===cat).sort((a,b)=>b.count-a.count||b.last.localeCompare(a.last));
+  list=list.slice(0,4);
+  /* the list is rebuilt only when it changes, so a tap is not lost to a re-render when the field loses focus */
+  const key=kind+"|"+cat+"|"+q+"|"+list.map(r=>r.low).join("|");if(box._key===key)return;box._key=key;
+  box.replaceChildren(...list.map(r=>{const c=kind==="tr"||!r.cat?null:(kind==="inc"?ICAT:CAT)[r.cat];
+    return h("button",{type:"button",class:"schip",role:"option",onmousedown:ev=>ev.preventDefault(),onclick:()=>pickNote(r)},c?catIcon(c,20):null,h("span",null,r.note),c&&q&&r.cat!==cat?h("small",null,c.name):null)}));
+  box.hidden=!list.length;if(list.length&&document.activeElement===$("note"))setTimeout(()=>box.scrollIntoView({block:"nearest"}),0)}
+function pickNote(r){$("note").value=r.note;
+  if(r.kind==="exp"&&CAT[r.cat]&&!CAT[r.cat].hidden)curCat=r.cat;if(r.kind==="inc"&&ICAT[r.cat]&&!ICAT[r.cat].hidden)curInc=r.cat;
+  detailOpen="";renderCats();renderDetails()}
+$("note").addEventListener("input",renderNoteSugg);
 
 /* settings menu with separate screens */
 let prefSec=null;
@@ -467,8 +489,15 @@ function syncView(){renderTabs();setView(view,false);
   $("codeOut").textContent=acc.code||"——————";
   applyCats();resubIcons();resubDebts();loadSubSel();fillSettings(false);renderWho();renderDanger();renderPeople();renderCats();renderTplBar();renderSubs();render();renderStats();renderHistory();renderCatSet();renderTplSet()}
 
+/* how often each category was used in the last half year (for "frequent first") */
+let catFreqRef=null,catFreq={};
+function catFreqs(){if(catFreqRef===histExp)return catFreq;const since=shiftMonth(today().slice(0,7),-5)+"-01",f={};
+  for(const e of histExp){if(String(e.date||"")<since)continue;const k=isInc(e)?"i":isExp(e)?"e":"";if(k)f[k+(e.cat||"")]=(f[k+(e.cat||"")]||0)+1}
+  catFreqRef=histExp;catFreq=f;return f}
 function renderCats(){if(curKind==="tr"&&!canTransfer())curKind="exp";
-  const inc=curKind==="inc",vis=(inc?INC_CATS:CATS).filter(c=>!c.hidden);
+  const inc=curKind==="inc";let vis=(inc?INC_CATS:CATS).filter(c=>!c.hidden);
+  if(prefs.catOrder!=="manual"){const f=catFreqs(),k=inc?"i":"e";
+    vis=vis.map((c,i)=>[c,i]).sort((a,b)=>isOtherCat(a[0].id)-isOtherCat(b[0].id)||(f[k+b[0].id]||0)-(f[k+a[0].id]||0)||a[1]-b[1]).map(x=>x[0])}
   if(!vis.some(c=>c.id===(inc?curInc:curCat))){if(inc)curInc=vis[0].id;else curCat=vis[0].id}
   const sel=inc?curInc:curCat;
   const kinds=[["exp",T("Расход")],["inc",T("Доход")]];if(canTransfer())kinds.push(["tr",T("Перевод")]);
@@ -522,7 +551,7 @@ function renderBars(box,rows,name,color,total){
     h("div",{class:"name"},h("span",{class:"dot",style:"background:"+color(k)}),name(k)),
     h("div",{class:"val"},fmt(v),h("small",null,total?Math.round(v/total*100)+"%":"")),
     h("div",{class:"bt"},h("i",{style:"width:"+(v/max*100)+"%;background:"+color(k)})))))}
-function renderList(){const box=$("list");renderListMode();
+function renderList(){const box=$("list");renderListMode();$("swipeHint").hidden=true;
   if(!loaded){box.replaceChildren(h("div",{class:"empty"},T("Загружаем операции…")));return}
   if(calMode()){renderCalendar(box);return}
   if(!expenses.filter(inSub).length){box.replaceChildren(h("div",{class:"empty"},acc.type==="shared"?T("В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую — её сразу увидят все участники счёта."):T("В этом месяце операций пока нет. Нажмите «+» внизу, чтобы добавить первую.")));return}
@@ -530,7 +559,10 @@ function renderList(){const box=$("list");renderListMode();
   const days={};for(const e of sorted)(days[e.date]=days[e.date]||[]).push(e);
   box.replaceChildren(...Object.keys(days).map(d=>{const items=days[d],out=sum(items.filter(isExp)),inn=sum(items.filter(isInc));
     return h("div",{class:"day"},h("div",{class:"dayh"},h("span",null,dayLabel(d)),h("span",null,out?fmt(out):null,inn?h("span",{class:"in"},"+"+fmt(inn)):null)),
-      ...items.map(e=>itemRow(e,false,"ops")))}))}
+      ...items.map(e=>itemRow(e,false,"ops")))}));
+  const sh=$("swipeHint");sh.hidden=readOnly||lsGet("fk.swipeHint")==="1"||!sorted.some(canSwipe);
+  if(!sh.hidden&&!sh.firstChild)sh.append(h("span",null,T("Проведите по операции влево, чтобы удалить, или вправо, чтобы повторить.")),
+    h("button",{type:"button",class:"x","aria-label":T("Закрыть"),onclick:()=>{lsSet("fk.swipeHint","1");sh.hidden=true}},"×"))}
 
 /* ---------- rows and editor ---------- */
 let editingId=null,editingWhere="",edCache={id:null,el:null};
@@ -543,7 +575,40 @@ function itemRow(e,showDate,where){if(editingId===e.id&&editingWhere===where)ret
   const kids=[catIcon(c,34),
     h("div",{class:"what"},h("div",null,e.note||c.name),sub?h("div",{class:"sub"},sub):null),
     h("div",{class:"amt"+(tr||dbt?" tr":inc?" inc":"")},sign+fmt(Number(e.amount)||0))];
-  return readOnly?h("div",{class:"item"},...kids):h("button",{type:"button",class:"item","aria-label":T("Изменить: ")+(e.note||c.name)+", "+fmt(Number(e.amount)||0),onclick:()=>openEditor(e.id,where)},...kids)}
+  if(readOnly)return h("div",{class:"item"},...kids);
+  const btn=h("button",{type:"button",class:"item","aria-label":T("Изменить: ")+(e.note||c.name)+", "+fmt(Number(e.amount)||0),onclick:ev=>{if(ev.currentTarget._swiped){ev.currentTarget._swiped=false;return}openEditor(e.id,where)}},...kids);
+  return canSwipe(e)?swipeRow(btn,e):btn}
+/* debts and transfers between accounts touch other records, so they are changed only in the editor */
+const canSwipe=e=>!readOnly&&(isExp(e)||isInc(e)||isTr(e)&&!isX(e));
+const SW_ICON={del:'<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>',rep:'<path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5"/>'};
+function swipeRow(btn,e){const act=(k,label)=>{const d=h("div",{class:"sw-act sw-"+k,"aria-hidden":"true"});d.innerHTML='<svg viewBox="0 0 24 24">'+SW_ICON[k]+'</svg>';d.append(h("span",null,label));return d};
+  const wrap=h("div",{class:"swipe"},act("rep",T("Повторить")),act("del",T("Удалить")),btn);
+  let x0=0,y0=0,dx=0,lock=null,pid=null;
+  const reset=()=>{wrap.classList.remove("dragging","to-del","to-rep","armed");btn.style.transform=""};
+  btn.addEventListener("pointerdown",ev=>{if(ev.pointerType==="mouse"&&ev.button!==0)return;x0=ev.clientX;y0=ev.clientY;dx=0;lock=null;pid=ev.pointerId});
+  btn.addEventListener("pointermove",ev=>{if(pid!==ev.pointerId)return;const mx=ev.clientX-x0,my=ev.clientY-y0;
+    if(lock===null&&(Math.abs(mx)>10||Math.abs(my)>10)){lock=Math.abs(mx)>Math.abs(my)*1.3?"x":"y";if(lock==="x"){try{btn.setPointerCapture(pid)}catch(x){}wrap.classList.add("dragging")}}
+    if(lock!=="x")return;dx=mx;btn.style.transform="translateX("+dx+"px)";
+    wrap.classList.toggle("to-del",dx<0);wrap.classList.toggle("to-rep",dx>0);wrap.classList.toggle("armed",Math.abs(dx)>wrap.clientWidth*.3)});
+  btn.addEventListener("pointerup",ev=>{if(pid!==ev.pointerId)return;pid=null;if(lock!=="x"){reset();return}
+    btn._swiped=true;setTimeout(()=>{btn._swiped=false},400);const go=Math.abs(dx)>wrap.clientWidth*.3;
+    if(go){lsSet("fk.swipeHint","1");$("swipeHint").hidden=true;if(navigator.vibrate)try{navigator.vibrate(12)}catch(x){}}
+    if(go&&dx<0){wrap.classList.remove("dragging");btn.style.transform="translateX(-105%)";quickDelete(e,wrap,reset)}
+    else{reset();if(go&&dx>0)repeatOp(e)}});
+  btn.addEventListener("pointercancel",()=>{pid=null;reset()});
+  return wrap}
+async function quickDelete(e,wrap,undoLook){const a=acc,data=stripId(e);wrap.classList.add("gone");
+  try{await expCol(a).doc(e.id).delete();patchLocal(e.id,null);offerUndo(T("Операция удалена"),()=>restoreOps(a,[{id:e.id,data}]))}
+  catch(err){wrap.classList.remove("gone");undoLook();toast(T("Не получилось удалить. Проверьте интернет и попробуйте ещё раз."))}}
+/* opens the form filled like the given operation, dated today */
+function repeatOp(e){if(!acc||readOnly)return;openEntry(false);
+  curKind=isTr(e)?"tr":isInc(e)?"inc":"exp";
+  if(curKind==="exp"&&CAT[e.cat]&&!CAT[e.cat].hidden)curCat=e.cat;if(curKind==="inc"&&ICAT[e.cat]&&!ICAT[e.cat].hidden)curInc=e.cat;
+  if(curKind!=="tr"&&subIds().includes(e.sub))formSub=e.sub;
+  if(curKind==="tr"){if(subIds().includes(e.from))trFrom=e.from;if(subIds().includes(e.to))trTo=e.to}
+  if(e.member&&people(acc).includes(e.member))lsSet("fk.who."+acc.id,e.member);
+  $("amount").value=numIn(Number(e.amount)||0);$("note").value=e.note||"";$("date").value=today();
+  renderCats();renderWho();renderTplBar()}
 function openEditor(id,where){editingId=id;editingWhere=where;edCache={id:null,el:null};renderList();renderHistory()}
 function closeEditor(){editingId=null;edCache={id:null,el:null};renderList();renderHistory()}
 function editor(e){if(isX(e))return xEditor(e);if(isDebt(e))return debtOpEditor(e);if(edCache.id===e.id&&edCache.el)return edCache.el;
@@ -812,9 +877,15 @@ function renderDue(){const box=$("dueCard"),tm=today().slice(0,7);
     return {t,day:Math.min(dim,Math.max(1,+t.day||1)),done:!!own||!!auto||(t.paid||[]).includes(tm),skip:(t.skips||[]).includes(tm)}});
   const rows=all.filter(r=>!r.done&&!r.skip).sort((a,b)=>a.day-b.day),doneN=all.filter(r=>r.done).length;
   box.hidden=false;
-  const head=h("div",{class:"sechead"},h("h2",{style:"margin:0"},T("Регулярные платежи")),
+  const df=folded("due")&&rows.length>0;
+  const head=h("div",{class:"sechead"},h("h2",{style:"margin:0"},h("button",{type:"button",class:"foldbtn"+(rows.length?"":" nofold"),"aria-expanded":String(!df),
+      onclick:()=>{if(!rows.length)return;setFold("due",!folded("due"));renderDue()}},T("Регулярные платежи"),chevron())),
     h("span",{class:"hint",style:"margin:0"},rows.length?T("осталось ")+rows.length+(doneN?T(" · записано ")+doneN:""):T("всё записано")));
   if(!rows.length){box.replaceChildren(head);return}
+  if(df){const now=rows.filter(r=>r.day<=td),out=rows.filter(r=>r.t.kind!=="inc").reduce((t,r)=>t+(Number(r.t.amount)||0),0),first=rows[0];
+    box.replaceChildren(head,h("button",{type:"button",class:"duemini"+(now.length?" now":""),onclick:()=>{setFold("due",false);renderDue()}},
+      h("span",null,now.length?T("Пора оплатить: ")+now.map(r=>r.t.name).join(", "):T("Ближайший: ")+first.t.name+", "+dayMonth(tm+"-"+pad(first.day))),
+      out?h("b",null,fmt(out)):null));return}
   box.replaceChildren(head,...rows.map(r=>{const t=r.t,due=r.day<=td;
     return h("div",{class:"due"+(due?" now":"")},catIcon(tplCat(t),32),
       h("div",{class:"what"},h("div",null,t.name),h("div",{class:"sub"},(due?(r.day===td?T("сегодня"):T("с ")+dayMonth(tm+"-"+pad(r.day))):dayMonth(tm+"-"+pad(r.day)))+(t.kind==="inc"?T(" · доход"):t.kind==="tr"?T(" · перевод"):""))),
@@ -898,10 +969,21 @@ let goalNew=null,goalEdit=null,goalArm=false,goalActive=null;
 function goalSaved(g,bal){if(!bal)return null;
   if(g.mode==="contrib"){let v=Number(g.start)||0;for(const e of histExp){if(e.goal!==g.id)continue;const a=Number(e.amount)||0;v+=isExp(e)?-a:a}return v}
   return subIds().includes(g.sub)?bal[g.sub]:null}
+/* ---------- collapsible blocks on the home screen (remembered on this device) ---------- */
+const FOLD_DEF={due:true,goals:false,debts:false};
+function folded(k){const v=lsGet("fk.fold."+k);return v===null?FOLD_DEF[k]:v==="1"}
+function setFold(k,v){lsSet("fk.fold."+k,v?"1":"0")}
+const chevron=()=>{const s=h("span",{class:"fchev","aria-hidden":"true"});s.innerHTML='<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>';return s};
+$("goalsFold").onclick=()=>{setFold("goals",!folded("goals"));renderGoals()};
+$("debtsFold").onclick=()=>{setFold("debts",!folded("debts"));renderDebts()};
 function renderGoals(){const sec=$("goalsSec");if(!acc){sec.hidden=true;return}
   const gs=goalsOf(acc);sec.hidden=readOnly&&!gs.length;if(sec.hidden)return;
   $("addGoalBtn").hidden=readOnly||!!goalNew;renderGoalNew();
   const bal=histLoaded&&archDone?balances():null;
+  const gf=folded("goals")&&gs.length>0&&!goalNew&&!goalEdit;$("goalsFold").setAttribute("aria-expanded",String(!gf));$("goalsFold").classList.toggle("nofold",!gs.length);
+  $("goalsBody").hidden=gf;$("goalsMini").hidden=!gf;
+  if(gf){$("goalsMini").replaceChildren(...gs.slice(0,2).flatMap((g,i)=>{const have=goalSaved(g,bal),t=Number(g.target)||0;
+      return [i?" · ":"",h("span",null,g.name+" "),have!==null&&t?h("b",null,Math.max(0,Math.min(100,Math.round(have/t*100)))+"%"):""]}),gs.length>2?T(" · ещё ")+(gs.length-2):"")}
   if(!gs.length){$("goals").replaceChildren(goalNew?h("span"):h("div",{class:"hint",style:"margin:0"},T("Поставьте цель, например «Отпуск — 150 000 ₽ к июлю». Копить можно в отдельном кошельке или в общей копилке, а приложение подскажет, сколько откладывать в месяц.")));return}
   $("goals").replaceChildren(...gs.map(g=>goalEdit&&goalEdit.id===g.id?goalEditor():goalCard(g,bal)))}
 function goalCard(g,bal){const subOk=subIds().includes(g.sub),contrib=g.mode==="contrib",have=goalSaved(g,bal),target=Number(g.target)||0;
@@ -1001,6 +1083,8 @@ function renderDebts(){const sec=$("debtSec");if(!acc){sec.hidden=true;return}
   const toMe=sum(open.filter(d=>d.dir==="lent").map(d=>({amount:debtLeft(d)}))),mine=sum(open.filter(d=>d.dir!=="lent").map(d=>({amount:debtLeft(d)})));
   $("debtSum").replaceChildren(...(open.length?[toMe?h("span",null,T("Вам должны "),h("b",{class:"pos"},fmt(toMe))):null,toMe&&mine?" · ":null,mine?h("span",null,T("Вы должны "),h("b",{class:"neg"},fmt(mine))):null].filter(Boolean)
     :[debts.length||debtNew?"":T("Записывайте, кто кому одолжил, — приложение напомнит о сроке и учтёт возврат в кошельке.")]));
+  const dff=folded("debts")&&debts.length>0&&!debtNew&&!debtOpen;$("debtsFold").setAttribute("aria-expanded",String(!dff));$("debtsFold").classList.toggle("nofold",!debts.length);
+  $("debtsBody").hidden=dff;
   renderDebtNew();
   const cards=open.map(debtCard);
   if(debtShowClosed)cards.push(...closed.map(debtCard));
@@ -1563,6 +1647,7 @@ function renderPrefs(){if(!prefSec)renderPrefMenu();renderRates();
     h("button",{type:"button",class:"sw custom",role:"radio","aria-checked":String(prefs.accent==="custom"),"aria-label":T("Свой цвет акцента"),title:T("Свой цвет акцента"),
       style:prefs.accent==="custom"?"background:"+prefs.accentColor:null,onclick:()=>openPicker($("accColor"),prefs.accentColor||"#0f6e5a")},prefs.accent==="custom"?"":"+"));
   renderBg();
+  bigSeg($("catOrderSeg"),[["freq",T("Частые сначала"),T("Чаще выбираемые — в начале")],["manual",T("Как в настройках"),T("Ваш порядок из «Категорий»")]],prefs.catOrder,v=>{prefs.catOrder=v;savePrefs();renderPrefs()});
   bigSeg($("startSeg"),[["spend",T("Главная"),T("Сводка, цели и операции")],["stats",T("Статистика"),T("Графики за период")]],prefs.start,v=>{prefs.start=v;savePrefs();renderPrefs()});
   bigSeg($("centsSeg"),[["show",T("С копейками"),T("1 234,50 ₽")],["round",T("Округлять"),T("1 235 ₽")]],prefs.cents,v=>{prefs.cents=v;savePrefs();renderPrefs();render()})}
 /* ---------- background ---------- */
@@ -1721,6 +1806,19 @@ async function deleteAcc(){const a=acc,msg=$("setMsg");msg.classList.remove("bad
     acc=null;dangerConfirm=false;msg.textContent="";toast(T("Счёт удалён"));onAccounts()}
   catch(e){writeErr(e,msg)}}
 
+(function(){const v=$("vSpend");let x0=0,y0=0,lock=null,on=false;
+  const skip=el=>!!el.closest(".swipe,.subs-scroll,.goals,.tscroll,.editor,input,select,textarea,.mseg,.debt,.goal");
+  const clear=()=>{v.style.transform="";v.style.opacity=""};
+  v.addEventListener("touchstart",e=>{on=e.touches.length===1&&!skip(e.target);if(!on)return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;lock=null},{passive:true});
+  v.addEventListener("touchmove",e=>{if(!on)return;const dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0;
+    if(lock===null&&(Math.abs(dx)>12||Math.abs(dy)>12))lock=Math.abs(dx)>Math.abs(dy)*1.5?"x":"y";
+    if(lock==="x"){v.style.transform="translateX("+dx*.3+"px)";v.style.opacity=String(1-Math.min(.3,Math.abs(dx)/1000))}},{passive:true});
+  v.addEventListener("touchend",e=>{if(!on)return;on=false;const t=e.changedTouches[0],dx=t?t.clientX-x0:0;clear();
+    if(lock==="x"&&Math.abs(dx)>70){changeMonth(dx<0?1:-1);v.classList.remove("slide-l","slide-r");void v.offsetWidth;v.classList.add(dx<0?"slide-l":"slide-r")}});
+  v.addEventListener("touchcancel",()=>{on=false;clear()});
+  document.addEventListener("keydown",e=>{if(view!=="spend"||sheetOpen||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+    if(e.target.closest&&e.target.closest("input,select,textarea,[contenteditable]"))return;
+    if(e.key==="ArrowLeft")changeMonth(-1);else if(e.key==="ArrowRight")changeMonth(1)})})();
 function changeMonth(d){month=shiftMonth(month,d);calDay=undefined;render();resubscribe();if(view==="stats")renderStats()}
 $("prev").onclick=()=>changeMonth(-1);
 $("next").onclick=()=>changeMonth(1);
