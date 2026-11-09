@@ -115,9 +115,12 @@
           <div class="meta" id="meterMeta"></div>
         </div>
         <div class="hintline" id="stats"></div>
+        <div class="hintline fcline" id="fcLine" hidden></div>
       </section>
 
       <section id="dueCard" class="card stack" style="gap:6px" hidden></section>
+
+      <section id="limSec" class="card stack" style="gap:8px" hidden></section>
 
       <section id="goalsSec" class="stack" style="gap:10px" hidden>
         <div class="sechead"><h2><button type="button" class="foldbtn" id="goalsFold" aria-expanded="true" aria-controls="goalsBody">Цели<svg class="fchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></h2><button type="button" class="linkbtn" id="addGoalBtn">+ Новая цель</button></div>
@@ -319,7 +322,7 @@
       <label for="amount" class="label">Сумма</label>
       <div class="amount-row"><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0"><span id="curSym">₽</span></div>
     </div>
-    <div id="catWrap"><span class="label" id="catLabel">Категория</span><div class="cgrid" id="cats" role="radiogroup" aria-label="Категория"></div></div>
+    <div id="catWrap"><span class="label" id="catLabel">Категория</span><div class="cgrid" id="cats" role="radiogroup" aria-label="Категория"></div><div class="limhint" id="limHint" hidden></div></div>
     <div id="trWrap" class="row2 half" hidden><div><label class="label" for="trFrom">Откуда</label><select id="trFrom" class="field"></select></div><div><label class="label" for="trTo">Куда</label><select id="trTo" class="field"></select></div></div>
     <div id="trAmt2Wrap" hidden><label class="label" for="trAmt2" id="trAmt2Lbl">Придёт на счёт</label><input id="trAmt2" class="field" inputmode="decimal" autocomplete="off" placeholder="Сумма в валюте второго счёта"></div>
     <div class="dchips" id="details"></div>

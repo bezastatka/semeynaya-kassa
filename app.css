@@ -625,3 +625,28 @@ button.item:active,.accrow:active,.mrow:active{background:var(--soft)}
 @keyframes pulse{to{opacity:.3}}
 .pend{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px;border-radius:50%;border:1.6px solid var(--warn);position:relative}
 .pend::after{content:"";position:absolute;left:4px;top:1.5px;width:1.6px;height:4px;background:var(--warn);box-shadow:1.4px 3px 0 -0.1px var(--warn)}
+
+/* ===== category limits and forecast ===== */
+.lim{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:9px 0 4px;border-top:1px solid var(--line)}
+.lw{min-width:0}
+.lh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ln{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.la{font-size:13.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.la b{color:var(--fg);font-weight:600}
+.ltrack{position:relative;height:8px;border-radius:4px;background:var(--soft);overflow:hidden;margin:6px 0 4px}
+.lfill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent);transition:width .4s ease}
+.lim.warn .lfill{background:var(--warn)}
+.lim.bad .lfill{background:var(--bad)}
+.lfc{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--accent) 50%,transparent) 0 4px,transparent 4px 7px)}
+.lim.warn .lfc{background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--warn) 60%,transparent) 0 4px,transparent 4px 7px)}
+.ls{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lim.warn .ls{color:var(--warn)}
+.lim.bad .ls{color:var(--bad);font-weight:500}
+.hint.bad{color:var(--bad);font-weight:500}
+.hint.warn{color:var(--warn);font-weight:500}
+.fcline b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.fcline .over{color:var(--bad);font-weight:600}
+.fcline .okc{color:var(--good)}
+.limhint{margin-top:8px;font-size:13.5px;padding:7px 11px;border-radius:10px;background:var(--soft);font-variant-numeric:tabular-nums}
+.limhint.warn{background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--warn);font-weight:500}
+.limhint.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));color:var(--bad);font-weight:600}

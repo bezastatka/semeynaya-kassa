@@ -182,12 +182,13 @@ function normCatList(raw,defs,otherId){const out=[],seen=new Set();
     const d=defs.find(x=>x.id===id)||{};
     const nm=String(c.name||d.name||T("Без названия")).slice(0,30),df=d.name&&nm===d.name?d.name:undefined;
     out.push({id,name:df?T(df):nm,_def:df,c:/^--c([1-9]|10)$/.test(c.c)?c.c:(d.c||"--c10"),
-      icon:typeof c.icon==="string"&&(Object.hasOwn(ICONS,c.icon)||/^img:[A-Za-z0-9_\-.~:@+]{1,200}$/.test(c.icon))?c.icon:(d.icon||"dots"),hidden:!!c.hidden&&id!==otherId})}
+      icon:typeof c.icon==="string"&&(Object.hasOwn(ICONS,c.icon)||/^img:[A-Za-z0-9_\-.~:@+]{1,200}$/.test(c.icon))?c.icon:(d.icon||"dots"),hidden:!!c.hidden&&id!==otherId,
+      limit:Number(c.limit)>0&&Number(c.limit)<=1e9?Math.round(Number(c.limit)*100)/100:undefined})}
   if(!out.length)return defs.map(defCat);
   if(!seen.has(otherId))out.push(defCat(defs.find(x=>x.id===otherId)));
   return out}
 function applyCats(){const raw=(acc&&acc.cats)||{};CATS=normCatList(raw.exp,DEF_EXP,"other");INC_CATS=normCatList(raw.inc,DEF_INC,"i_other");indexCats()}
-const stripCat=x=>({id:x.id,name:x._def&&x.name===T(x._def)?x._def:x.name,c:x.c,icon:x.icon,hidden:!!x.hidden});
+const stripCat=x=>({id:x.id,name:x._def&&x.name===T(x._def)?x._def:x.name,c:x.c,icon:x.icon,hidden:!!x.hidden,...(x.limit>0?{limit:x.limit}:{})});
 let iconData={},iconUnsub=null,iconKey="";
 function catIcon(c,size){size=size||32;const box=h("span",{class:"cico",style:"--cc:var("+(c.c||"--c10")+");width:"+size+"px;height:"+size+"px","aria-hidden":"true"});
   if(c.icon&&String(c.icon).startsWith("img:")){const src=iconData[c.icon.slice(4)];if(src){box.classList.add("img");box.append(h("img",{src,alt:""}));return box}}
@@ -218,7 +219,7 @@ function renderCatSet(){if(!acc||view!=="prefs")return;
   $("catTabs").replaceChildren(mseg([["exp",T("Расходы")],["inc",T("Доходы")]],catTab,v=>{catTab=v;catEdit=null;renderCatSet()},T("Тип категорий")));
   const list=catListOf(catTab);
   const rows=list.map((c,i)=>catEdit&&!catEdit.isNew&&catEdit.id===c.id?catEditor():h("div",{class:"catrow"+(c.hidden?" hid":"")},
-    catIcon(c,32),h("div",{class:"n"},h("div",null,c.name),c.hidden?h("div",{class:"sub"},T("скрыта")):null),
+    catIcon(c,32),h("div",{class:"n"},h("div",null,c.name),c.hidden||c.limit>0?h("div",{class:"sub"},[c.hidden?T("скрыта"):"",c.limit>0?T("лимит ")+fmt(c.limit):""].filter(Boolean).join(" · ")):null),
     readOnly?null:h("button",{type:"button",class:"icon-btn","aria-label":T("Выше"),disabled:i===0?true:null,onclick:()=>moveCat(i,-1)},"↑"),
     readOnly?null:h("button",{type:"button",class:"icon-btn","aria-label":T("Ниже"),disabled:i===list.length-1?true:null,onclick:()=>moveCat(i,1)},"↓"),
     readOnly?null:h("button",{type:"button",class:"ghost sm",onclick:()=>{catEdit={...c};catArm=false;iconArm=null;renderCatSet()}},T("Изменить"))));
@@ -258,6 +259,9 @@ function catEditor(){const d=catEdit;
   const note=d.isNew?null:isOtherCat(d.id)?T("Эту категорию нельзя удалить: в неё попадают операции без категории."):n===null?T("Проверяем, есть ли операции с этой категорией…"):n>0?T("В категории ")+n+" "+plural(n,[T("операция"),T("операции"),T("операций")])+T(", её можно только перестать предлагать при вводе."):null;
   return h("div",{class:"editor"},
     h("div",{class:"inline",style:"align-items:flex-end;flex-wrap:nowrap"},catIcon(d,44),h("div",{style:"flex:1;min-width:0"},h("label",{class:"label",for:"ce-name"},T("Название")),name)),
+    catTab==="exp"?h("div",null,h("label",{class:"label",for:"ce-limit"},T("Лимит в месяц, ")+cur()),
+      h("input",{class:"field",id:"ce-limit",inputmode:"decimal",autocomplete:"off",placeholder:T("Без лимита"),style:"max-width:220px",value:d.limitRaw!==undefined?d.limitRaw:d.limit?numIn(d.limit):"",oninput:e=>{d.limitRaw=e.target.value}}),
+      h("div",{class:"hint"},T("Покажем, сколько осталось, и предупредим, если по прогнозу лимит будет превышен."))):null,
     h("div",null,h("span",{class:"label"},T("Цвет")),colors),
     h("div",null,h("span",{class:"label"},T("Иконка")),h("div",{class:"ico-grid",role:"radiogroup","aria-label":T("Иконка")},...builtins,...customs,up),
       h("div",{class:"hint"},T("«+» — загрузить свою картинку PNG или JPG. Она обрежется до квадрата и будет видна всем участникам счёта."))),
@@ -299,7 +303,9 @@ async function saveCat(){const d=catEdit,msg=$("ceMsg");msg.classList.remove("ba
   if(!name){msg.classList.add("bad");msg.textContent=T("Введите название категории.");$("ce-name").focus();return}
   const list=catListOf(catTab).map(x=>({...x}));
   if(list.some(x=>x.id!==d.id&&x.name.toLowerCase()===name.toLowerCase())){msg.classList.add("bad");msg.textContent=T("Категория с таким названием уже есть.");return}
-  const item={id:d.id,name,c:d.c,icon:d.icon,hidden:!!d.hidden,_def:d._def};
+  let limit=d.limit;if(d.limitRaw!==undefined){const raw=String(d.limitRaw).trim(),v=parseNum(raw);
+    if(raw&&!(v>0&&v<=1e9)){msg.classList.add("bad");msg.textContent=T("Лимит должен быть больше нуля или пустым.");$("ce-limit").focus();return}limit=raw?Math.round(v*100)/100:undefined}
+  const item={id:d.id,name,c:d.c,icon:d.icon,hidden:!!d.hidden,_def:d._def,...(catTab==="exp"&&limit>0?{limit}:{})};
   const i=list.findIndex(x=>x.id===d.id);
   if(i<0){const oi=list.findIndex(x=>isOtherCat(x.id));list.splice(oi<0?list.length:oi,0,item)}else list[i]=item;
   if(await writeCats(catTab,list,msg)){catEdit=null;renderCatSet();toast(i<0?T("Категория «")+name+T("» добавлена"):T("Категория сохранена"))}}
@@ -370,7 +376,7 @@ function renderDetails(){if(!acc)return;const tr=curKind==="tr",subs=subsOf(acc)
   $("details").replaceChildren(...items);
   if(detailOpen==="note")renderNoteSugg();
   $("dateRow").hidden=detailOpen!=="date";$("subWrap").hidden=detailOpen!=="sub"||tr||subs.length<2;$("whoWrap").hidden=detailOpen!=="who"||!pp.length;$("noteRow").hidden=detailOpen!=="note"}
-$("date").addEventListener("change",renderDetails);$("note").addEventListener("change",renderDetails);
+$("date").addEventListener("change",()=>{renderDetails();limHint()});$("note").addEventListener("change",renderDetails);
 /* comment suggestions: earlier comments of the same type; picking one also sets its usual category */
 let noteIdxRef=null,noteIdx=[];
 function noteIndex(){if(noteIdxRef===histExp)return noteIdx;const m=new Map();
@@ -509,7 +515,7 @@ function renderCats(){if(curKind==="tr"&&!canTransfer())curKind="exp";
   if(!readOnly)tiles.push(h("button",{type:"button",class:"ctile more",onclick:()=>{closeSheet();catTab=inc?"inc":"exp";setView("prefs",true);openPrefSec("cats")}},catIcon({c:"--c10",icon:"tools"},40),h("span",null,T("Настроить"))));
   $("cats").replaceChildren(...tiles);
   $("entryTitle").textContent=curKind==="tr"?T("Новый перевод"):inc?T("Новый доход"):T("Новый расход");
-  renderFormSubs()}
+  limHint();renderFormSubs()}
 function curWho(){const p=people(acc);if(!p.length)return "";let v=lsGet("fk.who."+acc.id);if(!p.includes(v))v=p[0];return v}
 function renderWho(){if(!acc)return;const p=people(acc),sel=curWho();
   $("members").replaceChildren(...p.map(n=>h("button",{type:"button",class:"chip",role:"radio","aria-checked":String(n===sel),
@@ -539,6 +545,7 @@ function render(){
     st.replaceChildren(...(daysPassed&&total?[T("В среднем "),h("b",null,fmt(total/daysPassed)),T(" в день")]:[]))}
   if(acc.type==="shared")ensureNames(expenses.map(e=>e.by));
   $("listTitle").textContent=T("Операции за ")+lc(MONTHS[+month.slice(5)-1]);
+  const fc=forecast();renderForecast(fc);renderLimits(fc);
   renderList();renderDue();renderGoals();renderDebts()}
 const who=e=>e.member||nameOf(e.by)||"—";
 function group(list,key){const m={};for(const e of list){const k=key(e);m[k]=(m[k]||0)+(Number(e.amount)||0)}return Object.entries(m).sort((a,b)=>b[1]-a[1])}
@@ -969,8 +976,69 @@ let goalNew=null,goalEdit=null,goalArm=false,goalActive=null;
 function goalSaved(g,bal){if(!bal)return null;
   if(g.mode==="contrib"){let v=Number(g.start)||0;for(const e of histExp){if(e.goal!==g.id)continue;const a=Number(e.amount)||0;v+=isExp(e)?-a:a}return v}
   return subIds().includes(g.sub)?bal[g.sub]:null}
+/* ---------- forecast and category limits ----------
+   Month-end estimate for each category = already spent + recurring payments still expected this month
+   + the rest of the usual ("variable") spending. The usual level is the median of the last three full
+   months without recurring payments; it is blended with this month's pace: at the start of the month
+   history weighs more, towards the end the actual pace. */
+const counted=e=>isExp(e)&&!isOff(subOf(e));
+const catKey=e=>CAT[e.cat]?e.cat:"other";
+const fmtR=n=>fmt(n>=1000?Math.round(n/100)*100:Math.round(n));
+function catSpent(m,c){const src=histLoaded?histExp:expenses;let t=0;for(const e of src)if(e.month===m&&counted(e)&&catKey(e)===c)t+=Number(e.amount)||0;return t}
+function tplDue(tm){const ts=tplsOf(acc).filter(t=>t.repeat==="month"),dim=daysIn(tm),claimed=new Set(),rec=new Set();
+  const rows=ts.map(t=>{const own=expenses.find(e=>e.tpl===t.id);let auto=null;
+    if(!own){auto=expenses.find(e=>!claimed.has(e.id)&&tplMatches(t,e));if(auto)claimed.add(auto.id)}
+    if(own)rec.add(own.id);if(auto)rec.add(auto.id);
+    return {t,day:Math.min(dim,Math.max(1,+t.day||1)),done:!!own||!!auto||(t.paid||[]).includes(tm),skip:(t.skips||[]).includes(tm)}});
+  return {rows,rec,ts}}
+function forecast(){const tm=today().slice(0,7);if(!acc||subSel!=="all"||month!==tm||!loaded||!histLoaded)return null;
+  const td=+today().slice(8,10),dim=daysIn(tm),frac=td/dim,A=e=>Number(e.amount)||0,{rows,rec,ts}=tplDue(tm);
+  const spent={},vs={},pend={};
+  for(const e of expenses)if(counted(e)){const c=catKey(e);spent[c]=(spent[c]||0)+A(e);if(!e.tpl&&!rec.has(e.id))vs[c]=(vs[c]||0)+A(e)}
+  for(const r of rows)if(!r.done&&!r.skip&&r.t.kind!=="inc"&&r.t.kind!=="tr"&&r.t.amount>0){const c=CAT[r.t.cat]?r.t.cat:"other";pend[c]=(pend[c]||0)+Number(r.t.amount)}
+  const hm=[1,2,3].map(k=>shiftMonth(tm,-k)),have=new Set(),hist={};
+  for(const e of histExp){if(!hm.includes(e.month))continue;have.add(e.month);
+    if(!counted(e)||e.tpl||ts.some(t=>tplMatches(t,e)))continue;const c=catKey(e);(hist[c]=hist[c]||{})[e.month]=((hist[c]||{})[e.month]||0)+A(e)}
+  const ms=hm.filter(m=>have.has(m)),med=a=>{const s=[...a].sort((x,y)=>x-y),n=s.length;return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):0};
+  const by={};let total=0,sp=0;
+  for(const c of new Set([...Object.keys(spent),...Object.keys(hist),...Object.keys(pend)])){const s=spent[c]||0,v=vs[c]||0,p=pend[c]||0;let ve=v;
+    if(ms.length){const typ=med(ms.map(m=>(hist[c]||{})[m]||0)),pace=td>=3?v/td*dim:typ;ve=Math.max(v,frac*pace+(1-frac)*typ)}
+    else if(td>=5)ve=v/td*dim;
+    by[c]={spent:s,end:s+(ve-v)+p,pending:p};total+=by[c].end;sp+=s}
+  let spread=0;if(ms.length>=2){const tots=ms.map(m=>Object.values(hist).reduce((t,o)=>t+(o[m]||0),0)),avg=tots.reduce((a,b)=>a+b,0)/tots.length;
+    spread=Math.sqrt(tots.reduce((t,x)=>t+(x-avg)**2,0)/tots.length)*(1-frac)}
+  return {total,spent:sp,by,spread,enough:ms.length>0||td>=5,months:ms.length}}
+function renderForecast(fc){const el=$("fcLine");
+  if(!fc||!fc.enough||fc.total<1){el.hidden=true;return}el.hidden=false;const budget=accBudget();
+  el.replaceChildren(T("Прогноз к концу месяца: ≈ "),h("b",null,fmtR(fc.total)),
+    budget?(fc.total>budget?h("span",{class:"over"},T(" — больше бюджета на ≈ ")+fmtR(fc.total-budget)):h("span",{class:"okc"},T(" — в пределах бюджета"))):null)}
+function renderLimits(fc){const box=$("limSec");if(!acc||subSel!=="all"||!loaded){box.hidden=true;return}
+  const lims=CATS.filter(c=>c.limit>0);
+  if(!lims.length){if(readOnly||lsGet("fk.limHint")==="1"||expenses.filter(isExp).length<3){box.hidden=true;return}box.hidden=false;
+    box.replaceChildren(h("div",{class:"sechead"},h("h2",{style:"margin:0"},T("Лимиты по категориям")),h("button",{type:"button",class:"x","aria-label":T("Закрыть"),onclick:()=>{lsSet("fk.limHint","1");box.hidden=true}},"×")),
+      h("div",{class:"hint",style:"margin:0"},T("Задайте лимит, например «Кафе — 8 000 ₽ в месяц»: приложение покажет, сколько осталось, и заранее предупредит, если по прогнозу лимит будет превышен.")),
+      h("div",null,h("button",{type:"button",class:"ghost sm",onclick:()=>{catTab="exp";setView("prefs",true);openPrefSec("cats")}},T("Задать лимиты"))));return}
+  box.hidden=false;const isNow=month===today().slice(0,7);
+  const items=lims.map(c=>{const s=catSpent(month,c.id),f=fc&&fc.by[c.id]?fc.by[c.id].end:null;return {c,s,f,r:s/c.limit,fr:f!==null?f/c.limit:0}})
+    .sort((a,b)=>Math.max(b.r,b.fr)-Math.max(a.r,a.fr));
+  const over=items.filter(x=>x.r>1).length,risk=items.filter(x=>x.r<=1&&x.fr>1).length,fold=folded("lim");
+  const head=h("div",{class:"sechead"},h("h2",{style:"margin:0"},h("button",{type:"button",class:"foldbtn","aria-expanded":String(!fold),onclick:()=>{setFold("lim",!folded("lim"));renderLimits(forecast())}},T("Лимиты"),chevron())),
+    h("span",{class:"hint"+(over?" bad":risk?" warn":""),style:"margin:0"},over?T("превышено: ")+over:risk?T("по прогнозу превысит: ")+risk:T("всё в пределах")));
+  if(fold){box.replaceChildren(head,h("div",{class:"hintline"},...items.slice(0,3).flatMap((x,i)=>[i?" · ":"",x.c.name+" ",h("b",{class:x.r>1?"neg":""},Math.round(x.r*100)+"%")])));return}
+  box.replaceChildren(head,...items.map(({c,s,f,r,fr})=>{const left=c.limit-s,st=r>1?"bad":r>=.8||fr>1?"warn":"ok";
+    const fill=Math.min(100,r*100),fcw=f!==null&&f>s&&r<1?Math.max(0,Math.min(100,fr*100)-fill):0;
+    const note=r>1?T("превышен на ")+fmt(s-c.limit):T("осталось ")+fmt(left);
+    const fnote=isNow&&f!==null&&f>s?(fr>1&&r<=1?T(" · по прогнозу превысит на ≈ ")+fmtR(f-c.limit):T(" · к концу месяца ≈ ")+fmtR(f)):"";
+    return h("div",{class:"lim "+st},catIcon(c,30),h("div",{class:"lw"},
+      h("div",{class:"lh"},h("span",{class:"ln"},c.name),h("span",{class:"la"},h("b",null,fmt(s))," / "+fmt(c.limit))),
+      h("div",{class:"ltrack"},h("i",{class:"lfill",style:"width:"+fill+"%"}),fcw?h("i",{class:"lfc",style:"left:"+fill+"%;width:"+fcw+"%"}):null),
+      h("div",{class:"ls"},note,fnote)))}))}
+/* the limit line under the categories in the entry form */
+function limHint(){const el=$("limHint");const c=curKind==="exp"?CAT[curCat]:null;if(!c||!(c.limit>0)){el.hidden=true;return}
+  const m=($("date").value||today()).slice(0,7),s=catSpent(m,c.id),left=c.limit-s;el.hidden=false;el.className="limhint"+(left<0?" bad":s>=c.limit*.8?" warn":"");
+  el.textContent=c.name+": "+(left<0?T("лимит превышен на ")+fmt(-left):T("осталось ")+fmt(left)+T(" из ")+fmt(c.limit))}
 /* ---------- collapsible blocks on the home screen (remembered on this device) ---------- */
-const FOLD_DEF={due:true,goals:false,debts:false};
+const FOLD_DEF={due:true,goals:false,debts:false,lim:false};
 function folded(k){const v=lsGet("fk.fold."+k);return v===null?FOLD_DEF[k]:v==="1"}
 function setFold(k,v){lsSet("fk.fold."+k,v?"1":"0")}
 const chevron=()=>{const s=h("span",{class:"fchev","aria-hidden":"true"});s.innerHTML='<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>';return s};
@@ -1427,6 +1495,8 @@ function renderKpis(c){const k=[];
     k.push(kpi(T("Разница"),(bal>0?"+":"")+fmt(bal),c.incTotal?(bal>=0?T("отложено ")+Math.round(bal/c.incTotal*100)+T("% дохода"):T("расходы больше доходов")):T("доходов в периоде нет")))}
   k.push(kpi(T("В среднем в день"),c.days.length?fmt(c.total/c.days.length):"—",c.days.length+" "+plural(c.days.length,[T("день"),T("дня"),T("дней")])+T(" в периоде")));
   if(budget){const p=c.total/budget;k.push(kpi(T("Бюджет за период"),Math.round(p*100)+"%",p>1?T("перерасход ")+fmt(c.total-budget):T("осталось ")+fmt(budget-c.total)))}
+  if(!statAll&&c.n===1&&month===today().slice(0,7)){const fc=forecast();
+    if(fc&&fc.enough)k.push(kpi(T("Прогноз к концу месяца"),"≈ "+fmtR(fc.total),fc.spread>fc.total*.04?compact(Math.max(fc.spent,fc.total-fc.spread))+" – "+compact(fc.total+fc.spread):budget?(fc.total>budget?T("больше бюджета на ≈ ")+fmtR(fc.total-budget):T("в пределах бюджета")):T("уже потрачено ")+fmt(fc.spent)))}
   const top=group(c.E,e=>e.cat||"other")[0];
   k.push(kpi(T("Больше всего"),top?(CAT[top[0]]||CAT.other).name:"—",top&&c.total?Math.round(top[1]/c.total*100)+T("% всех трат"):""));
   if(k.length%2)k.push(kpi(T("Записей"),String(c.E.length+c.I.length),c.E.length?T("средний расход ")+fmt(c.total/c.E.length):""));
@@ -1761,11 +1831,13 @@ $("form").addEventListener("submit",async ev=>{ev.preventDefault();const msg=$("
     if(dest&&(dest.a.currency||"₽")!==cur()){amount2=Math.round(parseNum($("trAmt2").value)*100)/100;
       if(!(amount2>0)){msg.classList.add("bad");msg.textContent=T("Укажите, сколько придёт в счёт «")+(dest.a.name||"")+T("» в ")+(dest.a.currency||"₽")+".";$("trAmt2").focus();return}}}
   btn.disabled=true;
+  const lc0=!inc&&!tr?CAT[curCat]:null,lim=lc0&&lc0.limit>0?lc0.limit:0,before=lim?catSpent(date.slice(0,7),lc0.id):0;
   try{const dest=tr?destOf(trTo):null;
     await createOp({kind:curKind,amount,amount2,cat:inc?curInc:curCat,sub:formSub||"main",from:trFrom,to:trTo,member:curWho(),note:$("note").value.trim().slice(0,80),date,tpl:tplActive,goal:goalActive});
     $("amount").value="";$("note").value="";$("trAmt2").value="";msg.textContent="";tplActive=null;goalActive=null;renderTplBar();closeSheet();
     if(tr)toast(T("Переведено ")+fmt(amount)+": "+subName(trFrom)+" → "+(dest?T("«")+(dest.a.name||"")+T("»"):subName(trTo)));
-    else toast(date.slice(0,7)===month?(inc?T("Доход добавлен: +"):T("Расход добавлен: "))+fmt(amount):T("Добавлено в ")+lc(monthLabel(date.slice(0,7))))}
+    else{const after=before+amount,lw=!lim?"":before<=lim&&after>lim?" · "+lc0.name+": "+T("лимит превышен на ")+fmt(after-lim):before<lim*.8&&after>=lim*.8?" · "+lc0.name+": "+Math.round(after/lim*100)+T("% лимита"):"";
+      toast((date.slice(0,7)===month?(inc?T("Доход добавлен: +"):T("Расход добавлен: "))+fmt(amount):T("Добавлено в ")+lc(monthLabel(date.slice(0,7))))+lw)}}
   catch(e){writeErr(e,msg)}finally{btn.disabled=false}});
 
 $("saveSet").onclick=async()=>{const msg=$("setMsg");msg.classList.remove("bad");if(!acc)return;
