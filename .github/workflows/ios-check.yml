@@ -1,0 +1,22 @@
+# Проверяет, что проект iOS собирается (без подписи, для симулятора). Публикация — из Xcode на Mac.
+name: iOS (проверка сборки)
+on:
+  workflow_dispatch:
+  push:
+    branches: [apps]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/build.mjs && npx cap sync ios
+      - name: Xcode
+        run: xcodebuild -version
+      - name: Сборка для симулятора
+        working-directory: ios/App
+        run: xcodebuild -project App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40; exit ${PIPESTATUS[0]}
