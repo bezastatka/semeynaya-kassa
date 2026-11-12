@@ -1,0 +1,28 @@
+{
+  "name": "semeynaya-kassa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Семейная касса — учёт трат для себя и всей семьи",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "sync": "node scripts/build.mjs && cap sync",
+    "android": "node scripts/build.mjs && cap sync android && cap open android",
+    "ios": "node scripts/build.mjs && cap sync ios && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "8.6.0",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
+    "@capgo/capacitor-native-biometric": "8.9.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "8.6.0"
+  }
+}

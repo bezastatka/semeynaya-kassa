@@ -1,0 +1,24 @@
+{
+  "appId": "app.semeynayakassa",
+  "appName": "Семейная касса",
+  "webDir": "dist",
+  "backgroundColor": "#F2F5F4",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#F2F5F4",
+      "showSpinner": false
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

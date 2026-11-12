@@ -14,9 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Касса">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
+<link rel="stylesheet" href="css/fonts.css">
 <script src="js/theme.js"></script>
 <link rel="stylesheet" href="app.css">
 </head>
@@ -241,7 +239,7 @@
       <h3 id="setTitle">Счёт</h3>
       <div id="inviteBlock" class="stack" style="gap:10px">
         <span class="label" style="margin:0">Пригласить в счёт</span>
-        <div class="code"><output id="codeOut">——————</output><button type="button" class="ghost" id="copyCode">Скопировать код</button></div>
+        <div class="code"><output id="codeOut">——————</output><button type="button" class="ghost" id="copyCode">Скопировать код</button><button type="button" class="ghost" id="shareCode" hidden>Поделиться</button></div>
         <ol class="steps">
           <li>Отправьте человеку ссылку на приложение и этот код.</li>
           <li>Он входит в свой аккаунт, нажимает на название счёта вверху, затем «Присоединиться по коду».</li>
@@ -334,13 +332,14 @@
   </form>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/vendor/supabase.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/config.js"></script>
 <script src="js/backend.js"></script>
+<script src="js/native.js"></script>
 <script src="js/app.js"></script>
 <script>
-if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+if("serviceWorker" in navigator&&location.protocol==="https:"&&!(window.kassaNative&&kassaNative.native))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
 </body>
 </html>

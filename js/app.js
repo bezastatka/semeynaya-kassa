@@ -111,6 +111,8 @@ function dayLabel(s){const [y,m,d]=s.split("-").map(Number);
 const dayMonth=s=>{const [y,m,d]=s.split("-").map(Number);return df({day:"numeric",month:"long"}).format(new Date(y,m-1,d))};
 function plural(n,f){if(LANG!=="ru")return n===1?f[0]:f[2];const a=n%10,b=n%100;return a===1&&b!==11?f[0]:a>=2&&a<=4&&(b<10||b>=20)?f[1]:f[2]}
 function toast(t){const el=h("div",{class:"toast",role:"status"},t);document.body.append(el);setTimeout(()=>el.remove(),2400)}
+/* vibration: the phone apps use the system haptics, the website only a short buzz on swipe */
+function buzz(k){const n=window.kassaNative;if(n&&n.native){n.haptic(k);return}if(k==="tap"&&navigator.vibrate)try{navigator.vibrate(12)}catch(x){}}
 function notice(t,bad){const n=$("notice");n.textContent=t||"";n.hidden=!t;n.classList.toggle("bad",!!bad)}
 function genCode(){const a="ABCDEFGHJKMNPQRSTUVWXYZ23456789";let s="";const r=new Uint32Array(6);crypto.getRandomValues(r);for(const x of r)s+=a[x%a.length];return s}
 function fillCur(sel){sel.replaceChildren(...CURS.map(([v,t])=>h("option",{value:v},t)))}
@@ -599,7 +601,7 @@ function swipeRow(btn,e){const act=(k,label)=>{const d=h("div",{class:"sw-act sw
     wrap.classList.toggle("to-del",dx<0);wrap.classList.toggle("to-rep",dx>0);wrap.classList.toggle("armed",Math.abs(dx)>wrap.clientWidth*.3)});
   btn.addEventListener("pointerup",ev=>{if(pid!==ev.pointerId)return;pid=null;if(lock!=="x"){reset();return}
     btn._swiped=true;setTimeout(()=>{btn._swiped=false},400);const go=Math.abs(dx)>wrap.clientWidth*.3;
-    if(go){lsSet("fk.swipeHint","1");$("swipeHint").hidden=true;if(navigator.vibrate)try{navigator.vibrate(12)}catch(x){}}
+    if(go){lsSet("fk.swipeHint","1");$("swipeHint").hidden=true;buzz("tap")}
     if(go&&dx<0){wrap.classList.remove("dragging");btn.style.transform="translateX(-105%)";quickDelete(e,wrap,reset)}
     else{reset();if(go&&dx>0)repeatOp(e)}});
   btn.addEventListener("pointercancel",()=>{pid=null;reset()});
@@ -1786,6 +1788,14 @@ function renderDanger(){const z=$("dangerZone");if(!acc||readOnly){z.replaceChil
 
 $("copyCode").onclick=()=>{const code=$("codeOut").textContent;
   try{navigator.clipboard.writeText(code).then(()=>toast(T("Код скопирован")),()=>selectCode())}catch(e){selectCode()}};
+/* share the invite code: the phone's share sheet in the apps, the browser's one where it exists */
+function appUrl(){const c=window.KASSA_CONFIG||{};return c.siteUrl||(/^https?:$/.test(location.protocol)?location.origin+location.pathname.replace(/[^/]*$/,""):"")}
+function canShare(){return !!((window.kassaNative&&kassaNative.share)||navigator.share)}
+$("shareCode").hidden=!canShare();
+$("shareCode").onclick=async()=>{const code=$("codeOut").textContent.trim(),url=appUrl();
+  const text=T("Присоединяйтесь к нашему общему счёту в «Семейной кассе». Код приглашения: ")+code+(url?T(". Приложение: ")+url:"");
+  if(window.kassaNative&&kassaNative.share){if(!await kassaNative.share(text,T("Семейная касса")))toast(T("Не получилось открыть «Поделиться»"));return}
+  try{await navigator.share({title:T("Семейная касса"),text})}catch(e){}};
 function selectCode(){const r=document.createRange();r.selectNodeContents($("codeOut"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast(T("Код выделен — скопируйте его"))}
 
 /* ---------- data ---------- */
@@ -1835,6 +1845,7 @@ $("form").addEventListener("submit",async ev=>{ev.preventDefault();const msg=$("
   try{const dest=tr?destOf(trTo):null;
     await createOp({kind:curKind,amount,amount2,cat:inc?curInc:curCat,sub:formSub||"main",from:trFrom,to:trTo,member:curWho(),note:$("note").value.trim().slice(0,80),date,tpl:tplActive,goal:goalActive});
     $("amount").value="";$("note").value="";$("trAmt2").value="";msg.textContent="";tplActive=null;goalActive=null;renderTplBar();closeSheet();
+    buzz(!tr&&lim&&before+amount>lim?"warn":"ok");
     if(tr)toast(T("Переведено ")+fmt(amount)+": "+subName(trFrom)+" → "+(dest?T("«")+(dest.a.name||"")+T("»"):subName(trTo)));
     else{const after=before+amount,lw=!lim?"":before<=lim&&after>lim?" · "+lc0.name+": "+T("лимит превышен на ")+fmt(after-lim):before<lim*.8&&after>=lim*.8?" · "+lc0.name+": "+Math.round(after/lim*100)+T("% лимита"):"";
       toast((date.slice(0,7)===month?(inc?T("Доход добавлен: +"):T("Расход добавлен: "))+fmt(amount):T("Добавлено в ")+lc(monthLabel(date.slice(0,7))))+lw)}}
