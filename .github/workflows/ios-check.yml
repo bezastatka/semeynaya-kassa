@@ -2,8 +2,6 @@
 name: iOS (проверка сборки)
 on:
   workflow_dispatch:
-  push:
-    branches: [apps]
 jobs:
   build:
     runs-on: macos-latest
